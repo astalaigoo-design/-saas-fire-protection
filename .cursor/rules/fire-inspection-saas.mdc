@@ -1,0 +1,32 @@
+---
+description: Fire inspection vertical SaaS — stack, UX, and Next.js 14 patterns
+alwaysApply: true
+---
+
+# Fire inspection SaaS (this repo)
+
+**Product:** Vertical SaaS for fire inspection companies (owners, admins, field technicians).
+
+**Stack:** Next.js 14+ App Router · TypeScript (**strict** in `tsconfig.json`) · Tailwind · **shadcn/ui** for UI primitives · Prisma + Supabase Postgres · Clerk auth · Server Components by default.
+
+## Implementation rules
+
+- **TypeScript only** — no `any` unless unavoidable; narrow types at boundaries.
+- **Mobile-first** — technicians use phones: touch targets, readable type, single-column flows first; verify layouts at narrow widths.
+- **Mutations:** **Server Actions** (`"use server"`) with clear return types (`{ ok: true } | { ok: false; error: string }` or similar). Revalidate with `revalidatePath` / `revalidateTag` when data changes.
+- **Route segments:** add **`loading.tsx`** and **`error.tsx`** (and `not-found.tsx` where it helps) for async UI and failure boundaries.
+- **Components:** small, composable, colocate when feature-specific; shared pieces under `components/`.
+- **Next.js 14:** prefer Server Components; add `"use client"` only for interactivity (forms with instant feedback, Clerk hooks, etc.).
+- **HTML:** semantic elements (`main`, `nav`, `section`, `button` vs `div` clicks, headings in order).
+- **Errors:** handle failures in Server Actions and at data-fetch boundaries; surface user-safe messages; log details server-side only.
+- **Validation:** **Zod** for all external input (Server Action args, `searchParams`, webhooks). Parse before Prisma writes.
+
+## Auth / roles
+
+- Clerk **`publicMetadata.role`**: `owner` | `admin` | `technician`. Use `lib/auth/permissions.ts` and guards for route-level access; enforce row-level rules in queries (e.g. technicians: assigned jobs only).
+
+## Data
+
+- **Prisma** is the source of truth in app code; connection via env in `prisma/schema.prisma`. Use `lib/prisma.ts` singleton.
+
+When adding features, default to **server-first**, **validated**, and **phone-friendly** UI.
