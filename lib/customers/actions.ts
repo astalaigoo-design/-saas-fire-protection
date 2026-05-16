@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect";
 import { canManageCustomers } from "@/lib/auth/permissions";
 import { createCustomerSchema } from "@/lib/customers/schemas";
 import { getDashboardSession } from "@/lib/dashboard/session";
@@ -50,6 +51,7 @@ export async function createCustomer(
     revalidatePath("/dashboard/customers");
     redirect(`/dashboard/customers/${customer.id}`);
   } catch (error) {
+    if (isRedirectError(error)) throw error;
     console.error("createCustomer failed", error);
     return { ok: false, error: "Could not create customer. Please try again." };
   }

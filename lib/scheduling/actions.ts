@@ -123,10 +123,15 @@ export async function scheduleInspection(
     result: InspectionItemResult.pending,
   }));
 
+  const redirectMonth: CalendarMonth = {
+    year: scheduledAt.getFullYear(),
+    month: scheduledAt.getMonth() + 1,
+  };
+
   try {
-    await prisma.$transaction(
-      dates.map((occurrenceDate) =>
-        prisma.inspection.create({
+    await prisma.$transaction(async (tx) => {
+      for (const occurrenceDate of dates) {
+        await tx.inspection.create({
           data: {
             companyId: session.companyId,
             buildingId: parsed.data.buildingId,
@@ -138,21 +143,16 @@ export async function scheduleInspection(
             notes: parsed.data.notes ?? null,
             items: { create: checklistItems },
           },
-        }),
-      ),
-    );
-
-    const redirectMonth: CalendarMonth = {
-      year: scheduledAt.getFullYear(),
-      month: scheduledAt.getMonth() + 1,
-    };
-
-    revalidatePath("/dashboard/jobs");
-    redirect(
-      `/dashboard/jobs?year=${redirectMonth.year}&month=${redirectMonth.month}&scheduled=1`,
-    );
+        });
+      }
+    });
   } catch (error) {
     console.error("scheduleInspection failed", error);
     return { ok: false, error: "Could not schedule inspection. Please try again." };
   }
+
+  revalidatePath("/dashboard/jobs");
+  redirect(
+    `/dashboard/jobs?year=${redirectMonth.year}&month=${redirectMonth.month}&scheduled=1`,
+  );
 }
