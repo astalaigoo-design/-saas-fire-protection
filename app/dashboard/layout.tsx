@@ -25,7 +25,7 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50">
       <header className="border-b border-slate-800 bg-slate-900/80">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
           <nav className="flex flex-wrap items-center gap-4 text-sm">
             <Link href="/dashboard" className="font-medium text-amber-400">
               Dashboard
@@ -66,7 +66,7 @@ export default async function DashboardLayout({
           <UserButton afterSignOutUrl="/" />
         </div>
       </header>
-      <div className="mx-auto max-w-5xl px-4 py-8">{children}</div>
+      <div className="mx-auto max-w-6xl px-4 py-8">{children}</div>
     </div>
   );
 }
