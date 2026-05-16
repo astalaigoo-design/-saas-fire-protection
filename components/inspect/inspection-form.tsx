@@ -7,6 +7,7 @@ import { useEffect, useState, useTransition } from "react";
 import { BuildingHeader } from "@/components/inspect/building-header";
 import { ChecklistCarousel } from "@/components/inspect/checklist-carousel";
 import { PhotoUploadSection } from "@/components/inspect/photo-upload-section";
+import { DownloadReportButton } from "@/components/inspect/download-report-button";
 import { SignaturePad } from "@/components/inspect/signature-pad";
 import type { ChecklistItemState } from "@/components/inspect/checklist-item-card";
 import { startInspection, submitInspection } from "@/lib/inspect/actions";
@@ -125,12 +126,15 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
           </p>
         ) : null}
         {locked ? (
-          <Link
-            href="/dashboard"
-            className="flex min-h-12 w-full items-center justify-center rounded-xl bg-slate-800 text-sm font-semibold text-white"
-          >
-            Done
-          </Link>
+          <div className="flex w-full flex-col gap-3">
+            <DownloadReportButton inspectionId={inspection.id} />
+            <Link
+              href="/dashboard"
+              className="flex min-h-12 w-full items-center justify-center rounded-xl bg-slate-800 text-sm font-semibold text-white"
+            >
+              Done
+            </Link>
+          </div>
         ) : (
           <button
             type="button"

@@ -49,6 +49,11 @@ enum RecurrenceInterval {
 model Company {
   id   String @id @default(cuid())
   name String
+  /// HTTPS URL or data URL for PDF report header.
+  logoUrl       String?
+  reportEmail   String?
+  reportPhone   String?
+  reportAddress String? @db.Text
 
   users           User[]
   customers       Customer[]
