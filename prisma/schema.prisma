@@ -37,6 +37,12 @@ enum ReportStatus {
   failed
 }
 
+enum RecurrenceInterval {
+  monthly
+  quarterly
+  annual
+}
+
 // --- Core tenant -----------------------------------------------------------
 
 /// Fire inspection company (tenant).
@@ -159,6 +165,10 @@ model Inspection {
 
   notes String? @db.Text
 
+  /// Shared id for inspections created as one recurring series.
+  recurrenceGroupId  String?
+  recurrenceInterval RecurrenceInterval?
+
   items   InspectionItem[]
   photos  Photo[]
   reports Report[]
@@ -170,6 +180,7 @@ model Inspection {
   @@index([buildingId])
   @@index([assignedToUserId])
   @@index([scheduledAt])
+  @@index([recurrenceGroupId])
   @@map("inspections")
 }
 

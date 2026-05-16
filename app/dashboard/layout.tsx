@@ -35,7 +35,7 @@ export default async function DashboardLayout({
                 href="/dashboard/jobs"
                 className="text-slate-300 hover:text-white"
               >
-                Jobs
+                Schedule
               </Link>
             )}
             {role === "technician" && (
