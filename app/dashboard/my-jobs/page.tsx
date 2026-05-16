@@ -1,30 +1,50 @@
-import { currentUser } from "@clerk/nextjs/server";
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getAppRole } from "@/lib/auth/session";
+import { formatDateTime } from "@/lib/dashboard/dates";
+import { getDashboardSession } from "@/lib/dashboard/session";
+import { getMyAssignedInspections } from "@/lib/inspect/my-jobs";
+import { buildingLabel } from "@/lib/customers/format";
 
-/** Technicians: list only jobs where `assignedClerkUserId === user.id` in your DB. */
 export default async function MyJobsPage() {
-  const user = await currentUser();
-  if (!user) redirect("/sign-in");
+  const session = await getDashboardSession();
+  if (!session) redirect("/sign-in");
+  if (session.role !== "technician") redirect("/dashboard/jobs");
 
-  const role = await getAppRole();
-  if (!role) redirect("/dashboard");
-  if (role !== "technician") redirect("/dashboard/jobs");
+  const jobs = await getMyAssignedInspections(session.appUserId, session.companyId);
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">My assigned jobs</h1>
-      <p className="text-slate-400">
-        Clerk user id for assignment filters:{" "}
-        <code className="rounded bg-slate-800 px-2 py-0.5 text-amber-200">
-          {user.id}
-        </code>
-      </p>
-      <p className="text-sm text-slate-500">
-        Query jobs with{" "}
-        <code className="rounded bg-slate-800 px-1">assignedClerkUserId = user.id</code>{" "}
-        (or your field name).
-      </p>
+    <div className="space-y-6">
+      <header>
+        <h1 className="text-2xl font-semibold tracking-tight text-white">My jobs</h1>
+        <p className="mt-1 text-slate-400">Tap a job to open the mobile inspection form.</p>
+      </header>
+
+      {jobs.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-slate-700 px-4 py-10 text-center text-sm text-slate-500">
+          No assigned inspections right now.
+        </p>
+      ) : (
+        <ul className="space-y-3">
+          {jobs.map((job) => (
+            <li key={job.id}>
+              <Link
+                href={`/inspect/${job.id}`}
+                className="flex min-h-[4.5rem] flex-col justify-center rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-4 transition-colors hover:border-amber-500/40 hover:bg-slate-900"
+              >
+                <span className="font-medium text-white">
+                  {buildingLabel(job.building)}
+                </span>
+                <span className="mt-1 text-sm text-slate-400">
+                  {job.building.customer.name} · {job.inspectionType.name}
+                </span>
+                <span className="mt-2 text-sm text-amber-400/90">
+                  {formatDateTime(job.scheduledAt)}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

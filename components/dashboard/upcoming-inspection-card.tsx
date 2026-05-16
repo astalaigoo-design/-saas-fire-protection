@@ -47,10 +47,10 @@ export function UpcomingInspectionCard({ inspection }: UpcomingInspectionCardPro
         <p className="mt-auto pt-3 text-xs text-slate-600">Unassigned</p>
       )}
       <Link
-        href="/dashboard/jobs"
+        href={`/inspect/${inspection.id}`}
         className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-amber-400 hover:underline"
       >
-        View details
+        Open inspection
       </Link>
     </article>
   );

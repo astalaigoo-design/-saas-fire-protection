@@ -165,6 +165,11 @@ model Inspection {
 
   notes String? @db.Text
 
+  /// Digital signature captured at submit (PNG data URL).
+  signatureData     String?   @db.Text
+  signedAt          DateTime?
+  submittedByUserId String?
+
   /// Shared id for inspections created as one recurring series.
   recurrenceGroupId  String?
   recurrenceInterval RecurrenceInterval?
