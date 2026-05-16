@@ -153,10 +153,12 @@ export function ComplianceReportDocument({ data }: ComplianceReportDocumentProps
   const inspectionDate = data.completedAt ?? data.signedAt ?? data.scheduledAt;
   const buildingLines = buildingAddressLines(data.building);
   const companyLines = [
-    data.company.reportAddress,
+    ...(data.company.reportAddress
+      ? data.company.reportAddress.split(/\r?\n/).map((line) => line.trim())
+      : []),
     data.company.reportPhone,
     data.company.reportEmail,
-  ].filter(Boolean);
+  ].filter((line): line is string => Boolean(line));
 
   return (
     <Document title={`Compliance Report — ${data.building.customer.name}`}>
@@ -170,7 +172,9 @@ export function ComplianceReportDocument({ data }: ComplianceReportDocumentProps
               </Text>
             ))}
           </View>
-          {data.company.logoUrl ? (
+          {data.company.logoUrl &&
+          (data.company.logoUrl.startsWith("data:image/") ||
+            data.company.logoUrl.startsWith("http")) ? (
             <Image src={data.company.logoUrl} style={styles.logo} />
           ) : null}
         </View>
@@ -238,7 +242,7 @@ export function ComplianceReportDocument({ data }: ComplianceReportDocumentProps
         </View>
 
         {data.photos.length > 0 ? (
-          <View style={styles.block} break>
+          <View style={styles.block} break={true}>
             <Text style={styles.sectionTitle}>Photos</Text>
             <View style={styles.photoGrid}>
               {data.photos.map((photo, index) => (

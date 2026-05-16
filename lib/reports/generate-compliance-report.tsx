@@ -1,6 +1,10 @@
 import { ReportStatus } from "@prisma/client";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { ComplianceReportDocument } from "@/lib/reports/compliance-report-document";
+import {
+  filterPhotosForPdf,
+  sanitizeSignatureForPdf,
+} from "@/lib/reports/pdf-images";
 import type { ComplianceReportData } from "@/lib/reports/queries";
 import { getComplianceReportData } from "@/lib/reports/queries";
 import type { DashboardSession } from "@/lib/dashboard/session";
@@ -13,11 +17,27 @@ export async function fetchComplianceReportData(
   return getComplianceReportData(session, inspectionId);
 }
 
+function prepareDataForPdf(data: ComplianceReportData): ComplianceReportData {
+  return {
+    ...data,
+    photos: filterPhotosForPdf(data.photos),
+    signatureData: sanitizeSignatureForPdf(data.signatureData),
+    company: {
+      ...data.company,
+      logoUrl:
+        data.company.logoUrl && data.company.logoUrl.length < 500_000
+          ? data.company.logoUrl
+          : null,
+    },
+  };
+}
+
 /** Renders a compliance PDF buffer from loaded inspection data. */
 export async function renderComplianceReportPdf(
   data: ComplianceReportData,
 ): Promise<Buffer> {
-  const buffer = await renderToBuffer(<ComplianceReportDocument data={data} />);
+  const safeData = prepareDataForPdf(data);
+  const buffer = await renderToBuffer(<ComplianceReportDocument data={safeData} />);
   return Buffer.from(buffer);
 }
 
@@ -41,7 +61,11 @@ export async function generateComplianceReport(
     );
   }
 
+  const buffer = await renderComplianceReportPdf(data);
+  const filename = buildFilename(data);
   const storageUrl = `/api/inspections/${inspectionId}/report`;
+  const now = new Date();
+
   const existing = await prisma.report.findFirst({
     where: { inspectionId },
     orderBy: { createdAt: "desc" },
@@ -50,37 +74,22 @@ export async function generateComplianceReport(
   const report = existing
     ? await prisma.report.update({
         where: { id: existing.id },
-        data: { status: ReportStatus.generating },
+        data: {
+          status: ReportStatus.finalized,
+          generatedAt: now,
+          title: `Compliance — ${data.building.customer.name} — ${now.toISOString().slice(0, 10)}`,
+          storageUrl,
+        },
       })
     : await prisma.report.create({
         data: {
           inspectionId,
-          title: `Compliance — ${data.building.customer.name}`,
+          title: `Compliance — ${data.building.customer.name} — ${now.toISOString().slice(0, 10)}`,
           storageUrl,
-          status: ReportStatus.generating,
+          status: ReportStatus.finalized,
+          generatedAt: now,
         },
       });
 
-  try {
-    const buffer = await renderComplianceReportPdf(data);
-    const now = new Date();
-
-    await prisma.report.update({
-      where: { id: report.id },
-      data: {
-        status: ReportStatus.finalized,
-        generatedAt: now,
-        title: `Compliance — ${data.building.customer.name} — ${now.toISOString().slice(0, 10)}`,
-        storageUrl,
-      },
-    });
-
-    return { buffer, reportId: report.id, filename: buildFilename(data) };
-  } catch (error) {
-    await prisma.report.update({
-      where: { id: report.id },
-      data: { status: ReportStatus.failed },
-    });
-    throw error;
-  }
+  return { buffer, reportId: report.id, filename };
 }
