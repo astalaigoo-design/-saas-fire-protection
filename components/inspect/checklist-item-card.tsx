@@ -70,7 +70,7 @@ export function ChecklistItemCard({
   };
 
   return (
-    <article className="flex h-full w-[calc(100vw-2rem)] max-w-lg shrink-0 snap-center flex-col rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg sm:w-[min(100%,24rem)]">
+    <article className="flex h-full w-[min(24rem,calc(100vw-2rem))] shrink-0 snap-center flex-col rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg">
       <p className="text-xs font-medium text-slate-500">
         Item {index + 1} of {total}
       </p>
@@ -123,6 +123,11 @@ export function ChecklistItemCard({
         {error ? (
           <p role="alert" className="text-sm text-red-300">
             {error}
+          </p>
+        ) : null}
+        {pending ? (
+          <p role="status" className="text-xs text-slate-400">
+            Saving…
           </p>
         ) : null}
       </div>

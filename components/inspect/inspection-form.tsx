@@ -83,7 +83,7 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
     <div className="flex min-h-[100dvh] flex-col bg-slate-950 text-slate-50">
       <BuildingHeader inspection={inspection} locked={locked} />
 
-      <main className="flex-1 space-y-8 py-6">
+      <main className="flex-1 space-y-8 py-6 pb-28">
         <ChecklistCarousel
           inspectionId={inspection.id}
           items={items}
@@ -120,6 +120,11 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
       </main>
 
       <footer className="sticky bottom-0 border-t border-slate-800 bg-slate-900/95 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur">
+        {pending ? (
+          <p role="status" className="mb-3 text-center text-sm text-slate-300">
+            Saving your inspection…
+          </p>
+        ) : null}
         {submitError ? (
           <p role="alert" className="mb-3 text-center text-sm text-red-300">
             {submitError}

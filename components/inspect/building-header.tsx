@@ -20,10 +20,10 @@ export function BuildingHeader({ inspection, locked }: BuildingHeaderProps) {
       <p className="text-xs font-medium uppercase tracking-wide text-amber-400">
         {inspection.inspectionType.name}
       </p>
-      <h1 className="mt-1 text-xl font-semibold leading-snug text-white">
+      <h1 className="mt-1 break-words text-xl font-semibold leading-snug text-white">
         {buildingLabel(building)}
       </h1>
-      <p className="mt-1 text-sm text-slate-400">{building.customer.name}</p>
+      <p className="mt-1 break-words text-sm text-slate-400">{building.customer.name}</p>
       <p className="mt-2 text-sm text-slate-500">
         {building.addressLine1}
         {building.addressLine2 ? `, ${building.addressLine2}` : ""}

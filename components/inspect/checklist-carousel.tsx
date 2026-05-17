@@ -52,7 +52,7 @@ export function ChecklistCarousel({
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 scroll-px-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {items.map((item, index) => (
           <ChecklistItemCard
@@ -86,7 +86,9 @@ export function ChecklistCarousel({
           />
         ))}
       </div>
-      <p className="px-4 text-center text-xs text-slate-500">Swipe for next item →</p>
+      <p className="px-4 text-center text-xs text-slate-500">
+        {activeIndex === items.length - 1 ? "Review complete? Add photos and sign below." : "Swipe for next item →"}
+      </p>
     </section>
   );
 }

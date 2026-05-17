@@ -104,7 +104,7 @@ export function PhotoUploadSection({
           No photos yet. Tap Add photo to use your camera.
         </p>
       ) : (
-        <ul className="grid grid-cols-2 gap-3">
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {photos.map((photo) => (
             <li key={photo.id} className="relative overflow-hidden rounded-xl border border-slate-800">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -128,6 +128,11 @@ export function PhotoUploadSection({
           ))}
         </ul>
       )}
+      {pending ? (
+        <p role="status" className="text-sm text-slate-400">
+          Processing photo…
+        </p>
+      ) : null}
 
       {error ? (
         <p role="alert" className="text-sm text-red-300">
