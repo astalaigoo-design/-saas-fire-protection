@@ -1,0 +1,250 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// --- Enums -----------------------------------------------------------------
+
+enum UserRole {
+  owner
+  admin
+  technician
+}
+
+enum InspectionStatus {
+  scheduled
+  in_progress
+  completed
+  cancelled
+}
+
+enum InspectionItemResult {
+  pass
+  fail
+  na
+  pending
+}
+
+enum ReportStatus {
+  draft
+  generating
+  finalized
+  failed
+}
+
+enum RecurrenceInterval {
+  monthly
+  quarterly
+  annual
+}
+
+// --- Core tenant -----------------------------------------------------------
+
+/// Fire inspection company (tenant).
+model Company {
+  id   String @id @default(cuid())
+  name String
+  /// HTTPS URL or data URL for PDF report header.
+  logoUrl       String?
+  reportEmail   String?
+  reportPhone   String?
+  reportAddress String? @db.Text
+
+  users           User[]
+  customers       Customer[]
+  inspectionTypes InspectionType[]
+  inspections     Inspection[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("companies")
+}
+
+/// Staff member linked to Clerk; belongs to one company.
+model User {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  /// Clerk user id (`user_...`) — unique per company.
+  clerkUserId String
+  email       String?
+  name        String?
+  role        UserRole
+
+  inspectionsAssigned Inspection[] @relation("InspectionAssignee")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, clerkUserId])
+  @@index([companyId])
+  @@map("users")
+}
+
+/// Building owner / client of the inspection company.
+model Customer {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  name  String
+  email String?
+  phone String?
+
+  buildings Building[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@map("customers")
+}
+
+/// Physical site inspected (belongs to a customer).
+model Building {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  name         String?
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  region       String /// state / province
+  postalCode   String
+  country      String  @default("US")
+
+  inspections Inspection[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerId])
+  @@map("buildings")
+}
+
+/// Cadence category (e.g. annual, quarterly, monthly) — per company so labels can vary.
+model InspectionType {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  /// Stable code: `annual`, `quarterly`, `monthly`, or custom.
+  code String
+  name String
+
+  inspections Inspection[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, code])
+  @@map("inspection_types")
+}
+
+/// Scheduled or completed inspection visit for one building.
+model Inspection {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  buildingId String
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Restrict)
+
+  inspectionTypeId String
+  inspectionType   InspectionType @relation(fields: [inspectionTypeId], references: [id], onDelete: Restrict)
+
+  /// Technician (or lead) assigned to perform the inspection.
+  assignedToUserId String?
+  assignedTo       User?   @relation("InspectionAssignee", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+
+  scheduledAt DateTime
+  completedAt DateTime?
+  status      InspectionStatus @default(scheduled)
+
+  notes String? @db.Text
+
+  /// Digital signature captured at submit (PNG data URL).
+  signatureData     String?   @db.Text
+  signedAt          DateTime?
+  submittedByUserId String?
+
+  /// Shared id for inspections created as one recurring series.
+  recurrenceGroupId  String?
+  recurrenceInterval RecurrenceInterval?
+
+  items   InspectionItem[]
+  photos  Photo[]
+  reports Report[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([buildingId])
+  @@index([assignedToUserId])
+  @@index([scheduledAt])
+  @@index([recurrenceGroupId])
+  @@map("inspections")
+}
+
+/// Single checklist row for an inspection (pass / fail / N/A).
+model InspectionItem {
+  id           String     @id @default(cuid())
+  inspectionId String
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
+  label       String
+  description String? @db.Text
+  sortOrder   Int     @default(0)
+
+  result InspectionItemResult @default(pending)
+  notes  String?              @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([inspectionId])
+  @@map("inspection_items")
+}
+
+/// Image captured during an inspection (storage path or public URL).
+model Photo {
+  id           String     @id @default(cuid())
+  inspectionId String
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
+  url       String /// Supabase Storage public HTTPS URL (legacy rows may be data URLs)
+  caption   String?
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([inspectionId])
+  @@map("photos")
+}
+
+/// Generated inspection report (PDF).
+model Report {
+  id           String     @id @default(cuid())
+  inspectionId String
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
+  title       String?
+  storageUrl  String /// bucket path or URL to PDF
+  status      ReportStatus @default(draft)
+  generatedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([inspectionId])
+  @@map("reports")
+}

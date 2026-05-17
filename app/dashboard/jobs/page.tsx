@@ -1,0 +1,40 @@
+import { redirect } from "next/navigation";
+import { InspectionCalendar } from "@/components/scheduling/inspection-calendar";
+import { ensureCanManageJobs } from "@/lib/auth/guards";
+import { getDashboardSession } from "@/lib/dashboard/session";
+import { parseCalendarMonth } from "@/lib/scheduling/calendar";
+import { getCalendarInspections } from "@/lib/scheduling/queries";
+
+type JobsPageProps = {
+  searchParams: Record<string, string | string[] | undefined>;
+};
+
+export default async function JobsPage({ searchParams }: JobsPageProps) {
+  const session = await getDashboardSession();
+  if (!session) redirect("/sign-in");
+  ensureCanManageJobs(session.role);
+
+  const month = parseCalendarMonth(searchParams);
+  const inspections = await getCalendarInspections(
+    session.companyId,
+    month.year,
+    month.month,
+  );
+  const showScheduledBanner = searchParams.scheduled === "1";
+
+  return (
+    <div className="space-y-6">
+      <header>
+        <h1 className="text-2xl font-semibold tracking-tight text-white">Schedule</h1>
+        <p className="mt-1 text-slate-400">
+          Calendar of inspections for your company. Click a date to schedule.
+        </p>
+      </header>
+      <InspectionCalendar
+        month={month}
+        inspections={inspections}
+        showScheduledBanner={showScheduledBanner}
+      />
+    </div>
+  );
+}
