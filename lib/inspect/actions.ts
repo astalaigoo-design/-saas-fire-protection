@@ -14,6 +14,11 @@ import {
   updateChecklistItemSchema,
   uploadPhotoSchema,
 } from "@/lib/inspect/schemas";
+import { isSupabaseStorageConfigured } from "@/lib/supabase/env";
+import {
+  deleteInspectionPhotoFromStorage,
+  uploadInspectionPhotoToStorage,
+} from "@/lib/supabase/inspection-photos";
 import { prisma } from "@/lib/prisma";
 
 export type InspectActionResult =
@@ -118,7 +123,7 @@ export async function updateChecklistItem(
 
 export async function uploadInspectionPhoto(
   input: unknown,
-): Promise<InspectActionResult & { photoId?: string }> {
+): Promise<InspectActionResult & { photoId?: string; url?: string }> {
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
 
@@ -130,21 +135,40 @@ export async function uploadInspectionPhoto(
   const loaded = await loadEditableInspection(parsed.data.inspectionId, session);
   if (!loaded.ok) return { ok: false, error: loaded.error };
 
-  const count = await prisma.photo.count({
-    where: { inspectionId: parsed.data.inspectionId },
-  });
+  try {
+    let photoUrl: string;
+    if (isSupabaseStorageConfigured()) {
+      const uploaded = await uploadInspectionPhotoToStorage({
+        companyId: session.companyId,
+        inspectionId: parsed.data.inspectionId,
+        dataUrl: parsed.data.dataUrl,
+      });
+      photoUrl = uploaded.publicUrl;
+    } else {
+      photoUrl = parsed.data.dataUrl;
+    }
 
-  const photo = await prisma.photo.create({
-    data: {
-      inspectionId: parsed.data.inspectionId,
-      url: parsed.data.dataUrl,
-      caption: parsed.data.caption ?? null,
-      sortOrder: count,
-    },
-  });
+    const count = await prisma.photo.count({
+      where: { inspectionId: parsed.data.inspectionId },
+    });
 
-  revalidatePath(`/inspect/${parsed.data.inspectionId}`);
-  return { ok: true, photoId: photo.id };
+    const photo = await prisma.photo.create({
+      data: {
+        inspectionId: parsed.data.inspectionId,
+        url: photoUrl,
+        caption: parsed.data.caption ?? null,
+        sortOrder: count,
+      },
+    });
+
+    revalidatePath(`/inspect/${parsed.data.inspectionId}`);
+    return { ok: true, photoId: photo.id, url: photo.url };
+  } catch (error) {
+    console.error("uploadInspectionPhoto failed", error);
+    const message =
+      error instanceof Error ? error.message : "Could not upload photo.";
+    return { ok: false, error: message };
+  }
 }
 
 export async function deleteInspectionPhoto(
@@ -162,9 +186,19 @@ export async function deleteInspectionPhoto(
   });
   if (!photo) return { ok: false, error: "Photo not found." };
 
-  await prisma.photo.delete({ where: { id: photoId } });
-  revalidatePath(`/inspect/${inspectionId}`);
-  return { ok: true };
+  try {
+    if (isSupabaseStorageConfigured()) {
+      await deleteInspectionPhotoFromStorage(photo.url);
+    }
+    await prisma.photo.delete({ where: { id: photoId } });
+    revalidatePath(`/inspect/${inspectionId}`);
+    return { ok: true };
+  } catch (error) {
+    console.error("deleteInspectionPhoto failed", error);
+    const message =
+      error instanceof Error ? error.message : "Could not delete photo.";
+    return { ok: false, error: message };
+  }
 }
 
 export async function submitInspection(

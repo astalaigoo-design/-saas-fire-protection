@@ -48,7 +48,7 @@ export function PhotoUploadSection({
           ...current,
           {
             id: response.photoId ?? `temp-${Date.now()}`,
-            url: dataUrl,
+            url: response.url ?? dataUrl,
             caption: null,
           },
         ]);

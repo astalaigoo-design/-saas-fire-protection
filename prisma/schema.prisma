@@ -220,7 +220,7 @@ model Photo {
   inspectionId String
   inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
 
-  url       String /// Supabase Storage key, signed URL base, or HTTPS URL
+  url       String /// Supabase Storage public HTTPS URL (legacy rows may be data URLs)
   caption   String?
   sortOrder Int     @default(0)
 
