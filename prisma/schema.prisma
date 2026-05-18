@@ -120,13 +120,34 @@ model Building {
   postalCode   String
   country      String  @default("US")
 
+  /// e.g. commercial, residential, industrial, mixed_use
+  buildingType String?
+  fireDistrict String?
+  generalNotes String? @db.Text
+
   inspections Inspection[]
+  notes       BuildingNote[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([customerId])
   @@map("buildings")
+}
+
+/// Timestamped note on a building (site history).
+model BuildingNote {
+  id         String   @id @default(cuid())
+  buildingId String
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  body       String @db.Text
+  authorName String?
+
+  createdAt DateTime @default(now())
+
+  @@index([buildingId])
+  @@map("building_notes")
 }
 
 /// Cadence category (e.g. annual, quarterly, monthly) — per company so labels can vary.

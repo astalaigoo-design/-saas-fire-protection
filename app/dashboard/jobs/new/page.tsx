@@ -35,6 +35,9 @@ export default async function ScheduleInspectionPage({
 
   const formData = await getScheduleFormData(session.companyId);
   const defaultDate = resolveDefaultDate(searchParams);
+  const buildingIdParam = searchParams.buildingId;
+  const defaultBuildingId =
+    typeof buildingIdParam === "string" ? buildingIdParam : undefined;
 
   return (
     <div className="space-y-6">
@@ -51,7 +54,11 @@ export default async function ScheduleInspectionPage({
         title="Schedule inspection"
         description="Assign a technician, choose a building and type, and set recurrence."
       />
-      <ScheduleInspectionForm formData={formData} defaultDate={defaultDate} />
+      <ScheduleInspectionForm
+        formData={formData}
+        defaultDate={defaultDate}
+        defaultBuildingId={defaultBuildingId}
+      />
     </div>
   );
 }

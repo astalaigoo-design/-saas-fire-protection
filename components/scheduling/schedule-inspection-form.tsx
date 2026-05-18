@@ -21,6 +21,7 @@ type ScheduleInspectionFormProps = {
   formData: ScheduleFormData;
   defaultDate: string;
   defaultTime?: string;
+  defaultBuildingId?: string;
 };
 
 const initialState: ScheduleInspectionFormState = { ok: false, error: "" };
@@ -59,6 +60,7 @@ export function ScheduleInspectionForm({
   formData,
   defaultDate,
   defaultTime = "10:00",
+  defaultBuildingId,
 }: ScheduleInspectionFormProps) {
   const [state, formAction] = useFormState(scheduleInspection, initialState);
   const buildingGroups = groupBuildingsByCustomer(formData.buildings);
@@ -125,7 +127,7 @@ export function ScheduleInspectionForm({
               id="building-id"
               name="buildingId"
               required
-              defaultValue=""
+              defaultValue={defaultBuildingId ?? ""}
               className={nativeSelectClassName}
             >
               <option value="" disabled>
