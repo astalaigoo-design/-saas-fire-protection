@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { buildingLabel } from "@/lib/customers/format";
 import type { CustomerListItem } from "@/lib/customers/queries";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 
 type CustomerListProps = {
   customers: CustomerListItem[];
@@ -21,41 +23,45 @@ export function CustomerList({ customers }: CustomerListProps) {
         <li key={customer.id}>
           <Link
             href={`/dashboard/customers/${customer.id}`}
-            className="block rounded-xl border border-slate-800 bg-slate-900/60 p-4 transition-colors hover:border-slate-700 hover:bg-slate-900/90"
+            className="block rounded-xl transition-colors hover:opacity-95"
           >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h2 className="font-semibold text-white">{customer.name}</h2>
-                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-400">
-                  {customer.email ? <span>{customer.email}</span> : null}
-                  {customer.phone ? <span>{customer.phone}</span> : null}
-                  {!customer.email && !customer.phone ? (
-                    <span className="text-slate-500">No contact info</span>
-                  ) : null}
+            <Card className="bg-slate-900/70 text-white ring-slate-800">
+              <CardContent>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h2 className="font-semibold text-white">{customer.name}</h2>
+                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-400">
+                      {customer.email ? <span>{customer.email}</span> : null}
+                      {customer.phone ? <span>{customer.phone}</span> : null}
+                      {!customer.email && !customer.phone ? (
+                        <span className="text-slate-500">No contact info</span>
+                      ) : null}
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="shrink-0 border-slate-700 text-slate-300">
+                    {customer._count.buildings}{" "}
+                    {customer._count.buildings === 1 ? "building" : "buildings"}
+                  </Badge>
                 </div>
-              </div>
-              <span className="shrink-0 text-sm text-slate-500">
-                {customer._count.buildings}{" "}
-                {customer._count.buildings === 1 ? "building" : "buildings"}
-              </span>
-            </div>
-            {customer.buildings.length > 0 ? (
-              <ul className="mt-4 space-y-2 border-t border-slate-800/80 pt-4">
-                {customer.buildings.map((building) => (
-                  <li
-                    key={building.id}
-                    className="flex items-start gap-2 text-sm text-slate-300"
-                  >
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500/80" aria-hidden />
-                    <span>{buildingLabel(building)}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-4 border-t border-slate-800/80 pt-4 text-sm text-slate-500">
-                No buildings yet
-              </p>
-            )}
+                {customer.buildings.length > 0 ? (
+                  <ul className="mt-4 space-y-2 border-t border-slate-800/80 pt-4">
+                    {customer.buildings.map((building) => (
+                      <li
+                        key={building.id}
+                        className="flex items-start gap-2 text-sm text-slate-300"
+                      >
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500/80" aria-hidden />
+                        <span>{buildingLabel(building)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-4 border-t border-slate-800/80 pt-4 text-sm text-slate-500">
+                    No buildings yet
+                  </p>
+                )}
+              </CardContent>
+            </Card>
           </Link>
         </li>
       ))}

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { canManageCustomers, canManageJobs } from "@/lib/auth/permissions";
 import type { AppRole } from "@/lib/auth/roles";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type DashboardActionsProps = {
   role: AppRole;
@@ -19,7 +21,10 @@ export function DashboardActions({ role }: DashboardActionsProps) {
       {showCustomers && (
         <Link
           href="/dashboard/customers/new"
-          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-amber-500 px-5 py-2.5 text-sm font-semibold text-slate-950 hover:bg-amber-400"
+          className={cn(
+            buttonVariants({ size: "lg" }),
+            "h-11 bg-amber-500 px-5 text-sm font-semibold text-slate-950 hover:bg-amber-400",
+          )}
         >
           New Customer
         </Link>
@@ -27,7 +32,10 @@ export function DashboardActions({ role }: DashboardActionsProps) {
       {showSchedule && (
         <Link
           href="/dashboard/jobs/new"
-          className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-600 px-5 py-2.5 text-sm font-semibold text-slate-100 hover:border-slate-500 hover:bg-slate-800"
+          className={cn(
+            buttonVariants({ variant: "outline", size: "lg" }),
+            "h-11 border-slate-700 bg-slate-900/70 px-5 text-sm font-semibold text-slate-100 hover:border-slate-500 hover:bg-slate-800",
+          )}
         >
           Schedule Inspection
         </Link>

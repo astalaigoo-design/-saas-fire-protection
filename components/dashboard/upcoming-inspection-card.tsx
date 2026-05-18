@@ -1,6 +1,10 @@
 import Link from "next/link";
 import type { InspectionListItem } from "@/lib/dashboard/queries";
 import { formatDateTime } from "@/lib/dashboard/dates";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type UpcomingInspectionCardProps = {
   inspection: InspectionListItem;
@@ -13,46 +17,51 @@ function buildingLabel(inspection: InspectionListItem): string {
   );
 }
 
-const statusStyles: Record<string, string> = {
-  scheduled: "bg-sky-500/15 text-sky-300",
-  in_progress: "bg-amber-500/15 text-amber-300",
+const statusStyles: Record<string, "secondary" | "outline" | "destructive"> = {
+  scheduled: "secondary",
+  in_progress: "outline",
 };
 
 export function UpcomingInspectionCard({ inspection }: UpcomingInspectionCardProps) {
-  const statusClass =
-    statusStyles[inspection.status] ?? "bg-slate-700 text-slate-300";
+  const statusVariant = statusStyles[inspection.status] ?? "outline";
 
   return (
-    <article className="flex min-h-[9rem] flex-col rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-      <div className="flex items-center justify-between gap-2">
-        <span
-          className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${statusClass}`}
-        >
+    <Card className="min-h-[9rem] bg-slate-900/70 text-white ring-slate-800">
+      <CardContent className="flex h-full flex-col">
+        <div className="flex items-center justify-between gap-2">
+          <Badge
+            variant={statusVariant}
+            className="capitalize bg-slate-800/90 text-slate-200"
+          >
           {inspection.status.replace("_", " ")}
-        </span>
-        <span className="text-xs text-slate-500">{inspection.inspectionType.name}</span>
-      </div>
-      <h3 className="mt-3 font-medium leading-snug text-white">
-        {buildingLabel(inspection)}
-      </h3>
-      <p className="mt-1 text-sm text-slate-400">{inspection.building.customer.name}</p>
-      <p className="mt-3 text-sm text-amber-400/90">
-        {formatDateTime(inspection.scheduledAt)}
-      </p>
-      {inspection.assignedTo?.name ? (
-        <p className="mt-auto pt-3 text-xs text-slate-500">
-          Assigned: {inspection.assignedTo.name}
+          </Badge>
+          <span className="text-xs text-slate-500">{inspection.inspectionType.name}</span>
+        </div>
+        <h3 className="mt-3 font-medium leading-snug text-white">
+          {buildingLabel(inspection)}
+        </h3>
+        <p className="mt-1 text-sm text-slate-400">{inspection.building.customer.name}</p>
+        <p className="mt-3 text-sm text-amber-400/90">
+          {formatDateTime(inspection.scheduledAt)}
         </p>
-      ) : (
-        <p className="mt-auto pt-3 text-xs text-slate-600">Unassigned</p>
-      )}
-      <Link
-        href={`/inspect/${inspection.id}`}
-        className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-amber-400 hover:underline"
-      >
-        Open inspection
-      </Link>
-    </article>
+        {inspection.assignedTo?.name ? (
+          <p className="mt-auto pt-3 text-xs text-slate-500">
+            Assigned: {inspection.assignedTo.name}
+          </p>
+        ) : (
+          <p className="mt-auto pt-3 text-xs text-slate-600">Unassigned</p>
+        )}
+        <Link
+          href={`/inspect/${inspection.id}`}
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "default" }),
+            "mt-3 h-11 justify-start px-0 text-amber-400 hover:bg-transparent hover:text-amber-300",
+          )}
+        >
+          Open inspection
+        </Link>
+      </CardContent>
+    </Card>
   );
 }
 
