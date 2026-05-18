@@ -1,18 +1,13 @@
-import type { InspectionItemResult } from "@prisma/client";
+import type { ComplianceStatus } from "@prisma/client";
 import {
-  buildingComplianceFromInspections,
-  type ComplianceLevel,
+  deriveBuildingComplianceStatus,
+  type InspectionForCompliance,
 } from "@/lib/buildings/compliance";
 
-export type InspectionStatsInput = {
-  status: string;
-  scheduledAt: Date;
-  completedAt: Date | null;
-  items: { result: InspectionItemResult }[];
-};
+export type InspectionStatsInput = InspectionForCompliance;
 
 export type BuildingInspectionStats = {
-  compliance: ComplianceLevel;
+  compliance: ComplianceStatus;
   nextScheduledAt: Date | null;
   completedCount: number;
 };
@@ -28,7 +23,7 @@ export function computeBuildingInspectionStats(
     .sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime());
 
   return {
-    compliance: buildingComplianceFromInspections(inspections),
+    compliance: deriveBuildingComplianceStatus(inspections),
     nextScheduledAt: upcoming[0]?.scheduledAt ?? null,
     completedCount: completed.length,
   };

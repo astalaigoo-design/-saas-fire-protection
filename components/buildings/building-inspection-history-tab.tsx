@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
+import type { ComplianceStatus } from "@prisma/client";
 import type { BuildingInspectionRow } from "@/lib/buildings/queries";
 import { ComplianceBadge } from "@/components/buildings/compliance-badge";
 import { InspectionStatusBadge } from "@/components/customers/inspection-status-badge";
@@ -30,11 +31,11 @@ function inspectionDate(inspection: BuildingInspectionRow): Date {
   return inspection.completedAt ?? inspection.scheduledAt;
 }
 
-const complianceRowClass: Record<string, string> = {
-  pass: "border-l-4 border-l-emerald-500/70",
-  fail: "border-l-4 border-l-red-500/70",
-  warning: "border-l-4 border-l-amber-500/70",
-  unknown: "",
+const complianceRowClass: Record<ComplianceStatus, string> = {
+  PASS: "border-l-4 border-l-emerald-500/70",
+  FAIL: "border-l-4 border-l-red-500/70",
+  PENDING: "border-l-4 border-l-amber-500/70",
+  OVERDUE: "border-l-4 border-l-orange-500/70",
 };
 
 export function BuildingInspectionHistoryTab({

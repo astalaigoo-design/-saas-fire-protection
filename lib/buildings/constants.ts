@@ -1,14 +1,17 @@
+import { BuildingType } from "@prisma/client";
+
 export const BUILDING_TYPES = [
-  { value: "commercial", label: "Commercial" },
-  { value: "residential", label: "Residential" },
-  { value: "industrial", label: "Industrial" },
-  { value: "mixed_use", label: "Mixed use" },
-  { value: "institutional", label: "Institutional" },
-  { value: "other", label: "Other" },
+  { value: BuildingType.commercial, label: "Commercial" },
+  { value: BuildingType.residential, label: "Residential" },
+  { value: BuildingType.industrial, label: "Industrial" },
+  { value: BuildingType.mixed, label: "Mixed" },
+  { value: BuildingType.other, label: "Other" },
 ] as const;
 
-export function buildingTypeLabel(value: string | null | undefined): string {
+export function buildingTypeLabel(
+  value: BuildingType | string | null | undefined,
+): string {
   if (!value) return "Not specified";
   const match = BUILDING_TYPES.find((t) => t.value === value);
-  return match?.label ?? value.replace(/_/g, " ");
+  return match?.label ?? String(value).replace(/_/g, " ");
 }

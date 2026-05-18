@@ -1,12 +1,12 @@
+import { BuildingType } from "@prisma/client";
 import { z } from "zod";
 
 export const buildingTypeValues = [
-  "commercial",
-  "residential",
-  "industrial",
-  "mixed_use",
-  "institutional",
-  "other",
+  BuildingType.commercial,
+  BuildingType.residential,
+  BuildingType.industrial,
+  BuildingType.mixed,
+  BuildingType.other,
 ] as const;
 
 export const updateBuildingSchema = z.object({
@@ -19,11 +19,11 @@ export const updateBuildingSchema = z.object({
   postalCode: z.string().trim().min(1, "Postal code is required").max(20),
   country: z.string().trim().min(2).max(2).default("US"),
   buildingType: z
-    .union([z.enum(buildingTypeValues), z.literal("")])
+    .union([z.nativeEnum(BuildingType), z.literal("")])
     .optional()
     .transform((v) => (v === "" ? undefined : v)),
   fireDistrict: z.string().trim().max(200).optional().or(z.literal("")),
-  generalNotes: z.string().trim().max(10000).optional().or(z.literal("")),
+  notes: z.string().trim().max(10000).optional().or(z.literal("")),
 });
 
 export const addBuildingNoteSchema = z.object({

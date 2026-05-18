@@ -34,7 +34,7 @@ export async function updateBuilding(
     country: formData.get("country") || "US",
     buildingType: formData.get("buildingType"),
     fireDistrict: formData.get("fireDistrict"),
-    generalNotes: formData.get("generalNotes"),
+    notes: formData.get("notes"),
   });
 
   if (!parsed.success) {
@@ -57,7 +57,7 @@ export async function updateBuilding(
       country: d.country,
       buildingType: d.buildingType || null,
       fireDistrict: d.fireDistrict || null,
-      generalNotes: d.generalNotes || null,
+      notes: d.notes || null,
     },
   });
 

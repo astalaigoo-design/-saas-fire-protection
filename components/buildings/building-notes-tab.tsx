@@ -30,11 +30,11 @@ export function BuildingNotesTab({ building }: BuildingNotesTabProps) {
 
   return (
     <div className="space-y-6">
-      {building.generalNotes ? (
+      {building.notes ? (
         <Card>
           <CardContent className="space-y-2">
             <h3 className="text-sm font-medium text-muted-foreground">General notes</h3>
-            <p className="whitespace-pre-wrap text-sm text-foreground">{building.generalNotes}</p>
+            <p className="whitespace-pre-wrap text-sm text-foreground">{building.notes}</p>
             <p className="text-xs text-muted-foreground">
               Edit general notes from the building edit dialog.
             </p>
@@ -76,11 +76,11 @@ export function BuildingNotesTab({ building }: BuildingNotesTabProps) {
 
       <section>
         <h3 className="mb-3 font-medium text-foreground">Note history</h3>
-        {building.notes.length === 0 ? (
+        {building.buildingNotes.length === 0 ? (
           <EmptyState title="No notes in history yet" />
         ) : (
           <ul className="space-y-3">
-            {building.notes.map((note) => (
+            {building.buildingNotes.map((note) => (
               <li key={note.id}>
                 <Card>
                   <CardContent className="space-y-2">

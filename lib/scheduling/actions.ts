@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { canManageJobs } from "@/lib/auth/permissions";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { DEFAULT_INSPECTION_CHECKLIST } from "@/lib/inspections/default-checklist";
+import { syncBuildingComplianceStatus } from "@/lib/buildings/sync-compliance";
 import { prisma } from "@/lib/prisma";
 import {
   combineDateAndTime,
@@ -150,6 +151,8 @@ export async function scheduleInspection(
     console.error("scheduleInspection failed", error);
     return { ok: false, error: "Could not schedule inspection. Please try again." };
   }
+
+  await syncBuildingComplianceStatus(parsed.data.buildingId);
 
   revalidatePath("/dashboard/jobs");
   redirect(

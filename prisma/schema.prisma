@@ -43,6 +43,22 @@ enum RecurrenceInterval {
   annual
 }
 
+enum BuildingType {
+  commercial
+  residential
+  industrial
+  mixed
+  other
+}
+
+/// Building-level compliance derived from inspection activity (synced on inspection changes).
+enum ComplianceStatus {
+  PASS
+  FAIL
+  PENDING
+  OVERDUE
+}
+
 // --- Core tenant -----------------------------------------------------------
 
 /// Fire inspection company (tenant).
@@ -112,26 +128,35 @@ model Building {
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
+  /// Display name, e.g. "Main Office", "Warehouse A".
   name         String?
+  /// Street address (primary line).
   addressLine1 String
   addressLine2 String?
   city         String
-  region       String /// state / province
+  /// State / province.
+  region       String
+  /// ZIP / postal code.
   postalCode   String
-  country      String  @default("US")
+  country      String @default("US")
 
-  /// e.g. commercial, residential, industrial, mixed_use
-  buildingType String?
+  buildingType BuildingType?
+  /// Fire district or AHJ jurisdiction.
   fireDistrict String?
-  generalNotes String? @db.Text
+  /// General site notes (free text).
+  notes        String? @map("generalNotes") @db.Text
 
-  inspections Inspection[]
-  notes       BuildingNote[]
+  /// Denormalized from inspections; updated via syncBuildingComplianceStatus.
+  currentStatus ComplianceStatus @default(PENDING)
+
+  inspections   Inspection[]
+  buildingNotes BuildingNote[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([customerId])
+  @@index([currentStatus])
   @@map("buildings")
 }
 
@@ -201,7 +226,9 @@ model Inspection {
   recurrenceInterval RecurrenceInterval?
 
   items   InspectionItem[]
+  /// Photos captured during this inspection (also reachable from Building via inspections).
   photos  Photo[]
+  /// PDF reports for this inspection (also reachable from Building via inspections).
   reports Report[]
 
   createdAt DateTime @default(now())

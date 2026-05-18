@@ -134,9 +134,9 @@ export function BuildingEditDialog({ building }: BuildingEditDialogProps) {
             <Label htmlFor="edit-notes">General notes</Label>
             <Textarea
               id="edit-notes"
-              name="generalNotes"
+              name="notes"
               rows={4}
-              defaultValue={building.generalNotes ?? ""}
+              defaultValue={building.notes ?? ""}
             />
           </div>
           <SaveButton />

@@ -19,6 +19,7 @@ import {
   deleteInspectionPhotoFromStorage,
   uploadInspectionPhotoToStorage,
 } from "@/lib/supabase/inspection-photos";
+import { syncBuildingComplianceStatus } from "@/lib/buildings/sync-compliance";
 import { prisma } from "@/lib/prisma";
 
 export type InspectActionResult =
@@ -72,6 +73,7 @@ export async function startInspection(
       where: { id: inspectionId },
       data: { status: InspectionStatus.in_progress },
     });
+    await syncBuildingComplianceStatus(loaded.inspection.buildingId);
     revalidatePath(`/inspect/${inspectionId}`);
   }
 
@@ -245,6 +247,8 @@ export async function submitInspection(
       submittedByUserId: session.appUserId,
     },
   });
+
+  await syncBuildingComplianceStatus(loaded.inspection.buildingId);
 
   revalidatePath(`/inspect/${parsed.data.inspectionId}`);
   revalidatePath("/dashboard");

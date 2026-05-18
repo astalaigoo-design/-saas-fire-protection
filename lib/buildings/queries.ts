@@ -1,6 +1,6 @@
-import type { Prisma } from "@prisma/client";
+import type { ComplianceStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { inspectionItemCompliance, type ComplianceLevel } from "@/lib/buildings/compliance";
+import { inspectionRowCompliance } from "@/lib/buildings/compliance";
 import { computeBuildingInspectionStats } from "@/lib/buildings/stats";
 
 const buildingDetailSelect = {
@@ -15,7 +15,8 @@ const buildingDetailSelect = {
   country: true,
   buildingType: true,
   fireDistrict: true,
-  generalNotes: true,
+  notes: true,
+  currentStatus: true,
   createdAt: true,
   updatedAt: true,
   customer: {
@@ -25,7 +26,7 @@ const buildingDetailSelect = {
       companyId: true,
     },
   },
-  notes: {
+  buildingNotes: {
     select: {
       id: true,
       body: true,
@@ -77,14 +78,14 @@ export type BuildingInspectionRecord = Prisma.InspectionGetPayload<{
 }>;
 
 export type BuildingInspectionRow = BuildingInspectionRecord & {
-  compliance: ComplianceLevel;
+  compliance: ComplianceStatus;
 };
 
 export type BuildingDetailPageData = {
   building: BuildingDetailRecord;
   inspections: BuildingInspectionRow[];
   stats: {
-    compliance: ComplianceLevel;
+    compliance: ComplianceStatus;
     nextScheduledAt: Date | null;
     lastCompletedAt: Date | null;
     completedCount: number;
@@ -119,10 +120,7 @@ export async function getBuildingDetailPageData(
 
   const inspectionsWithCompliance: BuildingInspectionRow[] = inspections.map((inspection) => ({
     ...inspection,
-    compliance:
-      inspection.status === "completed"
-        ? inspectionItemCompliance(inspection.items)
-        : "unknown",
+    compliance: inspectionRowCompliance(inspection),
   }));
 
   const completed = inspections.filter((i) => i.status === "completed");
