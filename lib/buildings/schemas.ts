@@ -18,7 +18,10 @@ export const updateBuildingSchema = z.object({
   region: z.string().trim().min(1, "State / region is required").max(50),
   postalCode: z.string().trim().min(1, "Postal code is required").max(20),
   country: z.string().trim().min(2).max(2).default("US"),
-  buildingType: z.enum(buildingTypeValues).optional().or(z.literal("")),
+  buildingType: z
+    .union([z.enum(buildingTypeValues), z.literal("")])
+    .optional()
+    .transform((v) => (v === "" ? undefined : v)),
   fireDistrict: z.string().trim().max(200).optional().or(z.literal("")),
   generalNotes: z.string().trim().max(10000).optional().or(z.literal("")),
 });
