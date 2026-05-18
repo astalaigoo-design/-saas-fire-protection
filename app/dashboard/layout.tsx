@@ -3,7 +3,7 @@ import { UserButton } from "@clerk/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { DashboardNav, DashboardNavMobile } from "@/components/dashboard/dashboard-nav";
-import { parseAppRoleFromMetadata } from "@/lib/auth/roles";
+import { resolveAppRole } from "@/lib/auth/roles";
 import { APP_NAME } from "@/lib/branding";
 import { getDashboardNavItems } from "@/lib/dashboard/nav-items";
 
@@ -15,11 +15,10 @@ export default async function DashboardLayout({
   const user = await currentUser();
   if (!user) redirect("/sign-in");
 
-  const role = parseAppRoleFromMetadata(
+  const role = resolveAppRole(
     user.publicMetadata as Record<string, unknown>,
     user.unsafeMetadata as Record<string, unknown> | undefined,
   );
-  if (!role) redirect("/sign-in");
 
   const navItems = getDashboardNavItems(role);
 
