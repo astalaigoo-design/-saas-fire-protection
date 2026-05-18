@@ -6,6 +6,7 @@ import { buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -51,7 +52,9 @@ export function BuildingActions({
           Generate report
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-72">
-          <DropdownMenuLabel>Completed inspections</DropdownMenuLabel>
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Completed inspections</DropdownMenuLabel>
+          </DropdownMenuGroup>
           <DropdownMenuSeparator />
           {completed.length === 0 ? (
             <p className="px-2 py-3 text-sm text-muted-foreground">
