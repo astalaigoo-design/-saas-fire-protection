@@ -5,6 +5,7 @@ import { CustomerInspectionHistory } from "@/components/customers/customer-inspe
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ensureCanManageCustomers } from "@/lib/auth/guards";
+import { canManageJobs } from "@/lib/auth/permissions";
 import { formatDate } from "@/lib/dashboard/dates";
 import {
   getCustomerById,
@@ -58,7 +59,10 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
         <h2 id="buildings-heading" className="mb-4 font-heading text-lg font-semibold text-foreground">
           Buildings ({customer.buildings.length})
         </h2>
-        <CustomerBuildingsSection buildings={customer.buildings} />
+        <CustomerBuildingsSection
+          buildings={customer.buildings}
+          canSchedule={canManageJobs(session.role)}
+        />
       </section>
 
       <section aria-labelledby="inspections-heading">

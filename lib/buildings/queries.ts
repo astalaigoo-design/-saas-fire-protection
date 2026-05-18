@@ -1,10 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import {
-  buildingComplianceFromInspections,
-  inspectionItemCompliance,
-  type ComplianceLevel,
-} from "@/lib/buildings/compliance";
+import { inspectionItemCompliance, type ComplianceLevel } from "@/lib/buildings/compliance";
+import { computeBuildingInspectionStats } from "@/lib/buildings/stats";
 
 const buildingDetailSelect = {
   id: true,
@@ -129,10 +126,7 @@ export async function getBuildingDetailPageData(
   }));
 
   const completed = inspections.filter((i) => i.status === "completed");
-  const upcoming = inspections
-    .filter((i) => i.status === "scheduled" || i.status === "in_progress")
-    .filter((i) => i.scheduledAt >= new Date())
-    .sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime());
+  const inspectionStats = computeBuildingInspectionStats(inspections);
 
   const lastCompleted = completed
     .filter((i) => i.completedAt)
@@ -142,10 +136,8 @@ export async function getBuildingDetailPageData(
     building,
     inspections: inspectionsWithCompliance,
     stats: {
-      compliance: buildingComplianceFromInspections(inspections),
-      nextScheduledAt: upcoming[0]?.scheduledAt ?? null,
+      ...inspectionStats,
       lastCompletedAt: lastCompleted?.completedAt ?? null,
-      completedCount: completed.length,
     },
   };
 }
