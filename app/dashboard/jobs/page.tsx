@@ -26,8 +26,8 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Schedule"
-        description="Calendar of inspections for your company. Click a date to schedule."
+        title="Calendar"
+        description="Inspection calendar for your company. Click a date to schedule."
       />
       <InspectionCalendar
         month={month}

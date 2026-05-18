@@ -41,6 +41,30 @@ export type BuildingDetailRecord = Prisma.BuildingGetPayload<{
   select: typeof buildingDetailSelect;
 }>;
 
+const buildingListSelect = {
+  id: true,
+  name: true,
+  addressLine1: true,
+  city: true,
+  region: true,
+  currentStatus: true,
+  customer: { select: { id: true, name: true } },
+} satisfies Prisma.BuildingSelect;
+
+export type BuildingListItem = Prisma.BuildingGetPayload<{
+  select: typeof buildingListSelect;
+}>;
+
+export async function listCompanyBuildings(
+  companyId: string,
+): Promise<BuildingListItem[]> {
+  return prisma.building.findMany({
+    where: { customer: { companyId } },
+    orderBy: [{ customer: { name: "asc" } }, { name: "asc" }],
+    select: buildingListSelect,
+  });
+}
+
 const inspectionWithRelationsSelect = {
   id: true,
   scheduledAt: true,
