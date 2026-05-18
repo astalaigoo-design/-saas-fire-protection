@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { CustomerSearchParams } from "@/lib/customers/schemas";
+import { nativeSelectClassName } from "@/lib/ui/native-select";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -14,62 +16,56 @@ export function CustomerSearchForm({ params }: CustomerSearchFormProps) {
     Boolean(params.q) || params.buildings !== "all" || params.sort !== "name_asc";
 
   return (
-    <Card className="bg-slate-900/60 text-white ring-slate-800">
+    <Card>
       <CardContent>
         <form method="get" action="/dashboard/customers" className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <label className="block space-y-1.5 sm:col-span-2 lg:col-span-2">
-              <span className="text-sm font-medium text-slate-300">Search</span>
+            <div className="space-y-2 sm:col-span-2 lg:col-span-2">
+              <Label htmlFor="customer-search-q">Search</Label>
               <Input
+                id="customer-search-q"
                 type="search"
                 name="q"
                 defaultValue={params.q ?? ""}
                 placeholder="Name, email, phone, or building…"
-                className="h-11 border-slate-700 bg-slate-950 text-white placeholder:text-slate-500"
+                className="min-h-11"
               />
-            </label>
-            <label className="block space-y-1.5">
-              <span className="text-sm font-medium text-slate-300">Buildings</span>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="customer-search-buildings">Buildings</Label>
               <select
+                id="customer-search-buildings"
                 name="buildings"
                 defaultValue={params.buildings}
-                className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                className={nativeSelectClassName}
               >
                 <option value="all">All customers</option>
                 <option value="with">With buildings</option>
                 <option value="without">No buildings yet</option>
               </select>
-            </label>
-            <label className="block space-y-1.5">
-              <span className="text-sm font-medium text-slate-300">Sort</span>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="customer-search-sort">Sort</Label>
               <select
+                id="customer-search-sort"
                 name="sort"
                 defaultValue={params.sort}
-                className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                className={nativeSelectClassName}
               >
                 <option value="name_asc">Name (A–Z)</option>
                 <option value="name_desc">Name (Z–A)</option>
                 <option value="newest">Newest first</option>
               </select>
-            </label>
+            </div>
           </div>
           <div className="flex flex-wrap gap-3">
-            <button
-              type="submit"
-              className={cn(
-                buttonVariants({ size: "lg" }),
-                "h-11 bg-amber-500 px-5 text-sm font-semibold text-slate-950 hover:bg-amber-400",
-              )}
-            >
+            <button type="submit" className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-5")}>
               Apply filters
             </button>
             {hasFilters ? (
               <Link
                 href="/dashboard/customers"
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "lg" }),
-                  "h-11 border-slate-700 bg-slate-900/80 px-5 text-sm font-semibold text-slate-100 hover:border-slate-500 hover:bg-slate-800",
-                )}
+                className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-11 px-5")}
               >
                 Clear
               </Link>

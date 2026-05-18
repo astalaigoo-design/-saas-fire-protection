@@ -21,23 +21,17 @@ export function DashboardActions({ role }: DashboardActionsProps) {
       {showCustomers && (
         <Link
           href="/dashboard/customers/new"
-          className={cn(
-            buttonVariants({ size: "lg" }),
-            "h-11 bg-amber-500 px-5 text-sm font-semibold text-slate-950 hover:bg-amber-400",
-          )}
+          className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-5")}
         >
-          New Customer
+          New customer
         </Link>
       )}
       {showSchedule && (
         <Link
           href="/dashboard/jobs/new"
-          className={cn(
-            buttonVariants({ variant: "outline", size: "lg" }),
-            "h-11 border-slate-700 bg-slate-900/70 px-5 text-sm font-semibold text-slate-100 hover:border-slate-500 hover:bg-slate-800",
-          )}
+          className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-11 px-5")}
         >
-          Schedule Inspection
+          Schedule inspection
         </Link>
       )}
     </div>

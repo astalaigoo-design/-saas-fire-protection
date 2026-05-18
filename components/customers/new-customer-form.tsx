@@ -9,6 +9,7 @@ import {
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 const initialState: CreateCustomerFormState = { ok: false, error: "" };
@@ -19,10 +20,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className={cn(
-        buttonVariants({ size: "lg" }),
-        "h-11 bg-amber-500 px-5 text-sm font-semibold text-slate-950 hover:bg-amber-400 disabled:opacity-60",
-      )}
+      className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-5 disabled:opacity-60")}
     >
       {pending ? "Saving…" : "Create customer"}
     </button>
@@ -33,59 +31,59 @@ export function NewCustomerForm() {
   const [state, formAction] = useFormState(createCustomer, initialState);
 
   return (
-    <Card className="mx-auto max-w-lg bg-slate-900/70 text-white ring-slate-800">
+    <Card className="mx-auto max-w-lg">
       <CardContent>
         <form action={formAction} className="space-y-6">
           {state.ok === false && state.error ? (
             <p
               role="alert"
-              className="rounded-lg border border-red-900/50 bg-red-950/40 px-4 py-3 text-sm text-red-200"
+              className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
             >
               {state.error}
             </p>
           ) : null}
 
-          <label className="block space-y-1.5">
-            <span className="text-sm font-medium text-slate-300">
-              Name <span className="text-amber-400">*</span>
-            </span>
+          <div className="space-y-2">
+            <Label htmlFor="customer-name">
+              Name <span className="text-primary">*</span>
+            </Label>
             <Input
+              id="customer-name"
               type="text"
               name="name"
               required
               autoComplete="organization"
-              className="h-11 border-slate-700 bg-slate-950 text-white"
+              className="min-h-11"
             />
-          </label>
+          </div>
 
-          <label className="block space-y-1.5">
-            <span className="text-sm font-medium text-slate-300">Email</span>
+          <div className="space-y-2">
+            <Label htmlFor="customer-email">Email</Label>
             <Input
+              id="customer-email"
               type="email"
               name="email"
               autoComplete="email"
-              className="h-11 border-slate-700 bg-slate-950 text-white"
+              className="min-h-11"
             />
-          </label>
+          </div>
 
-          <label className="block space-y-1.5">
-            <span className="text-sm font-medium text-slate-300">Phone</span>
+          <div className="space-y-2">
+            <Label htmlFor="customer-phone">Phone</Label>
             <Input
+              id="customer-phone"
               type="tel"
               name="phone"
               autoComplete="tel"
-              className="h-11 border-slate-700 bg-slate-950 text-white"
+              className="min-h-11"
             />
-          </label>
+          </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <SubmitButton />
             <Link
               href="/dashboard/customers"
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "lg" }),
-                "h-11 text-amber-400 hover:bg-transparent hover:text-amber-300",
-              )}
+              className={cn(buttonVariants({ variant: "ghost", size: "lg" }), "min-h-11")}
             >
               Cancel
             </Link>

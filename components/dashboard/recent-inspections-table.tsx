@@ -1,5 +1,15 @@
 import type { InspectionListItem } from "@/lib/dashboard/queries";
 import { formatDate } from "@/lib/dashboard/dates";
+import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type RecentInspectionsTableProps = {
   inspections: InspectionListItem[];
@@ -15,67 +25,70 @@ function buildingLabel(inspection: InspectionListItem): string {
 export function RecentInspectionsTable({ inspections }: RecentInspectionsTableProps) {
   if (inspections.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-slate-700 px-4 py-8 text-center text-sm text-slate-500">
-        No completed inspections yet.
-      </p>
+      <EmptyState
+        title="No completed inspections yet"
+        description="Finished visits will appear here for quick review."
+      />
     );
   }
 
   return (
     <>
-      <div className="hidden overflow-x-auto rounded-xl border border-slate-800 md:block">
-        <table className="w-full min-w-[36rem] text-left text-sm">
-          <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase tracking-wide text-slate-400">
-            <tr>
-              <th className="px-4 py-3 font-medium">Building</th>
-              <th className="px-4 py-3 font-medium">Customer</th>
-              <th className="px-4 py-3 font-medium">Type</th>
-              <th className="px-4 py-3 font-medium">Completed</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-800">
-            {inspections.map((inspection) => (
-              <tr
-                key={inspection.id}
-                className="bg-slate-900/40 hover:bg-slate-900/70"
-              >
-                <td className="px-4 py-3 text-slate-100">{buildingLabel(inspection)}</td>
-                <td className="px-4 py-3 text-slate-300">
-                  {inspection.building.customer.name}
-                </td>
-                <td className="px-4 py-3 text-slate-300">
-                  {inspection.inspectionType.name}
-                </td>
-                <td className="px-4 py-3 text-slate-400">
-                  {inspection.completedAt ? formatDate(inspection.completedAt) : "—"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Card className="hidden overflow-hidden md:block">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="px-4">Building</TableHead>
+                <TableHead className="px-4">Customer</TableHead>
+                <TableHead className="px-4">Type</TableHead>
+                <TableHead className="px-4">Completed</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {inspections.map((inspection) => (
+                <TableRow key={inspection.id}>
+                  <TableCell className="px-4 font-medium text-foreground">
+                    {buildingLabel(inspection)}
+                  </TableCell>
+                  <TableCell className="px-4 text-muted-foreground">
+                    {inspection.building.customer.name}
+                  </TableCell>
+                  <TableCell className="px-4 text-muted-foreground">
+                    {inspection.inspectionType.name}
+                  </TableCell>
+                  <TableCell className="px-4 text-muted-foreground">
+                    {inspection.completedAt ? formatDate(inspection.completedAt) : "—"}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
       <ul className="space-y-3 md:hidden">
         {inspections.map((inspection) => (
-          <li
-            key={inspection.id}
-            className="rounded-xl border border-slate-800 bg-slate-900/60 p-4"
-          >
-            <p className="font-medium text-white">{buildingLabel(inspection)}</p>
-            <p className="mt-1 text-sm text-slate-400">
-              {inspection.building.customer.name}
-            </p>
-            <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
-              <div>
-                <dt className="text-slate-500">Type</dt>
-                <dd className="text-slate-200">{inspection.inspectionType.name}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500">Completed</dt>
-                <dd className="text-slate-200">
-                  {inspection.completedAt ? formatDate(inspection.completedAt) : "—"}
-                </dd>
-              </div>
-            </dl>
+          <li key={inspection.id}>
+            <Card>
+              <CardContent>
+                <p className="font-medium text-foreground">{buildingLabel(inspection)}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {inspection.building.customer.name}
+                </p>
+                <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <dt className="text-muted-foreground">Type</dt>
+                    <dd className="text-foreground">{inspection.inspectionType.name}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Completed</dt>
+                    <dd className="text-foreground">
+                      {inspection.completedAt ? formatDate(inspection.completedAt) : "—"}
+                    </dd>
+                  </div>
+                </dl>
+              </CardContent>
+            </Card>
           </li>
         ))}
       </ul>
