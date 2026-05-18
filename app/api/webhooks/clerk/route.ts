@@ -66,7 +66,10 @@ export async function POST(request: Request) {
     if (!result.ok) {
       const status = result.retryable ? 500 : 422;
       console.error("Clerk webhook handler failed:", type, result.error);
-      return NextResponse.json({ error: result.error, type }, { status });
+      return NextResponse.json(
+        { error: result.retryable ? "Webhook processing failed" : "Webhook payload rejected" },
+        { status },
+      );
     }
 
     return NextResponse.json({ received: true, action: result.action });
