@@ -1,6 +1,6 @@
 import { PrismaClient, UserRole } from "@prisma/client";
 
-const DEMO_COMPANY_NAME = "Demo Fire Protection Co.";
+import { DEMO_COMPANY_NAME } from "../lib/branding";
 
 const prisma = new PrismaClient();
 

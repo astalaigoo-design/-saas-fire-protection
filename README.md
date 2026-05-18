@@ -1,6 +1,6 @@
-# Saas Fire Protection
+# GetFlareflow
 
-Vertical SaaS for fire inspection companies — scheduling, field inspections, compliance PDFs, and customer report email.
+Fire inspection operations platform — scheduling, field inspections, compliance PDFs, and customer report email.
 
 **Stack:** Next.js 14 · TypeScript · Prisma · Supabase Postgres · Clerk · Tailwind / shadcn · Resend (optional)
 

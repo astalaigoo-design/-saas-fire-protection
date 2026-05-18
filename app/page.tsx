@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SignedIn, SignedOut, SignInButton, SignUpButton } from "@clerk/nextjs";
 import { buttonVariants } from "@/components/ui/button";
+import { APP_DESCRIPTION, APP_NAME, APP_TAGLINE } from "@/lib/branding";
 import { cn } from "@/lib/utils";
 
 export default function Home() {
@@ -8,15 +9,12 @@ export default function Home() {
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-8 text-foreground">
       <div className="max-w-lg text-center">
         <p className="mb-2 text-sm font-medium uppercase tracking-wide text-primary">
-          Fire inspection operations
+          {APP_TAGLINE}
         </p>
         <h1 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-          Saas Fire Protection
+          {APP_NAME}
         </h1>
-        <p className="mt-4 text-muted-foreground">
-          Schedule inspections, manage customers and sites, and run the field workflow with role-based
-          access for owners, admins, and technicians.
-        </p>
+        <p className="mt-4 text-muted-foreground">{APP_DESCRIPTION}</p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <SignedOut>
             <SignInButton mode="modal">

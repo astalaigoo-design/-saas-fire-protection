@@ -4,12 +4,11 @@ import {
   PrismaClient,
   UserRole,
 } from "@prisma/client";
-import { getWeekRange } from "../lib/dashboard/dates";
+import { DEMO_COMPANY_NAME } from "../lib/branding";
 import { syncBuildingComplianceStatus } from "../lib/buildings/sync-compliance";
+import { getWeekRange } from "../lib/dashboard/dates";
 
 const prisma = new PrismaClient();
-
-const DEMO_COMPANY_NAME = "Demo Fire Protection Co.";
 
 const INSPECTION_TYPES = [
   { code: "annual", name: "Annual Inspection" },

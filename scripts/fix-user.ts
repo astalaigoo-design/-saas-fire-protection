@@ -9,7 +9,7 @@ import { PrismaClient, type UserRole } from "@prisma/client";
 import { z } from "zod";
 import { APP_ROLES, isAppRole, ROLE_METADATA_KEY } from "../lib/auth/roles";
 
-const DEMO_COMPANY_NAME = "Demo Fire Protection Co.";
+import { DEMO_COMPANY_NAME } from "../lib/branding";
 
 /** Defaults when no CLI args (override via FIX_* env vars). */
 const DEFAULT_CLERK_USER_ID = "user_3Dnb93h5i7s5etCMAo8ybASlMkR";

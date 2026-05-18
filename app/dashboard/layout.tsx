@@ -4,6 +4,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { DashboardNav, DashboardNavMobile } from "@/components/dashboard/dashboard-nav";
 import { parseAppRoleFromMetadata } from "@/lib/auth/roles";
+import { APP_NAME } from "@/lib/branding";
 import { getDashboardNavItems } from "@/lib/dashboard/nav-items";
 
 export default async function DashboardLayout({
@@ -30,7 +31,7 @@ export default async function DashboardLayout({
             href="/dashboard"
             className="font-heading text-sm font-semibold tracking-tight text-foreground"
           >
-            Saas Fire Protection
+            {APP_NAME}
           </Link>
           <DashboardNav items={navItems} />
         </div>
@@ -43,7 +44,7 @@ export default async function DashboardLayout({
               href="/dashboard"
               className="shrink-0 font-heading text-sm font-semibold tracking-tight text-foreground"
             >
-              Saas Fire Protection
+              {APP_NAME}
             </Link>
             <UserButton afterSignOutUrl="/" />
           </div>
