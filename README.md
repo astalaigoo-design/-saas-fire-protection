@@ -52,6 +52,16 @@ Clerk user **public metadata** should include:
 
 If `role` is omitted, new users default to **technician**. Production sign-up uses the Clerk webhook at `/api/webhooks/clerk` (see `.env.example`).
 
+## Deploy on Vercel
+
+1. **Framework preset:** Next.js (leave **Output Directory** empty — do not set a custom path; Vercel uses `.next` automatically).
+2. **Build command:** `npm run build` (runs `prisma generate && next build` — see `vercel.json`).
+3. **Environment variables:** Add all required vars from the table above for **Production** and **Preview**. Missing `DATABASE_URL`, `DIRECT_URL`, or Clerk keys will cause the build to fail and you will see *".next was not found"*.
+4. **Clerk webhook URL:** `https://<your-domain>/api/webhooks/clerk` with `CLERK_WEBHOOK_SIGNING_SECRET`.
+5. After deploy, run `npx prisma migrate deploy` against production (or apply migrations in CI) — the Vercel build does not migrate the database.
+
+If the build log shows `prisma generate` or `next build` errors, fix those first; the missing `.next` message is a symptom, not the root cause.
+
 ## Roles
 
 - **Owner / Admin:** Dashboard, customers, buildings, calendar, inspections list, reports, settings (owner).
