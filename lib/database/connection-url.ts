@@ -61,7 +61,11 @@ export function assertValidDatabaseUrl(
 
 /** Dev-only: bump connection_limit when Supabase pooler is set to 1. */
 export function resolveDatabaseUrlForPrisma(): string {
-  const validated = assertValidDatabaseUrl(process.env.DATABASE_URL, "DATABASE_URL");
+  const rawDatabaseUrl = process.env.DATABASE_URL?.trim();
+  const rawDirectUrl = process.env.DIRECT_URL?.trim();
+  const selectedUrl = rawDatabaseUrl || rawDirectUrl;
+  const selectedLabel = rawDatabaseUrl ? "DATABASE_URL" : "DIRECT_URL";
+  const validated = assertValidDatabaseUrl(selectedUrl, selectedLabel);
 
   if (process.env.NODE_ENV === "production") {
     return validated;
