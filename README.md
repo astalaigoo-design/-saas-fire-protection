@@ -88,6 +88,25 @@ Only one dev server at a time. Run `npm run dev` and use the URL printed in the 
 
 Open buildings from **Customers → building card**, not a literal `{buildingId}` in the URL.
 
+### `Can't reach database server at x:5432` (or localhost)
+
+Your **`DATABASE_URL` is wrong or still a placeholder**. Prisma is trying to connect to hostname `x` (or another invalid host), not Supabase.
+
+1. Supabase Dashboard → **Project Settings** → **Database** → **Connect** → **ORMs** / URI.
+2. Set **`DATABASE_URL`** to the **Transaction pooler** string (port **6543**, `?pgbouncer=true`).
+3. Set **`DIRECT_URL`** to the **Session pooler** string (port **5432**) — used for migrations only.
+4. Replace `[YOUR-PASSWORD]` with your real DB password. If the password contains `@`, `#`, or `%`, [URL-encode](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) it.
+5. User must look like `postgres.abcdefghijklmnop` (project ref), not just `postgres`.
+6. On **Vercel**, paste both URLs into **Environment Variables** for Production and Preview, then redeploy.
+7. Verify locally: `npm run db:test`
+
+Example shape (use your host and ref from the dashboard):
+
+```env
+DATABASE_URL="postgresql://postgres.YOUR_REF:YOUR_PASSWORD@aws-1-us-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&sslmode=require"
+DIRECT_URL="postgresql://postgres.YOUR_REF:YOUR_PASSWORD@aws-1-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require"
+```
+
 ## Scripts
 
 | Command | Description |
