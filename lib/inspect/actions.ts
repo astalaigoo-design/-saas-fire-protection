@@ -20,10 +20,14 @@ import {
   uploadInspectionPhotoToStorage,
 } from "@/lib/supabase/inspection-photos";
 import { syncBuildingComplianceStatus } from "@/lib/buildings/sync-compliance";
+import {
+  emailComplianceReportAfterSubmit,
+  type ReportEmailOutcome,
+} from "@/lib/reports/email-report-after-submit";
 import { prisma } from "@/lib/prisma";
 
 export type InspectActionResult =
-  | { ok: true }
+  | { ok: true; reportEmail?: ReportEmailOutcome }
   | { ok: false; error: string };
 
 type EditableInspection = Prisma.InspectionGetPayload<{
@@ -250,8 +254,14 @@ export async function submitInspection(
 
   await syncBuildingComplianceStatus(loaded.inspection.buildingId);
 
+  const reportEmail = await emailComplianceReportAfterSubmit(
+    session,
+    parsed.data.inspectionId,
+  );
+
   revalidatePath(`/inspect/${parsed.data.inspectionId}`);
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/jobs");
-  return { ok: true };
+  revalidatePath("/dashboard/reports");
+  return { ok: true, reportEmail };
 }

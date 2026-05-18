@@ -290,6 +290,11 @@ model Report {
   status      ReportStatus @default(draft)
   generatedAt DateTime?
 
+  /// Set when the compliance PDF is emailed to the customer after submit.
+  emailedTo   String?
+  emailedAt   DateTime?
+  emailError  String?   @db.Text
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
