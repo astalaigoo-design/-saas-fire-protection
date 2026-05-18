@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { InspectionCalendar } from "@/components/scheduling/inspection-calendar";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
 import { getDashboardSession } from "@/lib/dashboard/session";
@@ -24,12 +25,10 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-white">Schedule</h1>
-        <p className="mt-1 text-slate-400">
-          Calendar of inspections for your company. Click a date to schedule.
-        </p>
-      </header>
+      <PageHeader
+        title="Calendar"
+        description="Inspection calendar for your company. Click a date to schedule."
+      />
       <InspectionCalendar
         month={month}
         inspections={inspections}

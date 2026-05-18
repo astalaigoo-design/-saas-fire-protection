@@ -8,9 +8,12 @@ import {
 } from "@/lib/scheduling/actions";
 import { recurrenceFormValues } from "@/lib/scheduling/schemas";
 import type { ScheduleFormData } from "@/lib/scheduling/queries";
+import { nativeSelectClassName } from "@/lib/ui/native-select";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +21,7 @@ type ScheduleInspectionFormProps = {
   formData: ScheduleFormData;
   defaultDate: string;
   defaultTime?: string;
+  defaultBuildingId?: string;
 };
 
 const initialState: ScheduleInspectionFormState = { ok: false, error: "" };
@@ -35,10 +39,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className={cn(
-        buttonVariants({ size: "lg" }),
-        "h-11 bg-amber-500 px-5 text-sm font-semibold text-slate-950 hover:bg-amber-400 disabled:opacity-60",
-      )}
+      className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-5 disabled:opacity-60")}
     >
       {pending ? "Scheduling…" : "Schedule inspection"}
     </button>
@@ -59,66 +60,75 @@ export function ScheduleInspectionForm({
   formData,
   defaultDate,
   defaultTime = "10:00",
+  defaultBuildingId,
 }: ScheduleInspectionFormProps) {
   const [state, formAction] = useFormState(scheduleInspection, initialState);
   const buildingGroups = groupBuildingsByCustomer(formData.buildings);
 
   if (formData.buildings.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-700 px-4 py-8 text-center text-sm text-slate-500">
-        Add a customer and building before scheduling inspections.{" "}
-        <Link href="/dashboard/customers/new" className="text-amber-400 hover:underline">
+      <EmptyState
+        title="Add a customer and building first"
+        description="You need at least one site before scheduling inspections."
+      >
+        <Link
+          href="/dashboard/customers/new"
+          className={cn(buttonVariants({ size: "sm" }), "min-h-10")}
+        >
           New customer
         </Link>
-      </div>
+      </EmptyState>
     );
   }
 
   return (
-    <Card className="mx-auto max-w-xl bg-slate-900/70 text-white ring-slate-800">
+    <Card className="mx-auto max-w-xl">
       <CardContent>
         <form action={formAction} className="space-y-6">
           {state.ok === false && state.error ? (
             <p
               role="alert"
-              className="rounded-lg border border-red-900/50 bg-red-950/40 px-4 py-3 text-sm text-red-200"
+              className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
             >
               {state.error}
             </p>
           ) : null}
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block space-y-1.5">
-              <span className="text-sm font-medium text-slate-300">Date</span>
+            <div className="space-y-2">
+              <Label htmlFor="scheduled-date">Date</Label>
               <Input
+                id="scheduled-date"
                 type="date"
                 name="scheduledDate"
                 required
                 defaultValue={defaultDate}
-                className="h-11 border-slate-700 bg-slate-950 text-white"
+                className="min-h-11"
               />
-            </label>
-            <label className="block space-y-1.5">
-              <span className="text-sm font-medium text-slate-300">Time</span>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="scheduled-time">Time</Label>
               <Input
+                id="scheduled-time"
                 type="time"
                 name="scheduledTime"
                 required
                 defaultValue={defaultTime}
-                className="h-11 border-slate-700 bg-slate-950 text-white"
+                className="min-h-11"
               />
-            </label>
+            </div>
           </div>
 
-          <label className="block space-y-1.5">
-            <span className="text-sm font-medium text-slate-300">
-              Building <span className="text-amber-400">*</span>
-            </span>
+          <div className="space-y-2">
+            <Label htmlFor="building-id">
+              Building <span className="text-primary">*</span>
+            </Label>
             <select
+              id="building-id"
               name="buildingId"
               required
-              defaultValue=""
-              className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              defaultValue={defaultBuildingId ?? ""}
+              className={nativeSelectClassName}
             >
               <option value="" disabled>
                 Select a building
@@ -133,17 +143,18 @@ export function ScheduleInspectionForm({
                 </optgroup>
               ))}
             </select>
-          </label>
+          </div>
 
-          <label className="block space-y-1.5">
-            <span className="text-sm font-medium text-slate-300">
-              Inspection type <span className="text-amber-400">*</span>
-            </span>
+          <div className="space-y-2">
+            <Label htmlFor="inspection-type-id">
+              Inspection type <span className="text-primary">*</span>
+            </Label>
             <select
+              id="inspection-type-id"
               name="inspectionTypeId"
               required
               defaultValue=""
-              className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className={nativeSelectClassName}
             >
               <option value="" disabled>
                 Select type
@@ -154,14 +165,15 @@ export function ScheduleInspectionForm({
                 </option>
               ))}
             </select>
-          </label>
+          </div>
 
-          <label className="block space-y-1.5">
-            <span className="text-sm font-medium text-slate-300">Assign technician</span>
+          <div className="space-y-2">
+            <Label htmlFor="assigned-user">Assign technician</Label>
             <select
+              id="assigned-user"
               name="assignedToUserId"
               defaultValue=""
-              className="min-h-11 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className={nativeSelectClassName}
             >
               <option value="">Unassigned</option>
               {formData.technicians.map((technician) => (
@@ -171,51 +183,48 @@ export function ScheduleInspectionForm({
               ))}
             </select>
             {formData.technicians.length === 0 ? (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 No technicians linked yet. Link Clerk users with the technician role.
               </p>
             ) : null}
-          </label>
+          </div>
 
           <fieldset className="space-y-3">
-            <legend className="text-sm font-medium text-slate-300">Recurrence</legend>
+            <legend className="text-sm font-medium text-foreground">Recurrence</legend>
             <div className="grid gap-2 sm:grid-cols-2">
               {recurrenceFormValues.map((value) => (
                 <label
                   key={value}
-                  className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 has-[:checked]:border-amber-500/60 has-[:checked]:bg-amber-500/5"
+                  className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-input bg-muted/20 px-3 py-2 has-[:checked]:border-primary/50 has-[:checked]:bg-primary/5"
                 >
                   <input
                     type="radio"
                     name="recurrence"
                     value={value}
                     defaultChecked={value === "none"}
-                    className="h-4 w-4 border-slate-600 bg-slate-900 text-amber-500 focus:ring-amber-500"
+                    className="h-4 w-4 border-input text-primary focus:ring-ring"
                   />
-                  <span className="text-sm text-slate-200">{recurrenceLabels[value]}</span>
+                  <span className="text-sm text-foreground">{recurrenceLabels[value]}</span>
                 </label>
               ))}
             </div>
           </fieldset>
 
-          <label className="block space-y-1.5">
-            <span className="text-sm font-medium text-slate-300">Notes</span>
+          <div className="space-y-2">
+            <Label htmlFor="schedule-notes">Notes</Label>
             <Textarea
+              id="schedule-notes"
               name="notes"
               rows={3}
-              className="border-slate-700 bg-slate-950 text-white"
               placeholder="Optional instructions for the technician"
             />
-          </label>
+          </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <SubmitButton />
             <Link
               href="/dashboard/jobs"
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "lg" }),
-                "h-11 text-amber-400 hover:bg-transparent hover:text-amber-300",
-              )}
+              className={cn(buttonVariants({ variant: "ghost", size: "lg" }), "min-h-11")}
             >
               Cancel
             </Link>

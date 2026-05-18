@@ -43,6 +43,22 @@ enum RecurrenceInterval {
   annual
 }
 
+enum BuildingType {
+  commercial
+  residential
+  industrial
+  mixed
+  other
+}
+
+/// Building-level compliance derived from inspection activity (synced on inspection changes).
+enum ComplianceStatus {
+  PASS
+  FAIL
+  PENDING
+  OVERDUE
+}
+
 // --- Core tenant -----------------------------------------------------------
 
 /// Fire inspection company (tenant).
@@ -76,6 +92,8 @@ model User {
   email       String?
   name        String?
   role        UserRole
+  active      Boolean   @default(true)
+  deletedAt   DateTime?
 
   inspectionsAssigned Inspection[] @relation("InspectionAssignee")
 
@@ -112,21 +130,51 @@ model Building {
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
+  /// Display name, e.g. "Main Office", "Warehouse A".
   name         String?
+  /// Street address (primary line).
   addressLine1 String
   addressLine2 String?
   city         String
-  region       String /// state / province
+  /// State / province.
+  region       String
+  /// ZIP / postal code.
   postalCode   String
-  country      String  @default("US")
+  country      String @default("US")
 
-  inspections Inspection[]
+  buildingType BuildingType?
+  /// Fire district or AHJ jurisdiction.
+  fireDistrict String?
+  /// General site notes (free text).
+  notes        String? @map("generalNotes") @db.Text
+
+  /// Denormalized from inspections; updated via syncBuildingComplianceStatus.
+  currentStatus ComplianceStatus @default(PENDING)
+
+  inspections   Inspection[]
+  buildingNotes BuildingNote[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([customerId])
+  @@index([currentStatus])
   @@map("buildings")
+}
+
+/// Timestamped note on a building (site history).
+model BuildingNote {
+  id         String   @id @default(cuid())
+  buildingId String
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  body       String @db.Text
+  authorName String?
+
+  createdAt DateTime @default(now())
+
+  @@index([buildingId])
+  @@map("building_notes")
 }
 
 /// Cadence category (e.g. annual, quarterly, monthly) — per company so labels can vary.
@@ -180,7 +228,9 @@ model Inspection {
   recurrenceInterval RecurrenceInterval?
 
   items   InspectionItem[]
+  /// Photos captured during this inspection (also reachable from Building via inspections).
   photos  Photo[]
+  /// PDF reports for this inspection (also reachable from Building via inspections).
   reports Report[]
 
   createdAt DateTime @default(now())
@@ -241,6 +291,11 @@ model Report {
   storageUrl  String /// bucket path or URL to PDF
   status      ReportStatus @default(draft)
   generatedAt DateTime?
+
+  /// Set when the compliance PDF is emailed to the customer after submit.
+  emailedTo   String?
+  emailedAt   DateTime?
+  emailError  String?   @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

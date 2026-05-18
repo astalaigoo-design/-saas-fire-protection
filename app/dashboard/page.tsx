@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DashboardActions } from "@/components/dashboard/dashboard-actions";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { RecentInspectionsTable } from "@/components/dashboard/recent-inspections-table";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { UpcomingInspectionCard } from "@/components/dashboard/upcoming-inspection-card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   getDashboardStats,
   getRecentCompletedInspections,
@@ -21,20 +25,20 @@ export default async function DashboardPage() {
     getRecentCompletedInspections(session),
   ]);
 
+  const description = [
+    session.companyName,
+    session.email ? session.email : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <div className="space-y-8">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-white">Dashboard</h1>
-          <p className="mt-1 text-slate-400">
-            {session.companyName}
-            {session.email ? (
-              <span className="text-slate-500"> · {session.email}</span>
-            ) : null}
-          </p>
-        </div>
-        <DashboardActions role={session.role} />
-      </header>
+      <PageHeader
+        title="Dashboard"
+        description={description}
+        actions={<DashboardActions role={session.role} />}
+      />
 
       <section aria-labelledby="stats-heading">
         <h2 id="stats-heading" className="sr-only">
@@ -49,17 +53,21 @@ export default async function DashboardPage() {
 
       <section aria-labelledby="upcoming-heading">
         <div className="mb-4 flex items-center justify-between gap-2">
-          <h2 id="upcoming-heading" className="text-lg font-semibold text-white">
+          <h2 id="upcoming-heading" className="font-heading text-lg font-semibold text-foreground">
             Upcoming this week
           </h2>
-          <Link href="/dashboard/jobs" className="text-sm text-amber-400 hover:underline">
+          <Link
+            href="/dashboard/jobs"
+            className={cn(buttonVariants({ variant: "link", size: "sm" }), "h-auto p-0")}
+          >
             View all
           </Link>
         </div>
         {upcoming.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-slate-700 px-4 py-8 text-center text-sm text-slate-500">
-            No inspections scheduled this week.
-          </p>
+          <EmptyState
+            title="No inspections scheduled this week"
+            description="Schedule a visit from the calendar when you're ready."
+          />
         ) : (
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {upcoming.map((inspection) => (
@@ -72,7 +80,10 @@ export default async function DashboardPage() {
       </section>
 
       <section aria-labelledby="recent-heading">
-        <h2 id="recent-heading" className="mb-4 text-lg font-semibold text-white">
+        <h2
+          id="recent-heading"
+          className="mb-4 font-heading text-lg font-semibold text-foreground"
+        >
           Recently completed
         </h2>
         <RecentInspectionsTable inspections={completed} />

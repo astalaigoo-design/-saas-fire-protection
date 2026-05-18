@@ -1,6 +1,10 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { CustomerSearchParams } from "@/lib/customers/schemas";
+import {
+  computeBuildingInspectionStats,
+  type BuildingInspectionStats,
+} from "@/lib/buildings/stats";
 
 const customerListSelect = {
   id: true,
@@ -85,6 +89,13 @@ export async function listCustomers(
   });
 }
 
+const customerBuildingInspectionSelect = {
+  status: true,
+  scheduledAt: true,
+  completedAt: true,
+  items: { select: { result: true } },
+} satisfies Prisma.InspectionSelect;
+
 const customerDetailSelect = {
   id: true,
   name: true,
@@ -103,15 +114,36 @@ const customerDetailSelect = {
       postalCode: true,
       country: true,
       createdAt: true,
-      _count: { select: { inspections: true } },
+      inspections: {
+        select: customerBuildingInspectionSelect,
+        orderBy: { scheduledAt: "desc" as const },
+      },
     },
     orderBy: { name: "asc" as const },
   },
 } satisfies Prisma.CustomerSelect;
 
-export type CustomerDetail = Prisma.CustomerGetPayload<{
+type CustomerDetailRecord = Prisma.CustomerGetPayload<{
   select: typeof customerDetailSelect;
 }>;
+
+type CustomerDetailBuildingRecord = CustomerDetailRecord["buildings"][number];
+
+export type CustomerBuildingCard = Omit<CustomerDetailBuildingRecord, "inspections"> & {
+  stats: BuildingInspectionStats;
+};
+
+export type CustomerDetail = Omit<CustomerDetailRecord, "buildings"> & {
+  buildings: CustomerBuildingCard[];
+};
+
+function mapCustomerBuilding(building: CustomerDetailBuildingRecord): CustomerBuildingCard {
+  const { inspections, ...rest } = building;
+  return {
+    ...rest,
+    stats: computeBuildingInspectionStats(inspections),
+  };
+}
 
 const inspectionHistorySelect = {
   id: true,
@@ -138,10 +170,16 @@ export async function getCustomerById(
   companyId: string,
   customerId: string,
 ): Promise<CustomerDetail | null> {
-  return prisma.customer.findFirst({
+  const customer = await prisma.customer.findFirst({
     where: { id: customerId, companyId },
     select: customerDetailSelect,
   });
+  if (!customer) return null;
+
+  return {
+    ...customer,
+    buildings: customer.buildings.map(mapCustomerBuilding),
+  };
 }
 
 export async function getCustomerInspectionHistory(

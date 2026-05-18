@@ -5,6 +5,7 @@ import {
   UserRole,
 } from "@prisma/client";
 import { getWeekRange } from "../lib/dashboard/dates";
+import { syncBuildingComplianceStatus } from "../lib/buildings/sync-compliance";
 
 const prisma = new PrismaClient();
 
@@ -304,6 +305,19 @@ async function ensureDemoCompletedInspection(companyId: string) {
   console.log(`Added completed demo inspection for ${building.name}.`);
 }
 
+async function backfillBuildingCompliance(companyId: string) {
+  const buildings = await prisma.building.findMany({
+    where: { customer: { companyId } },
+    select: { id: true },
+  });
+  for (const building of buildings) {
+    await syncBuildingComplianceStatus(building.id);
+  }
+  if (buildings.length > 0) {
+    console.log(`Synced compliance status for ${buildings.length} building(s).`);
+  }
+}
+
 async function main() {
   console.log("Seeding database…\n");
 
@@ -313,6 +327,7 @@ async function main() {
   await seedSampleInspection(company.id);
   await ensureDemoCompletedInspection(company.id);
   await ensureUpcomingInspectionThisWeek(company.id);
+  await backfillBuildingCompliance(company.id);
 
   console.log("\nSeed finished.");
 }

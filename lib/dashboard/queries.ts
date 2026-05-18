@@ -82,3 +82,50 @@ export async function getRecentCompletedInspections(
     select: inspectionListSelect,
   });
 }
+
+export async function listInspections(
+  session: DashboardSession,
+): Promise<InspectionListItem[]> {
+  return prisma.inspection.findMany({
+    where: inspectionScope(session),
+    orderBy: { scheduledAt: "desc" },
+    take: 100,
+    select: inspectionListSelect,
+  });
+}
+
+const reportListSelect = {
+  id: true,
+  title: true,
+  status: true,
+  generatedAt: true,
+  createdAt: true,
+  inspection: {
+    select: {
+      id: true,
+      building: {
+        select: {
+          id: true,
+          name: true,
+          addressLine1: true,
+          city: true,
+          customer: { select: { name: true } },
+        },
+      },
+      inspectionType: { select: { name: true } },
+    },
+  },
+} satisfies Prisma.ReportSelect;
+
+export type ReportListItem = Prisma.ReportGetPayload<{
+  select: typeof reportListSelect;
+}>;
+
+export async function listCompanyReports(companyId: string) {
+  return prisma.report.findMany({
+    where: { inspection: { companyId } },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+    select: reportListSelect,
+  });
+}

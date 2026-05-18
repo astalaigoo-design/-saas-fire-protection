@@ -1,6 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import type { NextFetchEvent, NextRequest } from "next/server";
 
 function clerkPublishableKeyHelp(): NextResponse {
   return new NextResponse(
@@ -39,18 +38,10 @@ const isPublicRoute = createRouteMatcher([
   "/",
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/api/webhooks/clerk",
 ]);
 
-const clerkHandler = clerkMiddleware((auth, request) => {
-  if (!isPublicRoute(request)) {
-    auth().protect();
-  }
-});
-
-export default function middleware(
-  request: NextRequest,
-  event: NextFetchEvent,
-): ReturnType<typeof clerkHandler> {
+export default clerkMiddleware(async (auth, request) => {
   const pk = (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "").trim();
 
   if (!pk) {
@@ -63,8 +54,10 @@ export default function middleware(
     return clerkPublishableKeyHelp();
   }
 
-  return clerkHandler(request, event);
-}
+  if (!isPublicRoute(request)) {
+    auth().protect();
+  }
+});
 
 export const config = {
   matcher: [

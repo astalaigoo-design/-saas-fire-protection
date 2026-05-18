@@ -12,6 +12,9 @@ import { SignaturePad } from "@/components/inspect/signature-pad";
 import type { ChecklistItemState } from "@/components/inspect/checklist-item-card";
 import { startInspection, submitInspection } from "@/lib/inspect/actions";
 import { isInspectionLocked, type InspectionFormData } from "@/lib/inspect/queries";
+import type { ReportEmailOutcome } from "@/lib/reports/email-report-after-submit";
+
+const emailNoticeKey = (inspectionId: string) => `inspect-email-notice-${inspectionId}`;
 
 type InspectionFormProps = {
   inspection: InspectionFormData;
@@ -33,6 +36,7 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
     inspection.signatureData,
   );
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [emailNotice, setEmailNotice] = useState<ReportEmailOutcome | null>(null);
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -40,6 +44,17 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
       void startInspection(inspection.id);
     }
   }, [inspection.id, inspection.status, locked]);
+
+  useEffect(() => {
+    const raw = sessionStorage.getItem(emailNoticeKey(inspection.id));
+    if (!raw) return;
+    sessionStorage.removeItem(emailNoticeKey(inspection.id));
+    try {
+      setEmailNotice(JSON.parse(raw) as ReportEmailOutcome);
+    } catch {
+      /* ignore */
+    }
+  }, [inspection.id]);
 
   const allItemsComplete = items.every(
     (item) => item.result !== InspectionItemResult.pending,
@@ -74,6 +89,12 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
       if (!response.ok) {
         setSubmitError(response.error);
         return;
+      }
+      if (response.reportEmail) {
+        sessionStorage.setItem(
+          emailNoticeKey(inspection.id),
+          JSON.stringify(response.reportEmail),
+        );
       }
       router.refresh();
     });
@@ -128,6 +149,18 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
         {submitError ? (
           <p role="alert" className="mb-3 text-center text-sm text-red-300">
             {submitError}
+          </p>
+        ) : null}
+        {emailNotice ? (
+          <p
+            role="status"
+            className={`mb-3 text-center text-sm ${
+              emailNotice.status === "sent" ? "text-emerald-300" : "text-amber-200"
+            }`}
+          >
+            {emailNotice.status === "sent"
+              ? `Report emailed to ${emailNotice.to}.`
+              : emailNotice.reason}
           </p>
         ) : null}
         {locked ? (
