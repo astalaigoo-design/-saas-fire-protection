@@ -55,7 +55,12 @@ export default clerkMiddleware(async (auth, request) => {
   }
 
   if (!isPublicRoute(request)) {
-    auth().protect();
+    const { userId } = await auth();
+    if (!userId) {
+      const signInUrl = new URL("/sign-in", request.url);
+      signInUrl.searchParams.set("redirect_url", request.url);
+      return NextResponse.redirect(signInUrl);
+    }
   }
 });
 
