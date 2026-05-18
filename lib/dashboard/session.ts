@@ -86,11 +86,7 @@ export async function getDashboardSession(): Promise<DashboardSession | null> {
     }
   }
 
-  const resolvedRole =
-    appUser.role ?? role ?? resolveAppRole(
-      clerkUser.publicMetadata as Record<string, unknown>,
-      clerkUser.unsafeMetadata as Record<string, unknown> | undefined,
-    );
+  const resolvedRole = role ?? roleFromMetadata;
 
   return {
     clerkUserId: clerkUser.id,

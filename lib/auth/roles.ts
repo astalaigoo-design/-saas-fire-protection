@@ -10,7 +10,7 @@ export const APP_ROLES = ["owner", "admin", "technician"] as const;
 export type AppRole = (typeof APP_ROLES)[number];
 
 /** Assigned when Clerk public metadata has no valid role (e.g. self-serve sign-up). */
-export const DEFAULT_APP_ROLE: AppRole = "technician";
+export const DEFAULT_APP_ROLE: AppRole = "owner";
 
 export function isAppRole(value: unknown): value is AppRole {
   return (
