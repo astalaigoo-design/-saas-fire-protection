@@ -92,6 +92,8 @@ model User {
   email       String?
   name        String?
   role        UserRole
+  active      Boolean   @default(true)
+  deletedAt   DateTime?
 
   inspectionsAssigned Inspection[] @relation("InspectionAssignee")
 

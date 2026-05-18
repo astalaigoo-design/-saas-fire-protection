@@ -1,6 +1,6 @@
 import { currentUser } from "@clerk/nextjs/server";
 import type { AppRole } from "@/lib/auth/roles";
-import { parseAppRoleFromMetadata } from "@/lib/auth/roles";
+import { parseAppRoleFromMetadata, resolveAppRole } from "@/lib/auth/roles";
 import { prisma } from "@/lib/prisma";
 
 export type DashboardSession = {
@@ -22,14 +22,17 @@ export async function getDashboardSession(): Promise<DashboardSession | null> {
   );
 
   const appUser = await prisma.user.findFirst({
-    where: { clerkUserId: clerkUser.id },
+    where: { clerkUserId: clerkUser.id, active: true },
     include: { company: true },
   });
 
   if (!appUser) return null;
 
-  const resolvedRole = appUser.role ?? role;
-  if (!resolvedRole) return null;
+  const resolvedRole =
+    appUser.role ?? role ?? resolveAppRole(
+      clerkUser.publicMetadata as Record<string, unknown>,
+      clerkUser.unsafeMetadata as Record<string, unknown> | undefined,
+    );
 
   return {
     clerkUserId: clerkUser.id,

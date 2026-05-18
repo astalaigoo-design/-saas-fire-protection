@@ -73,7 +73,7 @@ export async function getScheduleFormData(companyId: string): Promise<ScheduleFo
       orderBy: { name: "asc" },
     }),
     prisma.user.findMany({
-      where: { companyId, role: "technician" },
+      where: { companyId, role: "technician", active: true },
       select: { id: true, name: true, email: true },
       orderBy: { name: "asc" },
     }),

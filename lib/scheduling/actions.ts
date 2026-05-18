@@ -59,7 +59,7 @@ async function assertScheduleEntities(
 
   if (assignedToUserId) {
     const technician = await prisma.user.findFirst({
-      where: { id: assignedToUserId, companyId, role: "technician" },
+      where: { id: assignedToUserId, companyId, role: "technician", active: true },
       select: { id: true },
     });
     if (!technician) {
