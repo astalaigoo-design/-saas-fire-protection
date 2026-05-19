@@ -32,6 +32,19 @@ function parsePoolerUser(connectionString) {
   return m?.[1] ?? null;
 }
 
+function parseConnectionTarget(connectionString) {
+  try {
+    const parsed = new URL(connectionString);
+    return {
+      host: parsed.hostname,
+      port: parsed.port ? Number(parsed.port) : 5432,
+      database: parsed.pathname?.replace(/^\//, "") || "postgres",
+    };
+  } catch {
+    return null;
+  }
+}
+
 async function trySessionPooler(user, password) {
   const client = new pg.Client({
     host: "aws-1-us-east-1.pooler.supabase.com",
@@ -68,13 +81,16 @@ const user = parsePoolerUser(directUrl);
 const passwordMatch = directUrl.match(/postgres\.[^:]+:([^@]+)@/);
 const password = passwordMatch?.[1] ?? "";
 const projectRef = user?.startsWith("postgres.") ? user.replace("postgres.", "") : null;
+const target = parseConnectionTarget(directUrl);
 
 if (!user || !password) {
   console.error("Could not parse user/password from DIRECT_URL");
   process.exit(1);
 }
 
-console.log(`Testing Session pooler (user: ${user}) …\n`);
+console.log(
+  `Testing Session pooler (user: ${user}${target ? `, host: ${target.host}:${target.port}` : ""}) …\n`,
+);
 
 const result = await trySessionPooler(user, password);
 
@@ -98,7 +114,11 @@ if (result.code === "28P01") {
     ].join("\n"),
   );
 } else {
-  console.log("Check project is not paused and pooler host matches your dashboard.");
+  console.log(
+    `Check project is not paused and pooler host matches your dashboard${
+      target ? ` (${target.host}:${target.port}/${target.database})` : ""
+    }.`,
+  );
 }
 
 process.exit(1);
