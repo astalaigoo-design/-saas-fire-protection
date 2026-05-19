@@ -1,46 +1,65 @@
 import Link from "next/link";
-import { SignedIn, SignedOut, SignInButton, SignUpButton } from "@clerk/nextjs";
+import { SignInButton, SignUpButton } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { APP_DESCRIPTION, APP_NAME, APP_TAGLINE } from "@/lib/branding";
 import { cn } from "@/lib/utils";
 
-export default function Home() {
+const valuePoints = [
+  "Smart scheduling and recurring inspection planning",
+  "Customer and building records in one place",
+  "Mobile-first field workflow for technicians",
+];
+
+export default async function Home() {
+  const { userId } = await auth();
+  if (userId) redirect("/dashboard");
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-background p-8 text-foreground">
-      <div className="max-w-lg text-center">
-        <p className="mb-2 text-sm font-medium uppercase tracking-wide text-primary">
-          {APP_TAGLINE}
-        </p>
-        <h1 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-          {APP_NAME}
-        </h1>
-        <p className="mt-4 text-muted-foreground">{APP_DESCRIPTION}</p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <SignedOut>
-            <SignInButton mode="modal">
-              <button type="button" className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-6")}>
-                Sign in
-              </button>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <button
-                type="button"
-                className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-11 px-6")}
-              >
-                Sign up
-              </button>
-            </SignUpButton>
-          </SignedOut>
-          <SignedIn>
-            <Link
-              href="/dashboard"
-              className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-6")}
-            >
-              Open dashboard
-            </Link>
-          </SignedIn>
+    <main className="min-h-screen bg-background text-foreground">
+      <section className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-16 sm:px-6 lg:py-24">
+        <div className="space-y-3">
+          <p className="text-sm font-medium uppercase tracking-wide text-primary">
+            {APP_NAME}
+          </p>
+          <p className="text-sm text-muted-foreground">{APP_TAGLINE}</p>
         </div>
-        <p className="mt-6 text-xs text-muted-foreground">
+
+        <div className="max-w-3xl space-y-5">
+          <h1 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
+            Fire inspection operations built for busy teams
+          </h1>
+          <p className="text-base text-muted-foreground sm:text-lg">
+            {APP_DESCRIPTION}
+          </p>
+        </div>
+
+        <ul className="grid gap-3 sm:grid-cols-3">
+          {valuePoints.map((point) => (
+            <li key={point} className="rounded-lg border border-border bg-card p-4 text-sm">
+              {point}
+            </li>
+          ))}
+        </ul>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <SignInButton mode="redirect" forceRedirectUrl="/dashboard">
+            <button type="button" className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-6")}>
+              Sign in
+            </button>
+          </SignInButton>
+          <SignUpButton mode="redirect" forceRedirectUrl="/dashboard">
+            <button
+              type="button"
+              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-11 px-6")}
+            >
+              Create account
+            </button>
+          </SignUpButton>
+        </div>
+
+        <p className="text-xs text-muted-foreground">
           Full-page auth:{" "}
           <Link href="/sign-in" className="text-primary hover:underline">
             /sign-in
@@ -50,7 +69,7 @@ export default function Home() {
             /sign-up
           </Link>
         </p>
-      </div>
+      </section>
     </main>
   );
 }
