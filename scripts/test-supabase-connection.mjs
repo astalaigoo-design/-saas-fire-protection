@@ -32,28 +32,13 @@ function parsePoolerUser(connectionString) {
   return m?.[1] ?? null;
 }
 
-function parseConnectionTarget(connectionString) {
-  try {
-    const parsed = new URL(connectionString);
-    return {
-      host: parsed.hostname,
-      port: parsed.port ? Number(parsed.port) : 5432,
-      user: decodeURIComponent(parsed.username),
-      password: decodeURIComponent(parsed.password),
-      database: parsed.pathname?.replace(/^\//, "") || "postgres",
-    };
-  } catch {
-    return null;
-  }
-}
-
-async function trySessionPooler(target) {
+async function trySessionPooler(user, password) {
   const client = new pg.Client({
-    host: target.host,
-    port: target.port,
-    user: target.user,
-    password: target.password,
-    database: target.database,
+    host: "aws-1-us-east-1.pooler.supabase.com",
+    port: 5432,
+    user,
+    password,
+    database: "postgres",
     ssl: { rejectUnauthorized: false },
   });
   try {
@@ -80,17 +65,17 @@ if (!directUrl) {
 }
 
 const user = parsePoolerUser(directUrl);
-const target = parseConnectionTarget(directUrl);
-const projectRef = user?.startsWith("postgres.") ? user.replace("postgres.", "") : null;
+const passwordMatch = directUrl.match(/postgres\.[^:]+:([^@]+)@/);
+const password = passwordMatch?.[1] ?? "";
 
-if (!user || !target?.password) {
+if (!user || !password) {
   console.error("Could not parse user/password from DIRECT_URL");
   process.exit(1);
 }
 
-console.log(`Testing Session pooler (user: ${user}, host: ${target.host}:${target.port}) …\n`);
+console.log(`Testing Session pooler (user: ${user}) …\n`);
 
-const result = await trySessionPooler(target);
+const result = await trySessionPooler(user, password);
 
 if (result.ok) {
   console.log("✓ Database login works. Run: npx prisma db push");
@@ -105,16 +90,14 @@ if (result.code === "28P01") {
       "This is the same as Prisma P1000 — the database password is wrong for this project.",
       "",
       "Fix:",
-      `  1. Supabase Dashboard → project ${projectRef ?? "(your project)"}`,
+      "  1. Supabase Dashboard → project zdghesdcavpjinsocsmt",
       "  2. Project Settings → Database → Reset database password",
       "  3. Copy the new password into BOTH DATABASE_URL and DIRECT_URL in .env",
       "  4. npm run db:test   then   npx prisma db push",
     ].join("\n"),
   );
 } else {
-  console.log(
-    `Check project is not paused and DIRECT_URL host (${target.host}:${target.port}) matches your dashboard.`,
-  );
+  console.log("Check project is not paused and pooler host matches your dashboard.");
 }
 
 process.exit(1);
