@@ -10,13 +10,18 @@ export function assertValidDatabaseUrl(
   raw: string | undefined,
   label = "DATABASE_URL",
 ): string {
-  if (!raw?.trim()) {
+  const primary = raw?.trim();
+  const fallback =
+    label === "DIRECT_URL"
+      ? process.env.DATABASE_URL?.trim()
+      : process.env.DIRECT_URL?.trim();
+  const value = primary || fallback;
+
+  if (!value) {
     throw new Error(
-      `${label} is not set. Add your Supabase connection string to .env or Vercel Environment Variables.`,
+      `${label} is not set. Add DATABASE_URL and DIRECT_URL to .env or Vercel Environment Variables.`,
     );
   }
-
-  const value = raw.trim();
 
   for (const fragment of PLACEHOLDER_FRAGMENTS) {
     if (value.includes(fragment)) {
@@ -63,9 +68,7 @@ export function assertValidDatabaseUrl(
 export function resolveDatabaseUrlForPrisma(): string {
   const rawDatabaseUrl = process.env.DATABASE_URL?.trim();
   const rawDirectUrl = process.env.DIRECT_URL?.trim();
-  const selectedUrl = rawDatabaseUrl || rawDirectUrl;
-  const selectedLabel = rawDatabaseUrl ? "DATABASE_URL" : "DIRECT_URL";
-  const validated = assertValidDatabaseUrl(selectedUrl, selectedLabel);
+  const validated = assertValidDatabaseUrl(rawDatabaseUrl || rawDirectUrl, "DATABASE_URL");
 
   if (process.env.NODE_ENV === "production") {
     return validated;
