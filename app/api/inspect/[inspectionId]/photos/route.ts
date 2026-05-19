@@ -4,25 +4,25 @@ import {
   getIdempotencyCacheKey,
   setCachedIdempotentResponse,
 } from "@/lib/api/idempotency";
-import { submitInspection } from "@/lib/inspect/actions";
+import { uploadInspectionPhoto } from "@/lib/inspect/actions";
 
-type SubmitRouteProps = {
+type PhotoRouteProps = {
   params: { inspectionId: string };
 };
 
-export async function POST(request: Request, { params }: SubmitRouteProps) {
+export async function POST(request: Request, { params }: PhotoRouteProps) {
   const idempotencyKey = request.headers.get("x-idempotency-key");
   const cacheKey = idempotencyKey
-    ? getIdempotencyCacheKey(`inspect-submit:${params.inspectionId}`, idempotencyKey)
+    ? getIdempotencyCacheKey(`inspect-photo-upload:${params.inspectionId}`, idempotencyKey)
     : null;
   if (cacheKey) {
     const cached = getCachedIdempotentResponse(cacheKey);
     if (cached) return NextResponse.json(cached.body, { status: cached.status });
   }
 
-  let payload: { signatureData?: unknown } = {};
+  let payload: { dataUrl?: unknown; caption?: unknown } = {};
   try {
-    payload = (await request.json()) as { signatureData?: unknown };
+    payload = (await request.json()) as { dataUrl?: unknown; caption?: unknown };
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON payload." },
@@ -30,9 +30,10 @@ export async function POST(request: Request, { params }: SubmitRouteProps) {
     );
   }
 
-  const result = await submitInspection({
+  const result = await uploadInspectionPhoto({
     inspectionId: params.inspectionId,
-    signatureData: payload.signatureData,
+    dataUrl: payload.dataUrl,
+    caption: payload.caption,
   });
 
   const status = result.ok ? 200 : 400;

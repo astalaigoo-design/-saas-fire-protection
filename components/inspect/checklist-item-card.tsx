@@ -2,7 +2,8 @@
 
 import { InspectionItemResult } from "@prisma/client";
 import { useState, useTransition } from "react";
-import { updateChecklistItem } from "@/lib/inspect/actions";
+import { enqueueOfflineMutation } from "@/lib/offline/indexeddb";
+import { apiUpdateChecklistItem } from "@/lib/offline/inspect-api";
 
 export type ChecklistItemState = {
   id: string;
@@ -37,6 +38,7 @@ export function ChecklistItemCard({
 }: ChecklistItemCardProps) {
   const [failNote, setFailNote] = useState(item.notes ?? "");
   const [error, setError] = useState<string | null>(null);
+  const [syncNotice, setSyncNotice] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const applyResult = (result: InspectionItemResult) => {
@@ -49,23 +51,49 @@ export function ChecklistItemCard({
     }
 
     startTransition(async () => {
-      const response = await updateChecklistItem({
-        inspectionId,
-        itemId: item.id,
+      const notes = result === InspectionItemResult.fail ? failNote.trim() : undefined;
+      const optimisticItem: ChecklistItemState = {
+        ...item,
         result,
-        notes: result === InspectionItemResult.fail ? failNote.trim() : undefined,
-      });
+        notes: notes ?? null,
+      };
 
-      if (!response.ok) {
-        setError(response.error);
+      const enqueueAsOffline = async () => {
+        await enqueueOfflineMutation({
+          inspectionId,
+          type: "checklist.update",
+          payload: {
+            itemId: item.id,
+            result,
+            notes,
+          },
+        });
+        setSyncNotice("Saved offline. Sync will run when connection returns.");
+        onUpdated(optimisticItem);
+      };
+
+      if (!navigator.onLine) {
+        await enqueueAsOffline();
         return;
       }
 
-      onUpdated({
-        ...item,
-        result,
-        notes: result === InspectionItemResult.fail ? failNote.trim() : null,
-      });
+      try {
+        const response = await apiUpdateChecklistItem(inspectionId, {
+          itemId: item.id,
+          result,
+          notes,
+        });
+
+        if (!response.ok) {
+          setError(response.error);
+          return;
+        }
+
+        setSyncNotice(null);
+        onUpdated(optimisticItem);
+      } catch {
+        await enqueueAsOffline();
+      }
     });
   };
 
@@ -123,6 +151,11 @@ export function ChecklistItemCard({
         {error ? (
           <p role="alert" className="text-sm text-red-300">
             {error}
+          </p>
+        ) : null}
+        {syncNotice ? (
+          <p role="status" className="text-xs text-amber-200">
+            {syncNotice}
           </p>
         ) : null}
         {pending ? (

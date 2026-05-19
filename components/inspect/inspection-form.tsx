@@ -10,6 +10,13 @@ import { PhotoUploadSection } from "@/components/inspect/photo-upload-section";
 import { DownloadReportButton } from "@/components/inspect/download-report-button";
 import { SignaturePad } from "@/components/inspect/signature-pad";
 import type { ChecklistItemState } from "@/components/inspect/checklist-item-card";
+import {
+  enqueueOfflineMutation,
+  listOfflineMutations,
+  saveInspectionSnapshot,
+} from "@/lib/offline/indexeddb";
+import { apiStartInspection, apiSubmitInspection } from "@/lib/offline/inspect-api";
+import { syncOfflineInspectionMutations } from "@/lib/offline/inspection-sync";
 import type { InspectionFormData } from "@/lib/inspect/queries";
 import type { ReportEmailOutcome } from "@/lib/reports/email-report-after-submit";
 
@@ -18,36 +25,6 @@ const emailNoticeKey = (inspectionId: string) => `inspect-email-notice-${inspect
 type InspectionFormProps = {
   inspection: InspectionFormData;
 };
-
-type InspectActionResponse =
-  | { ok: true; reportEmail?: ReportEmailOutcome }
-  | { ok: false; error: string };
-
-async function requestStartInspection(inspectionId: string): Promise<InspectActionResponse> {
-  const response = await fetch(`/api/inspect/${inspectionId}/start`, {
-    method: "POST",
-    credentials: "include",
-  });
-  if (!response.ok) {
-    return { ok: false, error: `Could not start inspection (${response.status}).` };
-  }
-  return (await response.json()) as InspectActionResponse;
-}
-
-async function requestSubmitInspection(
-  inspectionId: string,
-  signatureData: string,
-): Promise<InspectActionResponse> {
-  const response = await fetch(`/api/inspect/${inspectionId}/submit`, {
-    method: "POST",
-    credentials: "include",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ signatureData }),
-  });
-  const body = (await response.json()) as InspectActionResponse;
-  if (!response.ok && !body.ok) return body;
-  return body;
-}
 
 export function InspectionForm({ inspection }: InspectionFormProps) {
   const router = useRouter();
@@ -66,12 +43,80 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
   );
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [emailNotice, setEmailNotice] = useState<ReportEmailOutcome | null>(null);
+  const [syncStatus, setSyncStatus] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator === "undefined" ? true : navigator.onLine,
+  );
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
+    let isMounted = true;
+    const runSync = async () => {
+      const hadSuccess = await syncOfflineInspectionMutations(inspection.id, {
+        onMutationError: (_mutation, error) => setSyncStatus(`Sync paused: ${error}`),
+      });
+      const pendingMutations = await listOfflineMutations(inspection.id);
+
+      if (!isMounted) return;
+      if (pendingMutations.length === 0) {
+        setSyncStatus(null);
+      } else if (isOnline) {
+        setSyncStatus(`Syncing ${pendingMutations.length} offline update(s)…`);
+      } else {
+        setSyncStatus(`${pendingMutations.length} update(s) waiting for connection.`);
+      }
+
+      if (hadSuccess) router.refresh();
+    };
+
+    const handleOnline = () => {
+      setIsOnline(true);
+      void runSync();
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    void runSync();
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [inspection.id, isOnline, router]);
+
+  useEffect(() => {
+    void saveInspectionSnapshot({
+      inspectionId: inspection.id,
+      snapshot: {
+        ...inspection,
+        items,
+        signatureData: signature,
+      },
+      updatedAt: Date.now(),
+    });
+  }, [inspection, items, signature]);
+
+  useEffect(() => {
     if (!locked && inspection.status === "scheduled") {
-      void requestStartInspection(inspection.id).catch((error: unknown) => {
-        console.error("requestStartInspection failed", error);
+      void (async () => {
+        if (!navigator.onLine) {
+          await enqueueOfflineMutation({
+            inspectionId: inspection.id,
+            type: "inspection.start",
+            payload: {},
+          });
+          setSyncStatus("Start action queued offline.");
+          return;
+        }
+
+        const response = await apiStartInspection(inspection.id);
+        if (!response.ok) {
+          setSubmitError(response.error);
+        }
+      })().catch((error: unknown) => {
+        console.error("startInspection failed", error);
       });
     }
   }, [inspection.id, inspection.status, locked]);
@@ -113,7 +158,17 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
     }
 
     startTransition(async () => {
-      const response = await requestSubmitInspection(inspection.id, signature);
+      if (!navigator.onLine) {
+        await enqueueOfflineMutation({
+          inspectionId: inspection.id,
+          type: "inspection.submit",
+          payload: { signatureData: signature },
+        });
+        setSyncStatus("Inspection saved offline. Submission will sync when online.");
+        return;
+      }
+
+      const response = await apiSubmitInspection(inspection.id, signature);
       if (!response.ok) {
         setSubmitError(response.error);
         return;
@@ -169,6 +224,16 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
       </main>
 
       <footer className="sticky bottom-0 border-t border-slate-800 bg-slate-900/95 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur">
+        {!isOnline ? (
+          <p role="status" className="mb-3 text-center text-xs text-amber-200">
+            Offline mode: updates are saved on this device and synced when connection returns.
+          </p>
+        ) : null}
+        {syncStatus ? (
+          <p role="status" className="mb-3 text-center text-xs text-amber-200">
+            {syncStatus}
+          </p>
+        ) : null}
         {pending ? (
           <p role="status" className="mb-3 text-center text-sm text-slate-300">
             Saving your inspection…

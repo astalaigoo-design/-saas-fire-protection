@@ -3,9 +3,10 @@
 import { useRef, useState, useTransition } from "react";
 import { compressImageFile } from "@/lib/inspect/compress-image";
 import {
-  deleteInspectionPhoto,
-  uploadInspectionPhoto,
-} from "@/lib/inspect/actions";
+  enqueueOfflineMutation,
+  removeTempPhotoUploads,
+} from "@/lib/offline/indexeddb";
+import { apiDeletePhoto, apiUploadPhoto } from "@/lib/offline/inspect-api";
 
 type PhotoRecord = {
   id: string;
@@ -27,6 +28,7 @@ export function PhotoUploadSection({
   const inputRef = useRef<HTMLInputElement>(null);
   const [photos, setPhotos] = useState(initialPhotos);
   const [error, setError] = useState<string | null>(null);
+  const [syncNotice, setSyncNotice] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const handleFile = (file: File | undefined) => {
@@ -36,18 +38,41 @@ export function PhotoUploadSection({
     startTransition(async () => {
       try {
         const dataUrl = await compressImageFile(file);
-        const response = await uploadInspectionPhoto({
-          inspectionId,
+        const tempId = `temp-${Date.now()}`;
+        const fallbackPhoto = {
+          id: tempId,
+          url: dataUrl,
+          caption: null,
+        };
+
+        const saveOffline = async () => {
+          await enqueueOfflineMutation({
+            inspectionId,
+            type: "photo.upload",
+            payload: { tempId, dataUrl },
+          });
+          setSyncNotice("Photo saved offline. It will upload when online.");
+          setPhotos((current) => [...current, fallbackPhoto]);
+        };
+
+        if (!navigator.onLine) {
+          await saveOffline();
+          return;
+        }
+
+        const response = await apiUploadPhoto(inspectionId, {
+          tempId,
           dataUrl,
         });
         if (!response.ok) {
           setError(response.error);
           return;
         }
+        setSyncNotice(null);
         setPhotos((current) => [
           ...current,
           {
-            id: response.photoId ?? `temp-${Date.now()}`,
+            id: response.photoId ?? tempId,
             url: response.url ?? dataUrl,
             caption: null,
           },
@@ -61,12 +86,38 @@ export function PhotoUploadSection({
   const removePhoto = (photoId: string) => {
     if (locked) return;
     startTransition(async () => {
-      const response = await deleteInspectionPhoto(inspectionId, photoId);
-      if (!response.ok) {
-        setError(response.error);
+      if (photoId.startsWith("temp-")) {
+        await removeTempPhotoUploads(inspectionId, photoId);
+        setPhotos((current) => current.filter((photo) => photo.id !== photoId));
         return;
       }
-      setPhotos((current) => current.filter((photo) => photo.id !== photoId));
+
+      const saveOfflineDelete = async () => {
+        await enqueueOfflineMutation({
+          inspectionId,
+          type: "photo.delete",
+          payload: { photoId },
+        });
+        setSyncNotice("Photo deletion queued offline.");
+        setPhotos((current) => current.filter((photo) => photo.id !== photoId));
+      };
+
+      if (!navigator.onLine) {
+        await saveOfflineDelete();
+        return;
+      }
+
+      try {
+        const response = await apiDeletePhoto(inspectionId, photoId);
+        if (!response.ok) {
+          setError(response.error);
+          return;
+        }
+        setSyncNotice(null);
+        setPhotos((current) => current.filter((photo) => photo.id !== photoId));
+      } catch {
+        await saveOfflineDelete();
+      }
     });
   };
 
@@ -137,6 +188,11 @@ export function PhotoUploadSection({
       {error ? (
         <p role="alert" className="text-sm text-red-300">
           {error}
+        </p>
+      ) : null}
+      {syncNotice ? (
+        <p role="status" className="text-xs text-amber-200">
+          {syncNotice}
         </p>
       ) : null}
     </section>

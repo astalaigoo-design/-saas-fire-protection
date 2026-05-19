@@ -4,25 +4,25 @@ import {
   getIdempotencyCacheKey,
   setCachedIdempotentResponse,
 } from "@/lib/api/idempotency";
-import { submitInspection } from "@/lib/inspect/actions";
+import { updateChecklistItem } from "@/lib/inspect/actions";
 
-type SubmitRouteProps = {
+type ChecklistRouteProps = {
   params: { inspectionId: string };
 };
 
-export async function POST(request: Request, { params }: SubmitRouteProps) {
+export async function POST(request: Request, { params }: ChecklistRouteProps) {
   const idempotencyKey = request.headers.get("x-idempotency-key");
   const cacheKey = idempotencyKey
-    ? getIdempotencyCacheKey(`inspect-submit:${params.inspectionId}`, idempotencyKey)
+    ? getIdempotencyCacheKey(`inspect-checklist:${params.inspectionId}`, idempotencyKey)
     : null;
   if (cacheKey) {
     const cached = getCachedIdempotentResponse(cacheKey);
     if (cached) return NextResponse.json(cached.body, { status: cached.status });
   }
 
-  let payload: { signatureData?: unknown } = {};
+  let payload: { itemId?: unknown; result?: unknown; notes?: unknown } = {};
   try {
-    payload = (await request.json()) as { signatureData?: unknown };
+    payload = (await request.json()) as { itemId?: unknown; result?: unknown; notes?: unknown };
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON payload." },
@@ -30,9 +30,11 @@ export async function POST(request: Request, { params }: SubmitRouteProps) {
     );
   }
 
-  const result = await submitInspection({
+  const result = await updateChecklistItem({
     inspectionId: params.inspectionId,
-    signatureData: payload.signatureData,
+    itemId: payload.itemId,
+    result: payload.result,
+    notes: payload.notes,
   });
 
   const status = result.ok ? 200 : 400;
