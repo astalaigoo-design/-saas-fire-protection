@@ -10,8 +10,7 @@ import { PhotoUploadSection } from "@/components/inspect/photo-upload-section";
 import { DownloadReportButton } from "@/components/inspect/download-report-button";
 import { SignaturePad } from "@/components/inspect/signature-pad";
 import type { ChecklistItemState } from "@/components/inspect/checklist-item-card";
-import { startInspection, submitInspection } from "@/lib/inspect/actions";
-import { isInspectionLocked, type InspectionFormData } from "@/lib/inspect/queries";
+import type { InspectionFormData } from "@/lib/inspect/queries";
 import type { ReportEmailOutcome } from "@/lib/reports/email-report-after-submit";
 
 const emailNoticeKey = (inspectionId: string) => `inspect-email-notice-${inspectionId}`;
@@ -20,9 +19,39 @@ type InspectionFormProps = {
   inspection: InspectionFormData;
 };
 
+type InspectActionResponse =
+  | { ok: true; reportEmail?: ReportEmailOutcome }
+  | { ok: false; error: string };
+
+async function requestStartInspection(inspectionId: string): Promise<InspectActionResponse> {
+  const response = await fetch(`/api/inspect/${inspectionId}/start`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    return { ok: false, error: `Could not start inspection (${response.status}).` };
+  }
+  return (await response.json()) as InspectActionResponse;
+}
+
+async function requestSubmitInspection(
+  inspectionId: string,
+  signatureData: string,
+): Promise<InspectActionResponse> {
+  const response = await fetch(`/api/inspect/${inspectionId}/submit`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ signatureData }),
+  });
+  const body = (await response.json()) as InspectActionResponse;
+  if (!response.ok && !body.ok) return body;
+  return body;
+}
+
 export function InspectionForm({ inspection }: InspectionFormProps) {
   const router = useRouter();
-  const locked = isInspectionLocked(inspection);
+  const locked = inspection.status === "completed" || inspection.status === "cancelled";
   const [items, setItems] = useState<ChecklistItemState[]>(() =>
     inspection.items.map((item) => ({
       id: item.id,
@@ -41,7 +70,9 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
 
   useEffect(() => {
     if (!locked && inspection.status === "scheduled") {
-      void startInspection(inspection.id);
+      void requestStartInspection(inspection.id).catch((error: unknown) => {
+        console.error("requestStartInspection failed", error);
+      });
     }
   }, [inspection.id, inspection.status, locked]);
 
@@ -82,10 +113,7 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
     }
 
     startTransition(async () => {
-      const response = await submitInspection({
-        inspectionId: inspection.id,
-        signatureData: signature,
-      });
+      const response = await requestSubmitInspection(inspection.id, signature);
       if (!response.ok) {
         setSubmitError(response.error);
         return;
