@@ -1,4 +1,11 @@
 import { prisma } from "@/lib/prisma";
+import { APP_NAME } from "@/lib/branding";
+
+const DEFAULT_BOOTSTRAP_INSPECTION_TYPES = [
+  { code: "annual", name: "Annual Inspection" },
+  { code: "quarterly", name: "Quarterly Inspection" },
+  { code: "monthly", name: "Monthly Inspection" },
+] as const;
 
 /**
  * Resolve tenant for a new Clerk user.
@@ -43,5 +50,44 @@ export async function resolveCompanyIdForClerkUser(
     return { companyId: fallback.id };
   }
 
-  return { error: "No company exists to assign the user. Run db:seed or set CLERK_DEFAULT_COMPANY_ID." };
+  const bootstrapCompanyName =
+    process.env.CLERK_BOOTSTRAP_COMPANY_NAME?.trim() || `${APP_NAME} Company`;
+
+  try {
+    const createdCompany = await prisma.$transaction(async (tx) => {
+      const existing = await tx.company.findFirst({
+        orderBy: { createdAt: "asc" },
+        select: { id: true, name: true },
+      });
+      if (existing) return existing;
+
+      const company = await tx.company.create({
+        data: { name: bootstrapCompanyName },
+        select: { id: true, name: true },
+      });
+
+      await tx.inspectionType.createMany({
+        data: DEFAULT_BOOTSTRAP_INSPECTION_TYPES.map((type) => ({
+          companyId: company.id,
+          code: type.code,
+          name: type.name,
+        })),
+      });
+
+      return company;
+    });
+
+    console.warn(
+      "Clerk webhook: bootstrapped company for first sign-up:",
+      createdCompany.name,
+      createdCompany.id,
+    );
+    return { companyId: createdCompany.id };
+  } catch (error) {
+    console.error("Clerk webhook: failed to bootstrap first company", error);
+    return {
+      error:
+        "No company exists to assign the user and auto-bootstrap failed. Set CLERK_DEFAULT_COMPANY_ID or run db:seed.",
+    };
+  }
 }

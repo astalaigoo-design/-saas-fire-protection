@@ -51,6 +51,8 @@ Clerk user **public metadata** should include:
 ```
 
 If `role` is omitted, new users default to **technician**. Production sign-up uses the Clerk webhook at `/api/webhooks/clerk` (see `.env.example`).
+If no company exists yet, first sign-up auto-creates a bootstrap company and default inspection types (`annual`, `quarterly`, `monthly`).
+Set `CLERK_BOOTSTRAP_COMPANY_NAME` to customize the initial company name.
 
 ## Deploy on Vercel
 
