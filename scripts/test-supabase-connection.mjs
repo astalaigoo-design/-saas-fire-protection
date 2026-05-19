@@ -67,6 +67,7 @@ if (!directUrl) {
 const user = parsePoolerUser(directUrl);
 const passwordMatch = directUrl.match(/postgres\.[^:]+:([^@]+)@/);
 const password = passwordMatch?.[1] ?? "";
+const projectRef = user?.startsWith("postgres.") ? user.replace("postgres.", "") : null;
 
 if (!user || !password) {
   console.error("Could not parse user/password from DIRECT_URL");
@@ -90,7 +91,7 @@ if (result.code === "28P01") {
       "This is the same as Prisma P1000 — the database password is wrong for this project.",
       "",
       "Fix:",
-      "  1. Supabase Dashboard → project zdghesdcavpjinsocsmt",
+      `  1. Supabase Dashboard → project ${projectRef ?? "(your project)"}`,
       "  2. Project Settings → Database → Reset database password",
       "  3. Copy the new password into BOTH DATABASE_URL and DIRECT_URL in .env",
       "  4. npm run db:test   then   npx prisma db push",
