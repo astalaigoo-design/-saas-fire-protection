@@ -1,9 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect";
 import { ensureCanManageCustomers } from "@/lib/auth/guards";
 import { getBuildingById } from "@/lib/buildings/queries";
-import { addBuildingNoteSchema, updateBuildingSchema } from "@/lib/buildings/schemas";
+import {
+  addBuildingNoteSchema,
+  createBuildingSchema,
+  updateBuildingSchema,
+} from "@/lib/buildings/schemas";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { prisma } from "@/lib/prisma";
 
@@ -13,6 +19,65 @@ function revalidateBuildingPaths(buildingId: string, customerId: string) {
   revalidatePath(`/dashboard/buildings/${buildingId}`);
   revalidatePath(`/dashboard/customers/${customerId}`);
   revalidatePath("/dashboard/customers");
+}
+
+export async function createBuilding(
+  _prev: BuildingActionResult,
+  formData: FormData,
+): Promise<BuildingActionResult> {
+  const session = await getDashboardSession();
+  if (!session) return { ok: false, error: "Sign in required." };
+  ensureCanManageCustomers(session.role);
+
+  const parsed = createBuildingSchema.safeParse({
+    customerId: formData.get("customerId"),
+    name: formData.get("name"),
+    addressLine1: formData.get("addressLine1"),
+    addressLine2: formData.get("addressLine2"),
+    city: formData.get("city"),
+    region: formData.get("region"),
+    postalCode: formData.get("postalCode"),
+    country: formData.get("country") || "US",
+  });
+
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  try {
+    const customer = await prisma.customer.findFirst({
+      where: {
+        id: parsed.data.customerId,
+        companyId: session.companyId,
+      },
+      select: { id: true },
+    });
+
+    if (!customer) return { ok: false, error: "Customer not found." };
+
+    const building = await prisma.building.create({
+      data: {
+        customerId: customer.id,
+        name: parsed.data.name || null,
+        addressLine1: parsed.data.addressLine1,
+        addressLine2: parsed.data.addressLine2 || null,
+        city: parsed.data.city,
+        region: parsed.data.region,
+        postalCode: parsed.data.postalCode,
+        country: parsed.data.country,
+      },
+      select: { id: true },
+    });
+
+    revalidateBuildingPaths(building.id, customer.id);
+    revalidatePath("/dashboard/buildings");
+    revalidatePath("/dashboard/jobs/new");
+    redirect(`/dashboard/buildings/${building.id}`);
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    console.error("createBuilding failed", error);
+    return { ok: false, error: "Could not create building. Please try again." };
+  }
 }
 
 export async function updateBuilding(

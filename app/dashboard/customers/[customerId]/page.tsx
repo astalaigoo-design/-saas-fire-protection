@@ -41,17 +41,25 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
         >
           ← All customers
         </Link>
-        <div>
-          <h1 className="font-heading text-2xl font-semibold tracking-tight text-foreground">
-            {customer.name}
-          </h1>
-          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-            {customer.email ? <span>{customer.email}</span> : null}
-            {customer.phone ? <span>{customer.phone}</span> : null}
-            <span>
-              Added {formatDate(customer.createdAt)}
-            </span>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="font-heading text-2xl font-semibold tracking-tight text-foreground">
+              {customer.name}
+            </h1>
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+              {customer.email ? <span>{customer.email}</span> : null}
+              {customer.phone ? <span>{customer.phone}</span> : null}
+              <span>
+                Added {formatDate(customer.createdAt)}
+              </span>
+            </div>
           </div>
+          <Link
+            href={`/dashboard/buildings/new?customerId=${customer.id}`}
+            className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-5")}
+          >
+            Add building
+          </Link>
         </div>
       </header>
 

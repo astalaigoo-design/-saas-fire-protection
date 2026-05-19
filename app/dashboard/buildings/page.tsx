@@ -2,12 +2,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ComplianceBadge } from "@/components/buildings/compliance-badge";
 import { PageHeader } from "@/components/dashboard/page-header";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ensureCanManageCustomers } from "@/lib/auth/guards";
 import { buildingLabel } from "@/lib/customers/format";
 import { listCompanyBuildings } from "@/lib/buildings/queries";
 import { getDashboardSession } from "@/lib/dashboard/session";
+import { cn } from "@/lib/utils";
 
 export default async function BuildingsPage() {
   const session = await getDashboardSession();
@@ -21,6 +23,14 @@ export default async function BuildingsPage() {
       <PageHeader
         title="Buildings"
         description="All sites across your customers. Open a building for inspections, photos, and reports."
+        actions={
+          <Link
+            href="/dashboard/buildings/new"
+            className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-5")}
+          >
+            Add building
+          </Link>
+        }
       />
 
       {buildings.length === 0 ? (
