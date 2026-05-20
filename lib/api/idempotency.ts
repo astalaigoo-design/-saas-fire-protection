@@ -19,9 +19,9 @@ function getStore(): Map<string, CachedResponse> {
 
 function pruneExpired(store: Map<string, CachedResponse>) {
   const now = Date.now();
-  for (const [key, value] of store.entries()) {
+  store.forEach((value, key) => {
     if (value.expiresAt <= now) store.delete(key);
-  }
+  });
 }
 
 export function getIdempotencyCacheKey(scope: string, key: string): string {
