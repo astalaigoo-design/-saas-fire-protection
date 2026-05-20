@@ -138,7 +138,15 @@ const quoteListSelect = {
   currency: true,
   createdAt: true,
   lineItems: {
-    select: { id: true },
+    orderBy: { sortOrder: "asc" },
+    select: {
+      id: true,
+      label: true,
+      description: true,
+      quantity: true,
+      unitPriceCents: true,
+      sortOrder: true,
+    },
   },
   inspection: {
     select: {

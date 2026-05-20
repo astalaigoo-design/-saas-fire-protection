@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/dashboard/page-header";
+import { QuoteLineItemsEditor } from "@/components/quotes/quote-line-items-editor";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
@@ -65,6 +66,11 @@ export default async function ReportsPage() {
                         ? ` · from ${formatDate(quote.inspection.completedAt)} inspection`
                         : ""}
                     </p>
+                    <QuoteLineItemsEditor
+                      quoteId={quote.id}
+                      currency={quote.currency}
+                      lineItems={quote.lineItems}
+                    />
                   </CardContent>
                 </Card>
               </li>
