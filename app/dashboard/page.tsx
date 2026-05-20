@@ -88,6 +88,15 @@ export default async function DashboardPage() {
         </h2>
         <RecentInspectionsTable inspections={completed} />
       </section>
+
+      <section aria-label="Feedback" className="flex justify-end">
+        <Link
+          href="mailto:support@getflareflow.com?subject=GetFlareflow%20Dashboard%20Feedback"
+          className={buttonVariants({ variant: "outline" })}
+        >
+          Feedback
+        </Link>
+      </section>
     </div>
   );
 }
