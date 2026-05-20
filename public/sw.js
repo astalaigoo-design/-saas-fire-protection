@@ -1,5 +1,5 @@
-const STATIC_CACHE = "flareflow-static-v1";
-const PAGE_CACHE = "flareflow-pages-v1";
+const STATIC_CACHE = "flareflow-static-v2";
+const PAGE_CACHE = "flareflow-pages-v2";
 
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
@@ -52,7 +52,15 @@ async function staleWhileRevalidate(request, cacheName) {
     })
     .catch(() => null);
 
-  return cached || networkPromise;
+  const networkResponse = await networkPromise;
+  return (
+    cached ||
+    networkResponse ||
+    new Response("", {
+      status: 503,
+      statusText: "Offline resource unavailable",
+    })
+  );
 }
 
 self.addEventListener("fetch", (event) => {
@@ -71,15 +79,11 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       networkFirst(request, PAGE_CACHE).catch(async () => {
         const cached = await caches.match(request);
-        const dashboardCached = await caches.match("/dashboard");
-        return (
-          cached ||
-          dashboardCached ||
-          new Response("Offline - this page is not cached yet.", {
-            status: 503,
-            headers: { "Content-Type": "text/plain" },
-          })
-        );
+        if (cached) return cached;
+        return new Response("Offline - this page is not cached yet.", {
+          status: 503,
+          headers: { "Content-Type": "text/plain" },
+        });
       }),
     );
     return;
