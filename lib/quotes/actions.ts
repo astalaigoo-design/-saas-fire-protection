@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
 import { getDashboardSession } from "@/lib/dashboard/session";
+import { sendQuoteEmail } from "@/lib/email/send-quote-email";
 import { prisma } from "@/lib/prisma";
 
 export type QuoteLineItemsActionResult = { ok: true } | { ok: false; error: string };
@@ -20,10 +21,26 @@ const lineItemSchema = z.object({
 const payloadSchema = z.object({
   quoteId: z.string().min(1),
   lineItems: z.array(lineItemSchema).min(1).max(200),
+  taxRatePercent: z.coerce.number().min(0).max(100).optional().default(0),
+  discountAmount: z.coerce.number().min(0).max(1_000_000).optional().default(0),
 });
 
 function toCents(value: number): number {
   return Math.round(value * 100);
+}
+
+function recalculateTotals(input: {
+  lineItems: Array<{ quantity: number; unitPriceCents: number }>;
+  taxRateBasisPoints: number;
+  discountCents: number;
+}) {
+  const subtotalCents = input.lineItems.reduce(
+    (sum, item) => sum + item.quantity * item.unitPriceCents,
+    0,
+  );
+  const taxCents = Math.round((subtotalCents * input.taxRateBasisPoints) / 10_000);
+  const totalCents = Math.max(0, subtotalCents + taxCents - input.discountCents);
+  return { subtotalCents, taxCents, totalCents };
 }
 
 export async function updateDraftQuoteLineItems(
@@ -47,6 +64,8 @@ export async function updateDraftQuoteLineItems(
   const parsed = payloadSchema.safeParse({
     quoteId: formData.get("quoteId"),
     lineItems: parsedJson,
+    taxRatePercent: formData.get("taxRatePercent"),
+    discountAmount: formData.get("discountAmount"),
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid quote update." };
@@ -86,11 +105,14 @@ export async function updateDraftQuoteLineItems(
     unitPriceCents: toCents(item.unitPrice),
     sortOrder: index,
   }));
+  const taxRateBasisPoints = Math.round(parsed.data.taxRatePercent * 100);
+  const discountCents = toCents(parsed.data.discountAmount);
 
-  const totalCents = normalizedItems.reduce(
-    (sum, item) => sum + item.quantity * item.unitPriceCents,
-    0,
-  );
+  const { subtotalCents, taxCents, totalCents } = recalculateTotals({
+    lineItems: normalizedItems,
+    taxRateBasisPoints,
+    discountCents,
+  });
 
   await prisma.$transaction([
     ...normalizedItems.map((item) =>
@@ -107,10 +129,154 @@ export async function updateDraftQuoteLineItems(
     ),
     prisma.quote.update({
       where: { id: quote.id },
-      data: { totalCents },
+      data: {
+        subtotalCents,
+        taxRateBasisPoints,
+        taxCents,
+        discountCents,
+        totalCents,
+      },
     }),
   ]);
 
   revalidatePath("/dashboard/reports");
   return { ok: true };
+}
+
+export async function sendDraftQuote(formData: FormData): Promise<void> {
+  const session = await getDashboardSession();
+  if (!session) return;
+  ensureCanManageJobs(session.role);
+
+  const quoteId = formData.get("quoteId");
+  if (typeof quoteId !== "string" || !quoteId.trim()) return;
+
+  const quote = await prisma.quote.findFirst({
+    where: {
+      id: quoteId,
+      companyId: session.companyId,
+      status: QuoteStatus.draft,
+    },
+    select: {
+      id: true,
+      title: true,
+      status: true,
+      currency: true,
+      subtotalCents: true,
+      taxCents: true,
+      discountCents: true,
+      totalCents: true,
+      lineItems: {
+        orderBy: { sortOrder: "asc" },
+        select: {
+          label: true,
+          description: true,
+          quantity: true,
+          unitPriceCents: true,
+        },
+      },
+      inspection: {
+        select: {
+          inspectionType: { select: { name: true } },
+          company: { select: { name: true, reportEmail: true } },
+          building: {
+            select: {
+              name: true,
+              addressLine1: true,
+              city: true,
+              customer: { select: { name: true, email: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+  if (!quote) return;
+
+  const customerEmail = quote.inspection.building.customer.email?.trim();
+  if (!customerEmail) return;
+
+  const buildingLabel =
+    quote.inspection.building.name?.trim() ||
+    `${quote.inspection.building.addressLine1}, ${quote.inspection.building.city}`;
+
+  const emailResult = await sendQuoteEmail({
+    to: customerEmail,
+    customerName: quote.inspection.building.customer.name,
+    companyName: quote.inspection.company.name,
+    buildingLabel,
+    inspectionTypeName: quote.inspection.inspectionType.name,
+    quoteTitle: quote.title ?? `${quote.inspection.inspectionType.name} repair quote`,
+    currency: quote.currency,
+    subtotalCents: quote.subtotalCents,
+    taxCents: quote.taxCents,
+    discountCents: quote.discountCents,
+    totalCents: quote.totalCents,
+    lineItems: quote.lineItems,
+    replyTo: quote.inspection.company.reportEmail,
+  });
+
+  if (!emailResult.ok) return;
+
+  const now = new Date();
+  await prisma.quote.update({
+    where: { id: quote.id },
+    data: {
+      status: QuoteStatus.sent,
+      sentTo: customerEmail,
+      sentAt: now,
+      sentMessageId: emailResult.messageId,
+      statusChangedAt: now,
+      acceptedAt: null,
+      declinedAt: null,
+    },
+  });
+  revalidatePath("/dashboard/reports");
+}
+
+async function transitionQuoteStatus(
+  quoteId: string,
+  next: "accepted" | "declined",
+) {
+  const session = await getDashboardSession();
+  if (!session) return;
+  ensureCanManageJobs(session.role);
+
+  const quote = await prisma.quote.findFirst({
+    where: { id: quoteId, companyId: session.companyId, status: QuoteStatus.sent },
+    select: { id: true },
+  });
+  if (!quote) return;
+
+  const now = new Date();
+  await prisma.quote.update({
+    where: { id: quote.id },
+    data:
+      next === "accepted"
+        ? {
+            status: QuoteStatus.accepted,
+            acceptedAt: now,
+            declinedAt: null,
+            statusChangedAt: now,
+          }
+        : {
+            status: QuoteStatus.declined,
+            declinedAt: now,
+            acceptedAt: null,
+            statusChangedAt: now,
+          },
+  });
+  revalidatePath("/dashboard/reports");
+}
+
+export async function markQuoteAccepted(formData: FormData): Promise<void> {
+  const quoteId = formData.get("quoteId");
+  if (typeof quoteId !== "string" || !quoteId.trim()) return;
+  await transitionQuoteStatus(quoteId, QuoteStatus.accepted);
+}
+
+export async function markQuoteDeclined(formData: FormData): Promise<void> {
+  const quoteId = formData.get("quoteId");
+  if (typeof quoteId !== "string" || !quoteId.trim()) return;
+  await transitionQuoteStatus(quoteId, QuoteStatus.declined);
 }

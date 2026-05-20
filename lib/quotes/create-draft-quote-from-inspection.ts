@@ -42,6 +42,10 @@ export async function createDraftQuoteFromInspection(
       status: QuoteStatus.draft,
       title,
       notes: "Auto-generated from failed inspection items. Add pricing before sending.",
+      subtotalCents: 0,
+      taxRateBasisPoints: 0,
+      taxCents: 0,
+      discountCents: 0,
       lineItems: {
         deleteMany: {},
         create: inspection.items.map((item, index) => ({
@@ -54,6 +58,12 @@ export async function createDraftQuoteFromInspection(
           sortOrder: index,
         })),
       },
+      sentTo: null,
+      sentAt: null,
+      sentMessageId: null,
+      statusChangedAt: null,
+      acceptedAt: null,
+      declinedAt: null,
       totalCents: 0,
     },
     create: {
@@ -62,6 +72,10 @@ export async function createDraftQuoteFromInspection(
       status: QuoteStatus.draft,
       title,
       notes: "Auto-generated from failed inspection items. Add pricing before sending.",
+      subtotalCents: 0,
+      taxRateBasisPoints: 0,
+      taxCents: 0,
+      discountCents: 0,
       lineItems: {
         create: inspection.items.map((item, index) => ({
           label: item.label,

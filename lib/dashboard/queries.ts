@@ -134,9 +134,18 @@ const quoteListSelect = {
   id: true,
   title: true,
   status: true,
+  notes: true,
+  subtotalCents: true,
+  taxRateBasisPoints: true,
+  taxCents: true,
+  discountCents: true,
   totalCents: true,
   currency: true,
   createdAt: true,
+  sentTo: true,
+  sentAt: true,
+  acceptedAt: true,
+  declinedAt: true,
   lineItems: {
     orderBy: { sortOrder: "asc" },
     select: {
@@ -151,17 +160,18 @@ const quoteListSelect = {
   inspection: {
     select: {
       id: true,
+      inspectionType: { select: { name: true } },
+      completedAt: true,
+      company: { select: { reportEmail: true, name: true } },
       building: {
         select: {
           id: true,
           name: true,
           addressLine1: true,
           city: true,
-          customer: { select: { name: true } },
+          customer: { select: { name: true, email: true } },
         },
       },
-      inspectionType: { select: { name: true } },
-      completedAt: true,
     },
   },
 } satisfies Prisma.QuoteSelect;
@@ -170,9 +180,9 @@ export type QuoteListItem = Prisma.QuoteGetPayload<{
   select: typeof quoteListSelect;
 }>;
 
-export async function listCompanyDraftQuotes(companyId: string): Promise<QuoteListItem[]> {
+export async function listCompanyQuotes(companyId: string): Promise<QuoteListItem[]> {
   return prisma.quote.findMany({
-    where: { companyId, status: "draft" },
+    where: { companyId },
     orderBy: { createdAt: "desc" },
     take: 100,
     select: quoteListSelect,

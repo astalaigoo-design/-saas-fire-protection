@@ -22,6 +22,11 @@ type EditableQuoteLineItem = {
 type QuoteLineItemsEditorProps = {
   quoteId: string;
   currency: string;
+  subtotalCents: number;
+  taxRateBasisPoints: number;
+  taxCents: number;
+  discountCents: number;
+  totalCents: number;
   lineItems: EditableQuoteLineItem[];
 };
 
@@ -58,6 +63,11 @@ function SaveButton() {
 export function QuoteLineItemsEditor({
   quoteId,
   currency,
+  subtotalCents,
+  taxRateBasisPoints,
+  taxCents,
+  discountCents,
+  totalCents,
   lineItems,
 }: QuoteLineItemsEditorProps) {
   const [state, formAction] = useFormState(updateDraftQuoteLineItems, initialState);
@@ -69,6 +79,12 @@ export function QuoteLineItemsEditor({
       quantity: String(item.quantity),
       unitPrice: (item.unitPriceCents / 100).toFixed(2),
     })),
+  );
+  const [taxRatePercent, setTaxRatePercent] = useState<string>(
+    (taxRateBasisPoints / 100).toFixed(2),
+  );
+  const [discountAmount, setDiscountAmount] = useState<string>(
+    (discountCents / 100).toFixed(2),
   );
 
   const payload = useMemo(
@@ -86,14 +102,25 @@ export function QuoteLineItemsEditor({
   );
 
   const draftTotalCents = useMemo(
-    () =>
-      draftItems.reduce((sum, item) => {
+    () => {
+      const draftSubtotal = draftItems.reduce((sum, item) => {
         const quantity = Number(item.quantity || "0");
         const unitPrice = Number(item.unitPrice || "0");
         if (!Number.isFinite(quantity) || !Number.isFinite(unitPrice)) return sum;
         return sum + Math.round(unitPrice * 100) * quantity;
-      }, 0),
-    [draftItems],
+      }, 0);
+      const draftTax = Math.round(
+        (draftSubtotal * Number(taxRatePercent || "0")) / 100,
+      );
+      const draftDiscount = Math.round(Number(discountAmount || "0") * 100);
+      return {
+        subtotal: draftSubtotal,
+        tax: draftTax,
+        discount: Math.max(0, draftDiscount),
+        total: Math.max(0, draftSubtotal + draftTax - Math.max(0, draftDiscount)),
+      };
+    },
+    [draftItems, taxRatePercent, discountAmount],
   );
 
   function updateItem(id: string, patch: Partial<LineItemDraft>) {
@@ -106,6 +133,8 @@ export function QuoteLineItemsEditor({
     <form action={formAction} className="mt-4 space-y-4 rounded-lg border border-border/70 p-3">
       <input type="hidden" name="quoteId" value={quoteId} />
       <input type="hidden" name="lineItemsJson" value={payload} readOnly />
+      <input type="hidden" name="taxRatePercent" value={taxRatePercent} readOnly />
+      <input type="hidden" name="discountAmount" value={discountAmount} readOnly />
 
       {state.ok === false && state.error ? (
         <p
@@ -163,13 +192,62 @@ export function QuoteLineItemsEditor({
         ))}
       </ul>
 
+      <div className="grid gap-2 sm:grid-cols-2">
+        <Input
+          type="number"
+          min={0}
+          max={100}
+          step="0.01"
+          value={taxRatePercent}
+          onChange={(event) => setTaxRatePercent(event.target.value)}
+          className="min-h-10"
+          aria-label="Tax rate percent"
+          placeholder="Tax %"
+        />
+        <Input
+          type="number"
+          min={0}
+          step="0.01"
+          value={discountAmount}
+          onChange={(event) => setDiscountAmount(event.target.value)}
+          className="min-h-10"
+          aria-label="Discount amount"
+          placeholder="Discount amount"
+        />
+      </div>
+
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">
-          Draft total:{" "}
-          <span className="font-semibold text-foreground">
-            {formatCurrency(draftTotalCents, currency)}
-          </span>
-        </p>
+        <div className="text-sm text-muted-foreground">
+          <p>
+            Subtotal:{" "}
+            <span className="font-semibold text-foreground">
+              {formatCurrency(draftTotalCents.subtotal, currency)}
+            </span>
+          </p>
+          <p>
+            Tax:{" "}
+            <span className="font-semibold text-foreground">
+              {formatCurrency(draftTotalCents.tax, currency)}
+            </span>
+          </p>
+          <p>
+            Discount:{" "}
+            <span className="font-semibold text-foreground">
+              -{formatCurrency(draftTotalCents.discount, currency)}
+            </span>
+          </p>
+          <p>
+            Draft total:{" "}
+            <span className="font-semibold text-foreground">
+              {formatCurrency(draftTotalCents.total, currency)}
+            </span>
+          </p>
+          <p className="text-xs">
+            Saved total: {formatCurrency(totalCents, currency)} (subtotal{" "}
+            {formatCurrency(subtotalCents, currency)}, tax{" "}
+            {formatCurrency(taxCents, currency)})
+          </p>
+        </div>
         <SaveButton />
       </div>
     </form>
