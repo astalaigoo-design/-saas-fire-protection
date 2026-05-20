@@ -1,5 +1,5 @@
-const STATIC_CACHE = "flareflow-static-v2";
-const PAGE_CACHE = "flareflow-pages-v2";
+const STATIC_CACHE = "flareflow-static-v3";
+const PAGE_CACHE = "flareflow-pages-v3";
 
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
@@ -25,6 +25,12 @@ self.addEventListener("activate", (event) => {
     ),
   );
   self.clients.claim();
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 async function networkFirst(request, cacheName) {
