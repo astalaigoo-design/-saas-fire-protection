@@ -175,7 +175,7 @@ export function ComplianceReportDocument({ data }: ComplianceReportDocumentProps
           {data.company.logoUrl &&
           (data.company.logoUrl.startsWith("data:image/") ||
             data.company.logoUrl.startsWith("http")) ? (
-            <Image src={data.company.logoUrl} style={styles.logo} alt={`${data.company.name} logo`} />
+            <Image src={data.company.logoUrl} style={styles.logo} />
           ) : null}
         </View>
 
@@ -247,11 +247,7 @@ export function ComplianceReportDocument({ data }: ComplianceReportDocumentProps
             <View style={styles.photoGrid}>
               {data.photos.map((photo, index) => (
                 <View key={`photo-${index}`} style={{ width: "48%" }}>
-                  <Image
-                    src={photo.url}
-                    style={styles.photo}
-                    alt={photo.caption ?? `Inspection photo ${index + 1}`}
-                  />
+                  <Image src={photo.url} style={styles.photo} />
                   {photo.caption ? (
                     <Text style={{ fontSize: 8, marginTop: 2 }}>{photo.caption}</Text>
                   ) : null}
@@ -264,7 +260,7 @@ export function ComplianceReportDocument({ data }: ComplianceReportDocumentProps
         <View style={styles.block}>
           <Text style={styles.sectionTitle}>Inspector signature</Text>
           {data.signatureData ? (
-            <Image src={data.signatureData} style={styles.signature} alt="Inspector signature" />
+            <Image src={data.signatureData} style={styles.signature} />
           ) : (
             <Text style={styles.value}>No signature on file.</Text>
           )}

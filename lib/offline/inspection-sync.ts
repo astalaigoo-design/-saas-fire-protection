@@ -10,7 +10,11 @@ import {
   apiUpdateChecklistItem,
   apiUploadPhoto,
 } from "@/lib/offline/inspect-api";
-import type { InspectActionResponse, OfflineMutation } from "@/lib/offline/inspection-types";
+import type {
+  InspectActionResponse,
+  OfflineMutation,
+  OfflineMutationPayloadMap,
+} from "@/lib/offline/inspection-types";
 
 type SyncCallbacks = {
   onMutationSuccess?: (mutation: OfflineMutation, response: InspectActionResponse) => void;
@@ -21,38 +25,46 @@ async function sendMutation(mutation: OfflineMutation): Promise<InspectActionRes
   switch (mutation.type) {
     case "inspection.start":
       return apiStartInspection(mutation.inspectionId, mutation.idempotencyKey);
-    case "checklist.update":
+    case "checklist.update": {
+      const payload = mutation.payload as OfflineMutationPayloadMap["checklist.update"];
       return apiUpdateChecklistItem(
         mutation.inspectionId,
         {
-          itemId: mutation.payload.itemId,
-          result: mutation.payload.result,
-          notes: mutation.payload.notes,
+          itemId: payload.itemId,
+          result: payload.result,
+          notes: payload.notes,
         },
         mutation.idempotencyKey,
       );
-    case "photo.upload":
+    }
+    case "photo.upload": {
+      const payload = mutation.payload as OfflineMutationPayloadMap["photo.upload"];
       return apiUploadPhoto(
         mutation.inspectionId,
         {
-          tempId: mutation.payload.tempId,
-          dataUrl: mutation.payload.dataUrl,
-          caption: mutation.payload.caption,
+          tempId: payload.tempId,
+          dataUrl: payload.dataUrl,
+          caption: payload.caption,
         },
         mutation.idempotencyKey,
       );
-    case "photo.delete":
+    }
+    case "photo.delete": {
+      const payload = mutation.payload as OfflineMutationPayloadMap["photo.delete"];
       return apiDeletePhoto(
         mutation.inspectionId,
-        mutation.payload.photoId,
+        payload.photoId,
         mutation.idempotencyKey,
       );
-    case "inspection.submit":
+    }
+    case "inspection.submit": {
+      const payload = mutation.payload as OfflineMutationPayloadMap["inspection.submit"];
       return apiSubmitInspection(
         mutation.inspectionId,
-        mutation.payload.signatureData,
+        payload.signatureData,
         mutation.idempotencyKey,
       );
+    }
     default:
       return { ok: false, error: "Unknown offline mutation type." };
   }

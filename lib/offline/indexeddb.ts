@@ -130,8 +130,10 @@ export async function removeTempPhotoUploads(
   tempId: string,
 ): Promise<void> {
   const mutations = await listOfflineMutations(inspectionId);
-  const matches = mutations.filter(
-    (row) => row.type === "photo.upload" && row.payload.tempId === tempId,
-  );
+  const matches = mutations.filter((row): row is OfflineMutation<"photo.upload"> => {
+    if (row.type !== "photo.upload") return false;
+    const payload = row.payload as Partial<OfflineMutationPayloadMap["photo.upload"]>;
+    return typeof payload.tempId === "string" && payload.tempId === tempId;
+  });
   await Promise.all(matches.map((row) => removeOfflineMutation(row.id)));
 }
