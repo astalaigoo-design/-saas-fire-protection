@@ -24,6 +24,7 @@ import {
   emailComplianceReportAfterSubmit,
   type ReportEmailOutcome,
 } from "@/lib/reports/email-report-after-submit";
+import { createDraftQuoteFromInspection } from "@/lib/quotes/create-draft-quote-from-inspection";
 import { prisma } from "@/lib/prisma";
 
 export type InspectActionResult =
@@ -253,6 +254,11 @@ export async function submitInspection(
   });
 
   await syncBuildingComplianceStatus(loaded.inspection.buildingId);
+
+  await createDraftQuoteFromInspection({
+    companyId: session.companyId,
+    inspectionId: parsed.data.inspectionId,
+  });
 
   const reportEmail = await emailComplianceReportAfterSubmit(
     session,

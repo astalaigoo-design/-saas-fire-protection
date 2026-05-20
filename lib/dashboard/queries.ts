@@ -129,3 +129,44 @@ export async function listCompanyReports(companyId: string) {
     select: reportListSelect,
   });
 }
+
+const quoteListSelect = {
+  id: true,
+  title: true,
+  status: true,
+  totalCents: true,
+  currency: true,
+  createdAt: true,
+  lineItems: {
+    select: { id: true },
+  },
+  inspection: {
+    select: {
+      id: true,
+      building: {
+        select: {
+          id: true,
+          name: true,
+          addressLine1: true,
+          city: true,
+          customer: { select: { name: true } },
+        },
+      },
+      inspectionType: { select: { name: true } },
+      completedAt: true,
+    },
+  },
+} satisfies Prisma.QuoteSelect;
+
+export type QuoteListItem = Prisma.QuoteGetPayload<{
+  select: typeof quoteListSelect;
+}>;
+
+export async function listCompanyDraftQuotes(companyId: string): Promise<QuoteListItem[]> {
+  return prisma.quote.findMany({
+    where: { companyId, status: "draft" },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+    select: quoteListSelect,
+  });
+}

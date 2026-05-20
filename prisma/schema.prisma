@@ -60,6 +60,13 @@ enum ComplianceStatus {
   OVERDUE
 }
 
+enum QuoteStatus {
+  draft
+  sent
+  accepted
+  declined
+}
+
 // --- Core tenant -----------------------------------------------------------
 
 /// Fire inspection company (tenant).
@@ -76,6 +83,7 @@ model Company {
   customers       Customer[]
   inspectionTypes InspectionType[]
   inspections     Inspection[]
+  quotes          Quote[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -233,6 +241,8 @@ model Inspection {
   photos  Photo[]
   /// PDF reports for this inspection (also reachable from Building via inspections).
   reports Report[]
+  /// Repair estimate created from failed inspection items.
+  quote Quote?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -303,4 +313,49 @@ model Report {
 
   @@index([inspectionId])
   @@map("reports")
+}
+
+/// Repair estimate derived from failed inspection items.
+model Quote {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  inspectionId String     @unique
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
+  status QuoteStatus @default(draft)
+  title  String?
+  notes  String?     @db.Text
+
+  currency   String @default("USD")
+  totalCents Int    @default(0)
+
+  lineItems QuoteLineItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId, status])
+  @@map("quotes")
+}
+
+model QuoteLineItem {
+  id String @id @default(cuid())
+
+  quoteId String
+  quote   Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  label       String
+  description String? @db.Text
+  quantity    Int     @default(1)
+  unitPriceCents Int  @default(0)
+  sortOrder   Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([quoteId])
+  @@map("quote_line_items")
 }
