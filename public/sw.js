@@ -1,5 +1,5 @@
-const STATIC_CACHE = "flareflow-static-v3";
-const PAGE_CACHE = "flareflow-pages-v3";
+const STATIC_CACHE = "flareflow-static-v4";
+const PAGE_CACHE = "flareflow-pages-v4";
 
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
