@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 
-const SW_URL = "/sw.js?v=4";
-const SW_MIGRATION_KEY = "sw-migration-v4-done";
+const SW_URL = "/sw.js?v=5";
+const SW_MIGRATION_KEY = "sw-migration-v5-done";
 
 export function ServiceWorkerRegistration() {
   useEffect(() => {
@@ -22,12 +22,6 @@ export function ServiceWorkerRegistration() {
 
       const registration = await navigator.serviceWorker.register(SW_URL, {
         updateViaCache: "none",
-      });
-
-      registration.addEventListener("updatefound", () => {
-        const installing = registration.installing;
-        if (!installing) return;
-        installing.addEventListener("statechange", () => undefined);
       });
 
       await registration.update();
