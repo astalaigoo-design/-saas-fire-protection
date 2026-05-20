@@ -44,9 +44,8 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [emailNotice, setEmailNotice] = useState<ReportEmailOutcome | null>(null);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
-  const [isOnline, setIsOnline] = useState(
-    typeof navigator === "undefined" ? true : navigator.onLine,
-  );
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -75,6 +74,8 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
     };
     const handleOffline = () => setIsOnline(false);
 
+    setIsHydrated(true);
+    setIsOnline(navigator.onLine);
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
     void runSync();
@@ -224,12 +225,12 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
       </main>
 
       <footer className="sticky bottom-0 border-t border-slate-800 bg-slate-900/95 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur">
-        {!isOnline ? (
+        {isHydrated && !isOnline ? (
           <p role="status" className="mb-3 text-center text-xs text-amber-200">
             Offline mode: updates are saved on this device and synced when connection returns.
           </p>
         ) : null}
-        {syncStatus ? (
+        {isHydrated && syncStatus ? (
           <p role="status" className="mb-3 text-center text-xs text-amber-200">
             {syncStatus}
           </p>
