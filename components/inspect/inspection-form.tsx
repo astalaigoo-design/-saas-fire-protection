@@ -22,11 +22,18 @@ import type { ReportEmailOutcome } from "@/lib/reports/email-report-after-submit
 
 const emailNoticeKey = (inspectionId: string) => `inspect-email-notice-${inspectionId}`;
 
-type InspectionFormProps = {
-  inspection: InspectionFormData;
+type InspectionPhoto = {
+  id: string;
+  url: string;
+  caption: string | null;
 };
 
-export function InspectionForm({ inspection }: InspectionFormProps) {
+type InspectionFormProps = {
+  inspection: InspectionFormData;
+  offlineOnly?: boolean;
+};
+
+export function InspectionForm({ inspection, offlineOnly = false }: InspectionFormProps) {
   const router = useRouter();
   const locked = inspection.status === "completed" || inspection.status === "cancelled";
   const [items, setItems] = useState<ChecklistItemState[]>(() =>
@@ -41,6 +48,7 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
   const [signature, setSignature] = useState<string | null>(
     inspection.signatureData,
   );
+  const [photos, setPhotos] = useState<InspectionPhoto[]>(() => inspection.photos);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [emailNotice, setEmailNotice] = useState<ReportEmailOutcome | null>(null);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
@@ -65,7 +73,7 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
         setSyncStatus(`${pendingMutations.length} update(s) waiting for connection.`);
       }
 
-      if (hadSuccess && navigator.onLine) router.refresh();
+      if (hadSuccess && !offlineOnly && navigator.onLine) router.refresh();
     };
 
     const handleOnline = () => {
@@ -85,24 +93,44 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, [inspection.id, isOnline, router]);
+  }, [inspection.id, isOnline, offlineOnly, router]);
 
   useEffect(() => {
+    const mergedItems = inspection.items.map((serverItem) => {
+      const local = items.find((item) => item.id === serverItem.id);
+      if (!local) return serverItem;
+      return { ...serverItem, result: local.result, notes: local.notes };
+    });
+
+    const mergedPhotos = photos.map((photo, index) => {
+      const existing = inspection.photos.find((row) => row.id === photo.id);
+      if (existing) {
+        return { ...existing, url: photo.url, caption: photo.caption };
+      }
+      return {
+        id: photo.id,
+        url: photo.url,
+        caption: photo.caption,
+        sortOrder: inspection.photos.length + index,
+      };
+    });
+
     void saveInspectionSnapshot({
       inspectionId: inspection.id,
       snapshot: {
         ...inspection,
-        items,
+        items: mergedItems,
+        photos: mergedPhotos,
         signatureData: signature,
       },
       updatedAt: Date.now(),
     });
-  }, [inspection, items, signature]);
+  }, [inspection, items, photos, signature]);
 
   useEffect(() => {
     if (!locked && inspection.status === "scheduled") {
       void (async () => {
-        if (!navigator.onLine) {
+        if (offlineOnly || !navigator.onLine) {
           await enqueueOfflineMutation({
             inspectionId: inspection.id,
             type: "inspection.start",
@@ -120,7 +148,7 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
         console.error("startInspection failed", error);
       });
     }
-  }, [inspection.id, inspection.status, locked]);
+  }, [inspection.id, inspection.status, locked, offlineOnly]);
 
   useEffect(() => {
     const raw = sessionStorage.getItem(emailNoticeKey(inspection.id));
@@ -159,7 +187,7 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
     }
 
     startTransition(async () => {
-      if (!navigator.onLine) {
+      if (offlineOnly || !navigator.onLine) {
         await enqueueOfflineMutation({
           inspectionId: inspection.id,
           type: "inspection.submit",
@@ -180,7 +208,7 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
           JSON.stringify(response.reportEmail),
         );
       }
-      if (navigator.onLine) router.refresh();
+      if (!offlineOnly && navigator.onLine) router.refresh();
     });
   };
 
@@ -197,8 +225,9 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
         />
         <PhotoUploadSection
           inspectionId={inspection.id}
-          photos={inspection.photos}
+          photos={photos}
           locked={locked}
+          onPhotosChange={setPhotos}
         />
 
         <div className="px-4">
@@ -225,7 +254,7 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
       </main>
 
       <footer className="sticky bottom-0 border-t border-slate-800 bg-slate-900/95 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur">
-        {isHydrated && !isOnline ? (
+        {isHydrated && (offlineOnly || !isOnline) ? (
           <p role="status" className="mb-3 text-center text-xs text-amber-200">
             Offline mode: updates are saved on this device and synced when connection returns.
           </p>

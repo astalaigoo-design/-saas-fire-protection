@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { InspectionForm } from "@/components/inspect/inspection-form";
+import { InspectionFormShell } from "@/components/inspect/inspection-form-shell";
 import { getInspectSession } from "@/lib/inspect/access";
 import { getInspectionForForm } from "@/lib/inspect/queries";
 
@@ -14,5 +14,7 @@ export default async function InspectPage({ params }: InspectPageProps) {
   const inspection = await getInspectionForForm(session, params.inspectionId);
   if (!inspection) notFound();
 
-  return <InspectionForm inspection={inspection} />;
+  return (
+    <InspectionFormShell inspectionId={params.inspectionId} serverInspection={inspection} />
+  );
 }

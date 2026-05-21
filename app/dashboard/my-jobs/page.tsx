@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { formatDateTime } from "@/lib/dashboard/dates";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { getMyAssignedInspections } from "@/lib/inspect/my-jobs";
+import { ResumeActiveInspection } from "@/components/offline/resume-active-inspection";
 import { buildingLabel } from "@/lib/customers/format";
 
 export default async function MyJobsPage() {
@@ -21,6 +22,8 @@ export default async function MyJobsPage() {
         title="My jobs"
         description="Tap a job to open the mobile inspection form."
       />
+
+      <ResumeActiveInspection />
 
       {jobs.length === 0 ? (
         <EmptyState title="No assigned inspections right now" />

@@ -18,15 +18,16 @@ type PhotoUploadSectionProps = {
   inspectionId: string;
   photos: PhotoRecord[];
   locked: boolean;
+  onPhotosChange: (photos: PhotoRecord[]) => void;
 };
 
 export function PhotoUploadSection({
   inspectionId,
-  photos: initialPhotos,
+  photos,
   locked,
+  onPhotosChange,
 }: PhotoUploadSectionProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [photos, setPhotos] = useState(initialPhotos);
   const [error, setError] = useState<string | null>(null);
   const [syncNotice, setSyncNotice] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -52,7 +53,7 @@ export function PhotoUploadSection({
             payload: { tempId, dataUrl },
           });
           setSyncNotice("Photo saved offline. It will upload when online.");
-          setPhotos((current) => [...current, fallbackPhoto]);
+          onPhotosChange([...photos, fallbackPhoto]);
         };
 
         if (!navigator.onLine) {
@@ -69,8 +70,8 @@ export function PhotoUploadSection({
           return;
         }
         setSyncNotice(null);
-        setPhotos((current) => [
-          ...current,
+        onPhotosChange([
+          ...photos,
           {
             id: response.photoId ?? tempId,
             url: response.url ?? dataUrl,
@@ -88,7 +89,7 @@ export function PhotoUploadSection({
     startTransition(async () => {
       if (photoId.startsWith("temp-")) {
         await removeTempPhotoUploads(inspectionId, photoId);
-        setPhotos((current) => current.filter((photo) => photo.id !== photoId));
+        onPhotosChange(photos.filter((photo) => photo.id !== photoId));
         return;
       }
 
@@ -99,7 +100,7 @@ export function PhotoUploadSection({
           payload: { photoId },
         });
         setSyncNotice("Photo deletion queued offline.");
-        setPhotos((current) => current.filter((photo) => photo.id !== photoId));
+        onPhotosChange(photos.filter((photo) => photo.id !== photoId));
       };
 
       if (!navigator.onLine) {
@@ -114,7 +115,7 @@ export function PhotoUploadSection({
           return;
         }
         setSyncNotice(null);
-        setPhotos((current) => current.filter((photo) => photo.id !== photoId));
+        onPhotosChange(photos.filter((photo) => photo.id !== photoId));
       } catch {
         await saveOfflineDelete();
       }

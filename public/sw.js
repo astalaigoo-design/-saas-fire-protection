@@ -1,5 +1,6 @@
-const STATIC_CACHE = "flareflow-static-v6";
-const PAGE_CACHE = "flareflow-pages-v6";
+const STATIC_CACHE = "flareflow-static-v7";
+const PAGE_CACHE = "flareflow-pages-v7";
+const INSPECT_CACHE = "flareflow-inspect-v7";
 
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
@@ -19,7 +20,10 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((key) => key !== STATIC_CACHE && key !== PAGE_CACHE)
+          .filter(
+            (key) =>
+              key !== STATIC_CACHE && key !== PAGE_CACHE && key !== INSPECT_CACHE,
+          )
           .map((key) => caches.delete(key)),
       ),
     ),
@@ -75,9 +79,17 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Inspection routes must never be substituted with another cached page (e.g. dashboard).
-  if (url.pathname.startsWith("/inspect")) {
-    event.respondWith(fetch(request));
+  if (url.pathname.startsWith("/inspect") && request.mode === "navigate") {
+    event.respondWith(
+      networkFirst(request, INSPECT_CACHE).catch(async () => {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        return new Response("Offline - open this inspection once while online.", {
+          status: 503,
+          headers: { "Content-Type": "text/plain" },
+        });
+      }),
+    );
     return;
   }
 

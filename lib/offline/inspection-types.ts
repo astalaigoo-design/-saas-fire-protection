@@ -1,4 +1,5 @@
 import type { InspectionItemResult } from "@prisma/client";
+import type { InspectionFormData } from "@/lib/inspect/queries";
 import type { ReportEmailOutcome } from "@/lib/reports/email-report-after-submit";
 
 export type InspectActionResponse =
@@ -45,6 +46,6 @@ export type OfflineMutation<T extends OfflineMutationType = OfflineMutationType>
 
 export type CachedInspectionSnapshot = {
   inspectionId: string;
-  snapshot: unknown;
+  snapshot: InspectionFormData;
   updatedAt: number;
 };
