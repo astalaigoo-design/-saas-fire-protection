@@ -65,7 +65,7 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
         setSyncStatus(`${pendingMutations.length} update(s) waiting for connection.`);
       }
 
-      if (hadSuccess) router.refresh();
+      if (hadSuccess && navigator.onLine) router.refresh();
     };
 
     const handleOnline = () => {
@@ -180,7 +180,7 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
           JSON.stringify(response.reportEmail),
         );
       }
-      router.refresh();
+      if (navigator.onLine) router.refresh();
     });
   };
 

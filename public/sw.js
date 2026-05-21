@@ -1,5 +1,5 @@
-const STATIC_CACHE = "flareflow-static-v3";
-const PAGE_CACHE = "flareflow-pages-v3";
+const STATIC_CACHE = "flareflow-static-v6";
+const PAGE_CACHE = "flareflow-pages-v6";
 
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
@@ -25,12 +25,6 @@ self.addEventListener("activate", (event) => {
     ),
   );
   self.clients.claim();
-});
-
-self.addEventListener("message", (event) => {
-  if (event.data?.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
 });
 
 async function networkFirst(request, cacheName) {
@@ -77,6 +71,12 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (url.pathname.startsWith("/api/")) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Inspection routes must never be substituted with another cached page (e.g. dashboard).
+  if (url.pathname.startsWith("/inspect")) {
     event.respondWith(fetch(request));
     return;
   }
