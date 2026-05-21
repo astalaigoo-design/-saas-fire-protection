@@ -51,36 +51,27 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      localStorage.setItem(lastInspectionPathKey, `/inspect/${inspection.id}`);
-    } catch {
-      // Ignore storage exceptions on locked-down browsers.
-    }
+    localStorage.setItem(lastInspectionPathKey, `/inspect/${inspection.id}`);
   }, [inspection.id]);
 
   useEffect(() => {
     let isMounted = true;
     const runSync = async () => {
-      try {
-        const hadSuccess = await syncOfflineInspectionMutations(inspection.id, {
-          onMutationError: (_mutation, error) => setSyncStatus(`Sync paused: ${error}`),
-        });
-        const pendingMutations = await listOfflineMutations(inspection.id);
+      const hadSuccess = await syncOfflineInspectionMutations(inspection.id, {
+        onMutationError: (_mutation, error) => setSyncStatus(`Sync paused: ${error}`),
+      });
+      const pendingMutations = await listOfflineMutations(inspection.id);
 
-        if (!isMounted) return;
-        if (pendingMutations.length === 0) {
-          setSyncStatus(null);
-        } else if (isOnline) {
-          setSyncStatus(`Syncing ${pendingMutations.length} offline update(s)…`);
-        } else {
-          setSyncStatus(`${pendingMutations.length} update(s) waiting for connection.`);
-        }
-
-        if (hadSuccess) router.refresh();
-      } catch {
-        if (!isMounted) return;
-        setSyncStatus("Offline queue unavailable on this device.");
+      if (!isMounted) return;
+      if (pendingMutations.length === 0) {
+        setSyncStatus(null);
+      } else if (isOnline) {
+        setSyncStatus(`Syncing ${pendingMutations.length} offline update(s)…`);
+      } else {
+        setSyncStatus(`${pendingMutations.length} update(s) waiting for connection.`);
       }
+
+      if (hadSuccess) router.refresh();
     };
 
     const handleOnline = () => {
@@ -111,8 +102,6 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
         signatureData: signature,
       },
       updatedAt: Date.now(),
-    }).catch(() => {
-      // Keep field UX stable even if offline storage is unavailable.
     });
   }, [inspection, items, signature]);
 
@@ -120,16 +109,12 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
     if (!locked && inspection.status === "scheduled") {
       void (async () => {
         if (!navigator.onLine) {
-          try {
-            await enqueueOfflineMutation({
-              inspectionId: inspection.id,
-              type: "inspection.start",
-              payload: {},
-            });
-            setSyncStatus("Start action queued offline.");
-          } catch {
-            setSyncStatus("Offline queue unavailable on this device.");
-          }
+          await enqueueOfflineMutation({
+            inspectionId: inspection.id,
+            type: "inspection.start",
+            payload: {},
+          });
+          setSyncStatus("Start action queued offline.");
           return;
         }
 
@@ -181,16 +166,12 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
 
     startTransition(async () => {
       if (!navigator.onLine) {
-        try {
-          await enqueueOfflineMutation({
-            inspectionId: inspection.id,
-            type: "inspection.submit",
-            payload: { signatureData: signature },
-          });
-          setSyncStatus("Inspection saved offline. Submission will sync when online.");
-        } catch {
-          setSubmitError("Offline queue unavailable on this device.");
-        }
+        await enqueueOfflineMutation({
+          inspectionId: inspection.id,
+          type: "inspection.submit",
+          payload: { signatureData: signature },
+        });
+        setSyncStatus("Inspection saved offline. Submission will sync when online.");
         return;
       }
 

@@ -46,17 +46,13 @@ export function PhotoUploadSection({
         };
 
         const saveOffline = async () => {
-          try {
-            await enqueueOfflineMutation({
-              inspectionId,
-              type: "photo.upload",
-              payload: { tempId, dataUrl },
-            });
-            setSyncNotice("Photo saved offline. It will upload when online.");
-            setPhotos((current) => [...current, fallbackPhoto]);
-          } catch {
-            setError("Offline queue unavailable on this device.");
-          }
+          await enqueueOfflineMutation({
+            inspectionId,
+            type: "photo.upload",
+            payload: { tempId, dataUrl },
+          });
+          setSyncNotice("Photo saved offline. It will upload when online.");
+          setPhotos((current) => [...current, fallbackPhoto]);
         };
 
         if (!navigator.onLine) {
@@ -97,17 +93,13 @@ export function PhotoUploadSection({
       }
 
       const saveOfflineDelete = async () => {
-        try {
-          await enqueueOfflineMutation({
-            inspectionId,
-            type: "photo.delete",
-            payload: { photoId },
-          });
-          setSyncNotice("Photo deletion queued offline.");
-          setPhotos((current) => current.filter((photo) => photo.id !== photoId));
-        } catch {
-          setError("Offline queue unavailable on this device.");
-        }
+        await enqueueOfflineMutation({
+          inspectionId,
+          type: "photo.delete",
+          payload: { photoId },
+        });
+        setSyncNotice("Photo deletion queued offline.");
+        setPhotos((current) => current.filter((photo) => photo.id !== photoId));
       };
 
       if (!navigator.onLine) {

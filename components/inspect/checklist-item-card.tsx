@@ -59,21 +59,17 @@ export function ChecklistItemCard({
       };
 
       const enqueueAsOffline = async () => {
-        try {
-          await enqueueOfflineMutation({
-            inspectionId,
-            type: "checklist.update",
-            payload: {
-              itemId: item.id,
-              result,
-              notes,
-            },
-          });
-          setSyncNotice("Saved offline. Sync will run when connection returns.");
-          onUpdated(optimisticItem);
-        } catch {
-          setError("Offline queue unavailable on this device.");
-        }
+        await enqueueOfflineMutation({
+          inspectionId,
+          type: "checklist.update",
+          payload: {
+            itemId: item.id,
+            result,
+            notes,
+          },
+        });
+        setSyncNotice("Saved offline. Sync will run when connection returns.");
+        onUpdated(optimisticItem);
       };
 
       if (!navigator.onLine) {
