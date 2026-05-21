@@ -3,7 +3,6 @@ import { UserButton } from "@clerk/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { DashboardNav, DashboardNavMobile } from "@/components/dashboard/dashboard-nav";
-import { OfflineDashboardGuard } from "@/components/offline/offline-dashboard-guard";
 import { resolveAppRole } from "@/lib/auth/roles";
 import { APP_NAME } from "@/lib/branding";
 import { getDashboardNavItems } from "@/lib/dashboard/nav-items";
@@ -38,7 +37,6 @@ export default async function DashboardLayout({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <OfflineDashboardGuard />
         <header className="sticky top-0 z-40 border-b border-border bg-card/80 backdrop-blur-md lg:hidden">
           <div className="flex items-center justify-between gap-3 px-4 py-3">
             <Link

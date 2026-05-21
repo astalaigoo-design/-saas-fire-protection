@@ -21,7 +21,6 @@ import type { InspectionFormData } from "@/lib/inspect/queries";
 import type { ReportEmailOutcome } from "@/lib/reports/email-report-after-submit";
 
 const emailNoticeKey = (inspectionId: string) => `inspect-email-notice-${inspectionId}`;
-const lastInspectionPathKey = "offline-last-inspection-path";
 
 type InspectionFormProps = {
   inspection: InspectionFormData;
@@ -48,11 +47,6 @@ export function InspectionForm({ inspection }: InspectionFormProps) {
   const [isHydrated, setIsHydrated] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [pending, startTransition] = useTransition();
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    localStorage.setItem(lastInspectionPathKey, `/inspect/${inspection.id}`);
-  }, [inspection.id]);
 
   useEffect(() => {
     let isMounted = true;
