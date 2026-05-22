@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { InspectionFormShell } from "@/components/inspect/inspection-form-shell";
+import { cacheOfflineInspectShell } from "@/lib/offline/cache-page";
 
 function OfflineInspectContent() {
   const searchParams = useSearchParams();
@@ -10,6 +11,9 @@ function OfflineInspectContent() {
   const inspectionId = searchParams.get("inspectionId")?.trim() ?? "";
 
   useEffect(() => {
+    if (navigator.onLine) {
+      cacheOfflineInspectShell();
+    }
     if (!inspectionId || !navigator.onLine) return;
     router.replace(`/inspect/${inspectionId}`);
   }, [inspectionId, router]);

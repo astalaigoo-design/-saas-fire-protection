@@ -3,28 +3,59 @@
 import Link from "next/link";
 import type { MouseEvent } from "react";
 import { useEffect, useState } from "react";
-import { getActiveInspectionId } from "@/lib/offline/active-inspection";
+import { setActiveInspectionId } from "@/lib/offline/active-inspection";
 import { hardNavigate, shouldHardNavigateOffline } from "@/lib/offline/hard-navigate";
+import { listInspectionSnapshots } from "@/lib/offline/indexeddb";
 import { inspectOfflineHref } from "@/lib/offline/inspect-route";
+import { parseInspectionSnapshot } from "@/lib/offline/inspection-snapshot";
+import { buildingLabel } from "@/lib/customers/format";
+
+type OfflineJob = {
+  inspectionId: string;
+  label: string;
+};
 
 export function ResumeActiveInspection() {
-  const [inspectionId, setInspectionId] = useState<string | null>(null);
+  const [jobs, setJobs] = useState<OfflineJob[]>([]);
 
   useEffect(() => {
-    if (!navigator.onLine) {
-      setInspectionId(getActiveInspectionId());
-    }
+    const load = async () => {
+      if (navigator.onLine) {
+        setJobs([]);
+        return;
+      }
 
-    const onOffline = () => setInspectionId(getActiveInspectionId());
+      const rows = await listInspectionSnapshots();
+      const next = rows
+        .map((row) => {
+          const snapshot = parseInspectionSnapshot(row.snapshot);
+          if (!snapshot) return null;
+          return {
+            inspectionId: row.inspectionId,
+            label: buildingLabel(snapshot.building),
+          };
+        })
+        .filter((row): row is OfflineJob => row !== null);
+
+      setJobs(next);
+      if (next[0]) setActiveInspectionId(next[0].inspectionId);
+    };
+
+    const onOffline = () => void load();
+    const onOnline = () => setJobs([]);
+
+    void load();
     window.addEventListener("offline", onOffline);
-    return () => window.removeEventListener("offline", onOffline);
+    window.addEventListener("online", onOnline);
+    return () => {
+      window.removeEventListener("offline", onOffline);
+      window.removeEventListener("online", onOnline);
+    };
   }, []);
 
-  if (!inspectionId) return null;
+  if (jobs.length === 0) return null;
 
-  const href = inspectOfflineHref(inspectionId);
-
-  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+  const navigate = (href: string, event: MouseEvent<HTMLAnchorElement>) => {
     if (shouldHardNavigateOffline()) {
       event.preventDefault();
       hardNavigate(href);
@@ -35,15 +66,26 @@ export function ResumeActiveInspection() {
     <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3">
       <p className="text-sm font-medium text-amber-200">You are offline</p>
       <p className="mt-1 text-sm text-amber-200/80">
-        Resume your in-progress inspection on this device.
+        {jobs.length === 1
+          ? "Resume your saved inspection on this device."
+          : `${jobs.length} inspections saved on this device. Pick one to continue.`}
       </p>
-      <Link
-        href={href}
-        onClick={handleClick}
-        className="mt-3 inline-flex min-h-11 items-center rounded-lg bg-amber-500 px-4 text-sm font-semibold text-slate-950"
-      >
-        Resume inspection
-      </Link>
+      <ul className="mt-3 space-y-2">
+        {jobs.map((job) => {
+          const href = inspectOfflineHref(job.inspectionId);
+          return (
+            <li key={job.inspectionId}>
+              <Link
+                href={href}
+                onClick={(event) => navigate(href, event)}
+                className="flex min-h-11 items-center rounded-lg bg-amber-500 px-4 text-sm font-semibold text-slate-950"
+              >
+                {job.label}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

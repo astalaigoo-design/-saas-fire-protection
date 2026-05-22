@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { InspectionForm } from "@/components/inspect/inspection-form";
 import { setActiveInspectionId } from "@/lib/offline/active-inspection";
 import { cacheInspectionForOffline } from "@/lib/offline/cache-page";
@@ -36,10 +36,10 @@ function OfflineInspectionUnavailable({ inspectionId }: { inspectionId: string }
     <div className="flex min-h-[100dvh] flex-col justify-center bg-slate-950 p-6 text-slate-50">
       <h1 className="text-lg font-semibold text-white">Inspection not available offline</h1>
       <p className="mt-2 text-sm text-slate-400">
-        Open inspection{" "}
-        <span className="font-mono text-slate-300">{inspectionId.slice(0, 8)}…</span> while you have
-        internet once. After that, you can continue offline on this device.
+        Open this job from My Jobs while you have internet once. After that, you can work offline
+        on this device — including other jobs you have opened online.
       </p>
+      <p className="mt-2 font-mono text-xs text-slate-500">{inspectionId.slice(0, 12)}…</p>
       <Link
         href="/dashboard/my-jobs"
         className="mt-6 flex min-h-12 items-center justify-center rounded-xl bg-slate-800 text-sm font-semibold text-white"
@@ -60,38 +60,42 @@ export function InspectionFormShell({
   const serverRef = useRef(serverInspection);
   if (serverInspection) serverRef.current = serverInspection;
 
-  useEffect(() => {
-    let cancelled = false;
+  const bootstrap = useCallback(async () => {
+    const cachedRow = await getInspectionSnapshot(inspectionId);
+    const cached = cachedRow ? parseInspectionSnapshot(cachedRow.snapshot) : null;
+    const offline = typeof navigator !== "undefined" && !navigator.onLine;
+    const server = serverRef.current;
+    const resolved = preferOfflineInspection(server, cached, offline);
 
-    const bootstrap = async () => {
-      const cachedRow = await getInspectionSnapshot(inspectionId);
-      const cached = cachedRow ? parseInspectionSnapshot(cachedRow.snapshot) : null;
-      const offline = typeof navigator !== "undefined" && !navigator.onLine;
-      const server = serverRef.current;
-      const resolved = preferOfflineInspection(server, cached, offline);
-
-      if (cancelled) return;
-
-      if (resolved) {
-        setInspection(resolved);
-        setOfflineOnly(offline && !server);
-        setActiveInspectionId(inspectionId);
-        setReady(true);
-        return;
-      }
-
-      setInspection(null);
-      setOfflineOnly(offline);
+    if (resolved) {
+      setInspection(resolved);
+      setOfflineOnly(offline && !server);
+      setActiveInspectionId(inspectionId);
       setReady(true);
-    };
+      return;
+    }
 
+    setInspection(null);
+    setOfflineOnly(offline);
+    setReady(true);
+  }, [inspectionId]);
+
+  useEffect(() => {
     setReady(false);
     void bootstrap();
+  }, [bootstrap]);
 
-    return () => {
-      cancelled = true;
+  useEffect(() => {
+    const onConnectivityChange = () => {
+      void bootstrap();
     };
-  }, [inspectionId]);
+    window.addEventListener("online", onConnectivityChange);
+    window.addEventListener("offline", onConnectivityChange);
+    return () => {
+      window.removeEventListener("online", onConnectivityChange);
+      window.removeEventListener("offline", onConnectivityChange);
+    };
+  }, [bootstrap]);
 
   useEffect(() => {
     if (!ready || !inspection) return;

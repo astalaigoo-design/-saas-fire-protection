@@ -1,6 +1,6 @@
-const STATIC_CACHE = "flareflow-static-v9";
-const PAGE_CACHE = "flareflow-pages-v9";
-const INSPECT_CACHE = "flareflow-inspect-v9";
+const STATIC_CACHE = "flareflow-static-v10";
+const PAGE_CACHE = "flareflow-pages-v10";
+const INSPECT_CACHE = "flareflow-inspect-v10";
 
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
@@ -14,6 +14,19 @@ function getInspectionIdFromPath(pathname) {
   const id = match[1];
   if (id === "offline") return null;
   return id;
+}
+
+async function matchOfflineInspectShell() {
+  const cache = await caches.open(INSPECT_CACHE);
+  const requests = await cache.keys();
+  for (const req of requests) {
+    const pathname = new URL(req.url).pathname;
+    if (pathname === "/inspect/offline") {
+      const hit = await cache.match(req);
+      if (hit) return hit;
+    }
+  }
+  return null;
 }
 
 self.addEventListener("install", (event) => {
@@ -40,11 +53,20 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("message", (event) => {
-  if (event.data?.type === "CACHE_URL" && typeof event.data.url === "string") {
-    event.waitUntil(
-      caches.open(INSPECT_CACHE).then((cache) => cache.add(event.data.url).catch(() => undefined)),
-    );
-  }
+  if (event.data?.type !== "CACHE_URL" || typeof event.data.url !== "string") return;
+
+  event.waitUntil(
+    (async () => {
+      try {
+        const response = await fetch(event.data.url);
+        if (!response.ok) return;
+        const cache = await caches.open(INSPECT_CACHE);
+        await cache.put(event.data.url, response);
+      } catch {
+        /* ignore cache failures */
+      }
+    })(),
+  );
 });
 
 async function networkFirst(request, cacheName) {
@@ -52,7 +74,7 @@ async function networkFirst(request, cacheName) {
     const response = await fetch(request);
     if (request.method === "GET" && response.ok) {
       const cache = await caches.open(cacheName);
-      cache.put(request, response.clone());
+      await cache.put(request, response.clone());
     }
     return response;
   } catch {
@@ -83,18 +105,29 @@ async function staleWhileRevalidate(request, cacheName) {
   );
 }
 
-async function offlineInspectFallback(request, url) {
-  const inspectionId = getInspectionIdFromPath(url.pathname);
-  if (!inspectionId) return null;
+async function serveOfflineInspection(request, url) {
+  const shell = await matchOfflineInspectShell();
 
-  const offlineUrl = new URL("/inspect/offline", url.origin);
-  offlineUrl.searchParams.set("inspectionId", inspectionId);
+  if (url.pathname === "/inspect/offline") {
+    const inspectionId = url.searchParams.get("inspectionId");
+    if (shell) return shell;
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    if (!inspectionId) {
+      return new Response("Offline — open My Jobs while online first.", {
+        status: 503,
+        headers: { "Content-Type": "text/plain" },
+      });
+    }
+  }
 
-  const cachedOffline =
-    (await caches.match(offlineUrl.href)) ||
-    (await caches.match(`${url.origin}/inspect/offline`));
+  const inspectionId =
+    getInspectionIdFromPath(url.pathname) || url.searchParams.get("inspectionId");
 
-  if (cachedOffline) {
+  if (inspectionId && shell) {
+    const offlineUrl = new URL("/inspect/offline", url.origin);
+    offlineUrl.searchParams.set("inspectionId", inspectionId);
+    if (request.url === offlineUrl.href) return shell;
     return Response.redirect(offlineUrl.href, 302);
   }
 
@@ -119,14 +152,14 @@ self.addEventListener("fetch", (event) => {
   ) {
     event.respondWith(
       networkFirst(request, INSPECT_CACHE).catch(async () => {
+        const offline = await serveOfflineInspection(request, url);
+        if (offline) return offline;
+
         const cached = await caches.match(request);
         if (cached) return cached;
 
-        const fallback = await offlineInspectFallback(request, url);
-        if (fallback) return fallback;
-
         return new Response(
-          "Offline — open this inspection once while online, then use Resume on My Jobs.",
+          "Offline — open My Jobs while online once, then each inspection you need.",
           {
             status: 503,
             headers: { "Content-Type": "text/plain" },

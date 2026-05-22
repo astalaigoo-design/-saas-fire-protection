@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 
-const SW_URL = "/sw.js?v=9";
-const SW_MIGRATION_KEY = "flareflow-sw-migrated-v9";
+const SW_URL = "/sw.js?v=10";
+const SW_MIGRATION_KEY = "flareflow-sw-migrated-v10";
 
 export function ServiceWorkerRegistration() {
   useEffect(() => {

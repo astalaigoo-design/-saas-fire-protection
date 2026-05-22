@@ -68,6 +68,15 @@ export async function getInspectionSnapshot(
   return result ?? null;
 }
 
+export async function listInspectionSnapshots(): Promise<CachedInspectionSnapshot[]> {
+  const all = await transaction<CachedInspectionSnapshot[]>(
+    SNAPSHOT_STORE,
+    "readonly",
+    (store) => store.getAll(),
+  );
+  return all.sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
 export async function enqueueOfflineMutation<T extends OfflineMutationType>(
   input: {
     inspectionId: string;
