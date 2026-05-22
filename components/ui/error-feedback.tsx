@@ -18,9 +18,13 @@ function getSafeUserMessage(error: Error | undefined, fallbackMessage: string): 
     "direct_url",
     "prisma",
     "p1000",
+    "p2021",
+    "p2022",
     "stack",
     "sql",
     "env",
+    "server components render",
+    "digest",
   ];
 
   const normalized = raw.toLowerCase();

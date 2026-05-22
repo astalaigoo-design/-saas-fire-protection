@@ -188,3 +188,26 @@ export async function listCompanyQuotes(companyId: string): Promise<QuoteListIte
     select: quoteListSelect,
   });
 }
+
+/** Avoid crashing the app when quote migrations have not been applied yet. */
+export async function listCompanyQuotesSafe(companyId: string): Promise<{
+  quotes: QuoteListItem[];
+  schemaReady: boolean;
+}> {
+  try {
+    const quotes = await listCompanyQuotes(companyId);
+    return { quotes, schemaReady: true };
+  } catch (error) {
+    console.error("listCompanyQuotes failed", error);
+    return { quotes: [], schemaReady: false };
+  }
+}
+
+export async function listCompanyReportsSafe(companyId: string): Promise<ReportListItem[]> {
+  try {
+    return await listCompanyReports(companyId);
+  } catch (error) {
+    console.error("listCompanyReports failed", error);
+    return [];
+  }
+}

@@ -32,10 +32,17 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
-export function formatDateTime(date: Date): string {
-  return dateTimeFormatter.format(date);
+function toDate(value: Date | string): Date | null {
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
-export function formatDate(date: Date): string {
-  return dateFormatter.format(date);
+export function formatDateTime(date: Date | string): string {
+  const parsed = toDate(date);
+  return parsed ? dateTimeFormatter.format(parsed) : "—";
+}
+
+export function formatDate(date: Date | string): string {
+  const parsed = toDate(date);
+  return parsed ? dateFormatter.format(parsed) : "—";
 }

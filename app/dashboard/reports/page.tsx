@@ -13,8 +13,8 @@ import { ensureCanManageJobs } from "@/lib/auth/guards";
 import { buildingLabel } from "@/lib/customers/format";
 import { formatDate } from "@/lib/dashboard/dates";
 import {
-  listCompanyQuotes,
-  listCompanyReports,
+  listCompanyQuotesSafe,
+  listCompanyReportsSafe,
 } from "@/lib/dashboard/queries";
 import { getDashboardSession } from "@/lib/dashboard/session";
 
@@ -30,9 +30,9 @@ export default async function ReportsPage() {
   if (!session) redirect("/sign-in");
   ensureCanManageJobs(session.role);
 
-  const [quotes, reports] = await Promise.all([
-    listCompanyQuotes(session.companyId),
-    listCompanyReports(session.companyId),
+  const [{ quotes, schemaReady }, reports] = await Promise.all([
+    listCompanyQuotesSafe(session.companyId),
+    listCompanyReportsSafe(session.companyId),
   ]);
   const draftQuotes = quotes.filter((quote) => quote.status === "draft");
   const sentQuotes = quotes.filter((quote) => quote.status === "sent");
@@ -46,6 +46,16 @@ export default async function ReportsPage() {
         title="Reports"
         description="Compliance reports and draft repair quotes from completed inspections."
       />
+
+      {!schemaReady ? (
+        <p
+          role="status"
+          className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200"
+        >
+          Repair quotes are temporarily unavailable while the database finishes updating. Compliance
+          report downloads below should still work.
+        </p>
+      ) : null}
 
       <section className="space-y-3">
         <h2 className="font-heading text-lg font-semibold text-foreground">
