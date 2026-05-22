@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/dashboard/dates";
+import { downloadComplianceReport } from "@/lib/reports/download-report-client";
 import type { BuildingInspectionRow } from "@/lib/buildings/queries";
 
 type BuildingActionsProps = {
@@ -66,7 +67,9 @@ export function BuildingActions({
                 key={inspection.id}
                 className="flex cursor-pointer flex-col items-start gap-0.5"
                 onClick={() => {
-                  window.open(`/api/inspections/${inspection.id}/report`, "_blank", "noopener");
+                  void downloadComplianceReport(inspection.id).then((error) => {
+                    if (error) window.alert(error);
+                  });
                 }}
               >
                 <span className="font-medium">{inspection.inspectionType.name}</span>

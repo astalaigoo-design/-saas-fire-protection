@@ -1,6 +1,6 @@
-const STATIC_CACHE = "flareflow-static-v8";
-const PAGE_CACHE = "flareflow-pages-v8";
-const INSPECT_CACHE = "flareflow-inspect-v8";
+const STATIC_CACHE = "flareflow-static-v9";
+const PAGE_CACHE = "flareflow-pages-v9";
+const INSPECT_CACHE = "flareflow-inspect-v9";
 
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
@@ -113,7 +113,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (url.pathname.startsWith("/inspect") && request.mode === "navigate") {
+  if (
+    (url.pathname.startsWith("/inspect/") || url.pathname === "/inspect/offline") &&
+    request.mode === "navigate"
+  ) {
     event.respondWith(
       networkFirst(request, INSPECT_CACHE).catch(async () => {
         const cached = await caches.match(request);

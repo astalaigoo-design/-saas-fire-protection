@@ -1,10 +1,8 @@
 import { ReportStatus } from "@prisma/client";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { ComplianceReportDocument } from "@/lib/reports/compliance-report-document";
-import {
-  filterPhotosForPdf,
-  sanitizeSignatureForPdf,
-} from "@/lib/reports/pdf-images";
+import { embedPhotosForPdf } from "@/lib/reports/embed-pdf-images";
+import { sanitizeSignatureForPdf } from "@/lib/reports/pdf-images";
 import type { ComplianceReportData } from "@/lib/reports/queries";
 import { getComplianceReportData } from "@/lib/reports/queries";
 import type { DashboardSession } from "@/lib/dashboard/session";
@@ -17,10 +15,11 @@ export async function fetchComplianceReportData(
   return getComplianceReportData(session, inspectionId);
 }
 
-function prepareDataForPdf(data: ComplianceReportData): ComplianceReportData {
+async function prepareDataForPdf(data: ComplianceReportData): Promise<ComplianceReportData> {
+  const photos = await embedPhotosForPdf(data.photos);
   return {
     ...data,
-    photos: filterPhotosForPdf(data.photos),
+    photos,
     signatureData: sanitizeSignatureForPdf(data.signatureData),
     company: {
       ...data.company,
@@ -36,7 +35,7 @@ function prepareDataForPdf(data: ComplianceReportData): ComplianceReportData {
 export async function renderComplianceReportPdf(
   data: ComplianceReportData,
 ): Promise<Buffer> {
-  const safeData = prepareDataForPdf(data);
+  const safeData = await prepareDataForPdf(data);
   const buffer = await renderToBuffer(<ComplianceReportDocument data={safeData} />);
   return Buffer.from(buffer);
 }

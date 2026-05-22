@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { DownloadReportButton } from "@/components/inspect/download-report-button";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { QuoteLineItemsEditor } from "@/components/quotes/quote-line-items-editor";
 import {
@@ -222,6 +223,12 @@ export default async function ReportsPage() {
                         ? ` · ${formatDate(report.generatedAt)}`
                         : ""}
                     </p>
+                    <div className="mt-3">
+                      <DownloadReportButton
+                        inspectionId={report.inspection.id}
+                        variant="dashboard"
+                      />
+                    </div>
                   </CardContent>
                 </Card>
               </li>

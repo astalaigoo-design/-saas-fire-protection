@@ -1,11 +1,9 @@
-import Link from "next/link";
 import type { BuildingInspectionRow } from "@/lib/buildings/queries";
+import { DownloadReportButton } from "@/components/inspect/download-report-button";
 import { formatDate } from "@/lib/dashboard/dates";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 
 type BuildingReportsTabProps = {
   inspections: BuildingInspectionRow[];
@@ -89,13 +87,10 @@ export function BuildingReportsTab({ inspections }: BuildingReportsTabProps) {
                 <Badge variant="outline" className="capitalize">
                   {report.status.replace("_", " ")}
                 </Badge>
-                <Link
-                  href={report.downloadHref}
-                  className={cn(buttonVariants({ size: "sm" }), "min-h-10")}
-                  download
-                >
-                  Download PDF
-                </Link>
+                <DownloadReportButton
+                  inspectionId={report.inspectionId}
+                  variant="dashboard"
+                />
               </div>
             </CardContent>
           </Card>

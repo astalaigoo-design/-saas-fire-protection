@@ -255,15 +255,31 @@ export async function submitInspection(
 
   await syncBuildingComplianceStatus(loaded.inspection.buildingId);
 
-  await createDraftQuoteFromInspection({
-    companyId: session.companyId,
-    inspectionId: parsed.data.inspectionId,
-  });
+  try {
+    await createDraftQuoteFromInspection({
+      companyId: session.companyId,
+      inspectionId: parsed.data.inspectionId,
+    });
+  } catch (error) {
+    console.error("createDraftQuoteFromInspection failed", error);
+  }
 
-  const reportEmail = await emailComplianceReportAfterSubmit(
-    session,
-    parsed.data.inspectionId,
-  );
+  let reportEmail: ReportEmailOutcome = {
+    status: "skipped",
+    reason: "Report email was not sent.",
+  };
+  try {
+    reportEmail = await emailComplianceReportAfterSubmit(
+      session,
+      parsed.data.inspectionId,
+    );
+  } catch (error) {
+    console.error("emailComplianceReportAfterSubmit failed", error);
+    reportEmail = {
+      status: "skipped",
+      reason: "Inspection was saved but the report could not be generated.",
+    };
+  }
 
   revalidatePath(`/inspect/${parsed.data.inspectionId}`);
   revalidatePath("/dashboard");

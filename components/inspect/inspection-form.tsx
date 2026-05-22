@@ -1,6 +1,6 @@
 "use client";
 
-import { InspectionItemResult } from "@prisma/client";
+import { InspectionItemResult, InspectionStatus } from "@prisma/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -35,7 +35,9 @@ type InspectionFormProps = {
 
 export function InspectionForm({ inspection, offlineOnly = false }: InspectionFormProps) {
   const router = useRouter();
-  const locked = inspection.status === "completed" || inspection.status === "cancelled";
+  const serverLocked =
+    inspection.status === "completed" || inspection.status === "cancelled";
+  const [submittedOffline, setSubmittedOffline] = useState(false);
   const [items, setItems] = useState<ChecklistItemState[]>(() =>
     inspection.items.map((item) => ({
       id: item.id,
@@ -49,6 +51,16 @@ export function InspectionForm({ inspection, offlineOnly = false }: InspectionFo
     inspection.signatureData,
   );
   const [photos, setPhotos] = useState<InspectionPhoto[]>(() => inspection.photos);
+  const locked = serverLocked || submittedOffline;
+  const displayInspection = submittedOffline
+    ? {
+        ...inspection,
+        status: InspectionStatus.completed,
+        signatureData: signature,
+        completedAt: inspection.completedAt ?? new Date(),
+        signedAt: inspection.signedAt ?? new Date(),
+      }
+    : inspection;
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [emailNotice, setEmailNotice] = useState<ReportEmailOutcome | null>(null);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
@@ -193,6 +205,7 @@ export function InspectionForm({ inspection, offlineOnly = false }: InspectionFo
           type: "inspection.submit",
           payload: { signatureData: signature },
         });
+        setSubmittedOffline(true);
         setSyncStatus("Inspection saved offline. Submission will sync when online.");
         return;
       }
@@ -288,7 +301,13 @@ export function InspectionForm({ inspection, offlineOnly = false }: InspectionFo
         ) : null}
         {locked ? (
           <div className="flex w-full flex-col gap-3">
-            <DownloadReportButton inspectionId={inspection.id} />
+            {submittedOffline && !isOnline ? (
+              <p className="text-center text-xs text-amber-200">
+                Report download will be available after this inspection syncs online.
+              </p>
+            ) : (
+              <DownloadReportButton inspectionId={inspection.id} />
+            )}
             <Link
               href="/dashboard"
               className="flex min-h-12 w-full items-center justify-center rounded-xl bg-slate-800 text-sm font-semibold text-white"
