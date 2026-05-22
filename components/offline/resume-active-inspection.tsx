@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getActiveInspectionId } from "@/lib/offline/active-inspection";
+import { inspectOfflineHref } from "@/lib/offline/inspect-route";
 
 export function ResumeActiveInspection() {
   const [inspectionId, setInspectionId] = useState<string | null>(null);
@@ -26,7 +27,7 @@ export function ResumeActiveInspection() {
         Resume your in-progress inspection on this device.
       </p>
       <Link
-        href={`/inspect/${inspectionId}`}
+        href={inspectOfflineHref(inspectionId)}
         className="mt-3 inline-flex min-h-11 items-center rounded-lg bg-amber-500 px-4 text-sm font-semibold text-slate-950"
       >
         Resume inspection

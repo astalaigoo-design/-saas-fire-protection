@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { InspectionForm } from "@/components/inspect/inspection-form";
 import { setActiveInspectionId } from "@/lib/offline/active-inspection";
+import { cacheInspectionForOffline } from "@/lib/offline/cache-page";
 import { getInspectionSnapshot } from "@/lib/offline/indexeddb";
 import {
   parseInspectionSnapshot,
@@ -91,6 +92,11 @@ export function InspectionFormShell({
       cancelled = true;
     };
   }, [inspectionId]);
+
+  useEffect(() => {
+    if (!ready || !inspection) return;
+    cacheInspectionForOffline(inspectionId);
+  }, [ready, inspection, inspectionId]);
 
   if (!ready) return <InspectionFormSkeleton />;
   if (!inspection) return <OfflineInspectionUnavailable inspectionId={inspectionId} />;

@@ -1,12 +1,20 @@
-const STATIC_CACHE = "flareflow-static-v7";
-const PAGE_CACHE = "flareflow-pages-v7";
-const INSPECT_CACHE = "flareflow-inspect-v7";
+const STATIC_CACHE = "flareflow-static-v8";
+const PAGE_CACHE = "flareflow-pages-v8";
+const INSPECT_CACHE = "flareflow-inspect-v8";
 
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
   "/icons/icon-192.svg",
   "/icons/icon-512.svg",
 ];
+
+function getInspectionIdFromPath(pathname) {
+  const match = pathname.match(/^\/inspect\/([^/]+)$/);
+  if (!match) return null;
+  const id = match[1];
+  if (id === "offline") return null;
+  return id;
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -29,6 +37,14 @@ self.addEventListener("activate", (event) => {
     ),
   );
   self.clients.claim();
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "CACHE_URL" && typeof event.data.url === "string") {
+    event.waitUntil(
+      caches.open(INSPECT_CACHE).then((cache) => cache.add(event.data.url).catch(() => undefined)),
+    );
+  }
 });
 
 async function networkFirst(request, cacheName) {
@@ -67,6 +83,24 @@ async function staleWhileRevalidate(request, cacheName) {
   );
 }
 
+async function offlineInspectFallback(request, url) {
+  const inspectionId = getInspectionIdFromPath(url.pathname);
+  if (!inspectionId) return null;
+
+  const offlineUrl = new URL("/inspect/offline", url.origin);
+  offlineUrl.searchParams.set("inspectionId", inspectionId);
+
+  const cachedOffline =
+    (await caches.match(offlineUrl.href)) ||
+    (await caches.match(`${url.origin}/inspect/offline`));
+
+  if (cachedOffline) {
+    return Response.redirect(offlineUrl.href, 302);
+  }
+
+  return null;
+}
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
@@ -84,10 +118,17 @@ self.addEventListener("fetch", (event) => {
       networkFirst(request, INSPECT_CACHE).catch(async () => {
         const cached = await caches.match(request);
         if (cached) return cached;
-        return new Response("Offline - open this inspection once while online.", {
-          status: 503,
-          headers: { "Content-Type": "text/plain" },
-        });
+
+        const fallback = await offlineInspectFallback(request, url);
+        if (fallback) return fallback;
+
+        return new Response(
+          "Offline — open this inspection once while online, then use Resume on My Jobs.",
+          {
+            status: 503,
+            headers: { "Content-Type": "text/plain" },
+          },
+        );
       }),
     );
     return;
@@ -98,10 +139,13 @@ self.addEventListener("fetch", (event) => {
       networkFirst(request, PAGE_CACHE).catch(async () => {
         const cached = await caches.match(request);
         if (cached) return cached;
-        return new Response("Offline - this page is not cached yet.", {
-          status: 503,
-          headers: { "Content-Type": "text/plain" },
-        });
+        return new Response(
+          "Offline — open My Jobs once while online, then use Resume inspection.",
+          {
+            status: 503,
+            headers: { "Content-Type": "text/plain" },
+          },
+        );
       }),
     );
     return;

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { InspectJobLink } from "@/components/inspect/inspect-job-link";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { formatDateTime } from "@/lib/dashboard/dates";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { getMyAssignedInspections } from "@/lib/inspect/my-jobs";
+import { CacheRouteOnVisit } from "@/components/offline/cache-route-on-visit";
 import { ResumeActiveInspection } from "@/components/offline/resume-active-inspection";
 import { buildingLabel } from "@/lib/customers/format";
 
@@ -23,6 +24,7 @@ export default async function MyJobsPage() {
         description="Tap a job to open the mobile inspection form."
       />
 
+      <CacheRouteOnVisit path="/dashboard/my-jobs" />
       <ResumeActiveInspection />
 
       {jobs.length === 0 ? (
@@ -31,7 +33,10 @@ export default async function MyJobsPage() {
         <ul className="space-y-3">
           {jobs.map((job) => (
             <li key={job.id}>
-              <Link href={`/inspect/${job.id}`} className="block rounded-xl transition-opacity hover:opacity-95">
+              <InspectJobLink
+                inspectionId={job.id}
+                className="block rounded-xl transition-opacity hover:opacity-95"
+              >
                 <Card>
                   <CardContent>
                     <span className="font-medium text-foreground">
@@ -45,7 +50,7 @@ export default async function MyJobsPage() {
                     </span>
                   </CardContent>
                 </Card>
-              </Link>
+              </InspectJobLink>
             </li>
           ))}
         </ul>
