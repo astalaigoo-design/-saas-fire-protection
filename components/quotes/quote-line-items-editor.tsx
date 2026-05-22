@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -129,12 +130,21 @@ export function QuoteLineItemsEditor({
     );
   }
 
+  const currencyLabel = currency.toUpperCase();
+
   return (
     <form action={formAction} className="mt-4 space-y-4 rounded-lg border border-border/70 p-3">
       <input type="hidden" name="quoteId" value={quoteId} />
       <input type="hidden" name="lineItemsJson" value={payload} readOnly />
       <input type="hidden" name="taxRatePercent" value={taxRatePercent} readOnly />
       <input type="hidden" name="discountAmount" value={discountAmount} readOnly />
+
+      <div>
+        <h3 className="text-sm font-semibold text-foreground">Pricing</h3>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          Edit quantity, unit price, tax %, and discount.
+        </p>
+      </div>
 
       {state.ok === false && state.error ? (
         <p
@@ -168,52 +178,70 @@ export function QuoteLineItemsEditor({
               placeholder="Repair scope / notes"
               className="min-h-16"
             />
-            <div className="grid gap-2 sm:grid-cols-2">
-              <Input
-                type="number"
-                min={1}
-                step={1}
-                value={item.quantity}
-                onChange={(event) => updateItem(item.id, { quantity: event.target.value })}
-                className="min-h-10"
-                aria-label={`Quantity for ${item.label}`}
-              />
-              <Input
-                type="number"
-                min={0}
-                step="0.01"
-                value={item.unitPrice}
-                onChange={(event) => updateItem(item.id, { unitPrice: event.target.value })}
-                className="min-h-10"
-                aria-label={`Unit price for ${item.label}`}
-              />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor={`${item.id}-quantity`}>Quantity</Label>
+                <Input
+                  id={`${item.id}-quantity`}
+                  type="number"
+                  min={1}
+                  step={1}
+                  inputMode="numeric"
+                  value={item.quantity}
+                  onChange={(event) => updateItem(item.id, { quantity: event.target.value })}
+                  className="min-h-10"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor={`${item.id}-unit-price`}>
+                  Unit price ({currencyLabel})
+                </Label>
+                <Input
+                  id={`${item.id}-unit-price`}
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  inputMode="decimal"
+                  value={item.unitPrice}
+                  onChange={(event) => updateItem(item.id, { unitPrice: event.target.value })}
+                  className="min-h-10"
+                />
+              </div>
             </div>
           </li>
         ))}
       </ul>
 
-      <div className="grid gap-2 sm:grid-cols-2">
-        <Input
-          type="number"
-          min={0}
-          max={100}
-          step="0.01"
-          value={taxRatePercent}
-          onChange={(event) => setTaxRatePercent(event.target.value)}
-          className="min-h-10"
-          aria-label="Tax rate percent"
-          placeholder="Tax %"
-        />
-        <Input
-          type="number"
-          min={0}
-          step="0.01"
-          value={discountAmount}
-          onChange={(event) => setDiscountAmount(event.target.value)}
-          className="min-h-10"
-          aria-label="Discount amount"
-          placeholder="Discount amount"
-        />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor={`${quoteId}-tax-rate`}>Tax %</Label>
+          <Input
+            id={`${quoteId}-tax-rate`}
+            type="number"
+            min={0}
+            max={100}
+            step="0.01"
+            inputMode="decimal"
+            value={taxRatePercent}
+            onChange={(event) => setTaxRatePercent(event.target.value)}
+            className="min-h-10"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor={`${quoteId}-discount`}>
+            Discount ({currencyLabel})
+          </Label>
+          <Input
+            id={`${quoteId}-discount`}
+            type="number"
+            min={0}
+            step="0.01"
+            inputMode="decimal"
+            value={discountAmount}
+            onChange={(event) => setDiscountAmount(event.target.value)}
+            className="min-h-10"
+          />
+        </div>
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
