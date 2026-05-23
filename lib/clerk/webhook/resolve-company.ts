@@ -1,11 +1,6 @@
+import { createCompanyWithDefaults } from "@/lib/companies/bootstrap-company";
 import { prisma } from "@/lib/prisma";
 import { APP_NAME } from "@/lib/branding";
-
-const DEFAULT_BOOTSTRAP_INSPECTION_TYPES = [
-  { code: "annual", name: "Annual Inspection" },
-  { code: "quarterly", name: "Quarterly Inspection" },
-  { code: "monthly", name: "Monthly Inspection" },
-] as const;
 
 /**
  * Resolve tenant for a new Clerk user.
@@ -61,20 +56,7 @@ export async function resolveCompanyIdForClerkUser(
       });
       if (existing) return existing;
 
-      const company = await tx.company.create({
-        data: { name: bootstrapCompanyName },
-        select: { id: true, name: true },
-      });
-
-      await tx.inspectionType.createMany({
-        data: DEFAULT_BOOTSTRAP_INSPECTION_TYPES.map((type) => ({
-          companyId: company.id,
-          code: type.code,
-          name: type.name,
-        })),
-      });
-
-      return company;
+      return createCompanyWithDefaults(bootstrapCompanyName, tx);
     });
 
     console.warn(

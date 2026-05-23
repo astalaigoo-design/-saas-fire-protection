@@ -1,16 +1,25 @@
-import { getAppRole } from "@/lib/auth/session";
+import { redirect } from "next/navigation";
+import { CompanySettingsForm } from "@/components/dashboard/company-settings-form";
+import { PageHeader } from "@/components/dashboard/page-header";
 import { ensureCanManageOrgSettings } from "@/lib/auth/guards";
+import { getCompanyProfile } from "@/lib/companies/queries";
+import { getDashboardSession } from "@/lib/dashboard/session";
 
 export default async function OrgSettingsPage() {
-  const role = await getAppRole();
-  ensureCanManageOrgSettings(role);
+  const session = await getDashboardSession();
+  if (!session) redirect("/sign-in");
+  ensureCanManageOrgSettings(session.role);
+
+  const company = await getCompanyProfile(session);
+  if (!company) redirect("/dashboard");
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-semibold">Organization settings</h1>
-      <p className="text-slate-400">
-        Owner-only area — billing, integrations, or tenant-wide configuration.
-      </p>
+    <div className="space-y-6">
+      <PageHeader
+        title="Organization"
+        description="Your inspection business name and details on PDF reports. This is not the same as a customer you inspect for."
+      />
+      <CompanySettingsForm company={company} />
     </div>
   );
 }

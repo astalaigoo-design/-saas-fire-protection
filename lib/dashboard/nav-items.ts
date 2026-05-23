@@ -1,6 +1,7 @@
 import {
   canManageCustomers,
   canManageJobs,
+  canManageOrgSettings,
 } from "@/lib/auth/permissions";
 import type { AppRole } from "@/lib/auth/roles";
 import type { DashboardNavItem } from "@/components/dashboard/dashboard-nav";
@@ -27,6 +28,10 @@ export function getDashboardNavItems(role: AppRole): DashboardNavItem[] {
     items.push(
       { href: "/dashboard/my-jobs", label: "Inspections", icon: "clipboard-list" },
     );
+  }
+
+  if (canManageOrgSettings(role)) {
+    items.push({ href: "/dashboard/settings", label: "Organization", icon: "settings" });
   }
 
   return items;

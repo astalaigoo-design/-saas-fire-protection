@@ -1,5 +1,5 @@
 /**
- * Link a Clerk user to the demo company in Prisma and set Clerk publicMetadata.role.
+ * Link a Clerk user to a company in Prisma and set Clerk publicMetadata.role.
  *
  * Usage:
  *   npx tsx scripts/fix-user.ts <clerk_user_id> [owner|admin|technician]
@@ -104,10 +104,16 @@ async function main() {
   });
 
   const envCompanyId = process.env.FIX_COMPANY_ID?.trim();
+  const envCompanyName = process.env.FIX_COMPANY_NAME?.trim();
+
   let company =
     envCompanyId != null && envCompanyId.length > 0
       ? await prisma.company.findUnique({ where: { id: envCompanyId } })
       : null;
+
+  if (!company && envCompanyName) {
+    company = await prisma.company.findFirst({ where: { name: envCompanyName } });
+  }
 
   if (!company) {
     const existingLink = await prisma.user.findFirst({

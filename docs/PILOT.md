@@ -60,6 +60,14 @@ Then **sign out and sign in again** at https://getflareflow.com.
 
 To find `companyId`: `npm run db:studio` → `Company` table → copy `id` for your company row.
 
+**Rename an existing tenant (e.g. leave Demo Co.):** sign in as **owner** → **Organization** in the nav → set **Company name** to your real business name → **Save**.
+
+**Create a separate real company + link owner:**
+
+```bash
+npm run create-company -- "Your Fire Inspection LLC" <clerk_user_id> owner
+```
+
 ---
 
 ## 2. Add one real customer
