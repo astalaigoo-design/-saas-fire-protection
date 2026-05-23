@@ -15,18 +15,9 @@ export function isInspectionFormData(value: unknown): value is InspectionFormDat
   return typeof value.inspectionType.name === "string";
 }
 
-function hydrateInspectionDates(snapshot: InspectionFormData): InspectionFormData {
-  return {
-    ...snapshot,
-    scheduledAt: new Date(snapshot.scheduledAt),
-    completedAt: snapshot.completedAt ? new Date(snapshot.completedAt) : null,
-    signedAt: snapshot.signedAt ? new Date(snapshot.signedAt) : null,
-  };
-}
-
 export function parseInspectionSnapshot(snapshot: unknown): InspectionFormData | null {
   if (!isInspectionFormData(snapshot)) return null;
-  return hydrateInspectionDates(snapshot);
+  return snapshot;
 }
 
 export function mergeInspectionWithCache(

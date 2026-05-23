@@ -8,7 +8,6 @@ import { cacheInspectionForOffline } from "@/lib/offline/cache-page";
 import { warmUrlForOffline } from "@/lib/offline/warm-cache";
 import { getJobCatalog, saveJobCatalog } from "@/lib/offline/job-catalog";
 import { buildingLabel } from "@/lib/customers/format";
-import { apiFetchInspection } from "@/lib/offline/inspect-api";
 import { getInspectionSnapshot } from "@/lib/offline/indexeddb";
 import {
   parseInspectionSnapshot,
@@ -68,19 +67,7 @@ export function InspectionFormShell({
     const cachedRow = await getInspectionSnapshot(inspectionId);
     const cached = cachedRow ? parseInspectionSnapshot(cachedRow.snapshot) : null;
     const offline = typeof navigator !== "undefined" && !navigator.onLine;
-    let server = serverRef.current;
-
-    if (!server && !offline) {
-      try {
-        const response = await apiFetchInspection(inspectionId);
-        if (response.ok) {
-          server = parseInspectionSnapshot(response.inspection);
-        }
-      } catch {
-        /* use cache only */
-      }
-    }
-
+    const server = serverRef.current;
     const resolved = preferOfflineInspection(server, cached, offline);
 
     if (resolved) {

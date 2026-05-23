@@ -1,6 +1,7 @@
 import { cachePageForOffline } from "@/lib/offline/cache-page";
 
 const NEXT_ASSET_RE = /(?:src|href)="(\/_next\/[^"?#]+)/g;
+const IFRAME_WARM_MS = 4000;
 
 function extractNextAssetPaths(html: string): string[] {
   const paths = new Set<string>();
@@ -28,6 +29,31 @@ async function waitForServiceWorkerControl(timeoutMs = 8000): Promise<boolean> {
       resolve(Boolean(navigator.serviceWorker.controller));
     };
     navigator.serviceWorker.addEventListener("controllerchange", onController);
+  });
+}
+
+function warmRouteInHiddenFrame(path: string): Promise<void> {
+  return new Promise((resolve) => {
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("aria-hidden", "true");
+    iframe.setAttribute("tabindex", "-1");
+    iframe.style.cssText =
+      "position:absolute;width:0;height:0;border:0;opacity:0;pointer-events:none";
+    iframe.src = path;
+
+    const finish = () => {
+      window.clearTimeout(timer);
+      iframe.remove();
+      resolve();
+    };
+
+    const timer = window.setTimeout(finish, IFRAME_WARM_MS);
+    iframe.onload = () => {
+      window.setTimeout(finish, 1500);
+    };
+    iframe.onerror = finish;
+
+    document.body.appendChild(iframe);
   });
 }
 
@@ -64,4 +90,5 @@ export async function warmUrlForOffline(path: string): Promise<void> {
 export async function warmOfflineInspectStack(): Promise<void> {
   await warmUrlForOffline("/inspect/offline");
   await warmUrlForOffline("/dashboard/my-jobs");
+  await warmRouteInHiddenFrame("/inspect/offline");
 }
