@@ -2,7 +2,7 @@
   "name": "GetFlareflow",
   "short_name": "Flareflow",
   "description": "Offline-capable fire inspection field workflow.",
-  "start_url": "/dashboard",
+  "start_url": "/dashboard/my-jobs",
   "scope": "/",
   "display": "standalone",
   "background_color": "#020617",

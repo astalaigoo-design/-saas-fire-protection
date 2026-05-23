@@ -88,7 +88,12 @@ export async function warmUrlForOffline(path: string): Promise<void> {
 }
 
 export async function warmOfflineInspectStack(): Promise<void> {
-  await warmUrlForOffline("/inspect/offline");
+  if (typeof window === "undefined" || !navigator.onLine) return;
+
+  cachePageForOffline(`${window.location.origin}/offline.html`);
   await warmUrlForOffline("/dashboard/my-jobs");
+  await warmUrlForOffline("/dashboard");
+  await warmUrlForOffline("/inspect/offline");
   await warmRouteInHiddenFrame("/inspect/offline");
+  await warmRouteInHiddenFrame("/dashboard/my-jobs");
 }

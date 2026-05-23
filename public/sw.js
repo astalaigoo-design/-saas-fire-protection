@@ -1,12 +1,24 @@
-const STATIC_CACHE = "flareflow-static-v14";
-const PAGE_CACHE = "flareflow-pages-v14";
-const INSPECT_CACHE = "flareflow-inspect-v14";
-const ASSET_CACHE = "flareflow-assets-v14";
+const STATIC_CACHE = "flareflow-static-v15";
+const PAGE_CACHE = "flareflow-pages-v15";
+const INSPECT_CACHE = "flareflow-inspect-v15";
+const ASSET_CACHE = "flareflow-assets-v15";
 
-const STATIC_ASSETS = [
+const OFFLINE_FALLBACK_PATH = "/offline.html";
+
+const PRECACHE_URLS = [
+  OFFLINE_FALLBACK_PATH,
   "/manifest.webmanifest",
   "/icons/icon-192.svg",
   "/icons/icon-512.svg",
+  "/dashboard/my-jobs",
+  "/inspect/offline",
+];
+
+const OFFLINE_NAV_FALLBACKS = [
+  "/dashboard/my-jobs",
+  "/inspect/offline",
+  "/dashboard",
+  OFFLINE_FALLBACK_PATH,
 ];
 
 function getInspectionIdFromPath(pathname) {
@@ -74,14 +86,20 @@ async function warmAssetsFromHtml(html, origin, cache) {
   );
 }
 
-async function matchCached(request, cacheName) {
-  const cache = await caches.open(cacheName);
-  const hit = await cache.match(request);
-  if (hit) return hit;
-  return caches.match(request);
+async function matchCachedByPathname(pathname) {
+  const cacheNames = [PAGE_CACHE, INSPECT_CACHE, STATIC_CACHE, ASSET_CACHE];
+  for (const cacheName of cacheNames) {
+    const cache = await caches.open(cacheName);
+    for (const req of await cache.keys()) {
+      if (new URL(req.url).pathname === pathname) {
+        const hit = await cache.match(req);
+        if (hit) return hit;
+      }
+    }
+  }
+  return caches.match(OFFLINE_FALLBACK_PATH);
 }
 
-/** Online: always hit network, store a copy for offline. */
 async function networkFirstWithCache(request, cacheName) {
   const cache = await caches.open(cacheName);
   try {
@@ -99,15 +117,21 @@ async function networkFirstWithCache(request, cacheName) {
   } catch {
     const cached = await cache.match(request);
     if (cached) return cached;
+    const pathname = new URL(request.url).pathname;
+    const byPath = await matchCachedByPathname(pathname);
+    if (byPath) return byPath;
     throw new Error("network-unavailable");
   }
 }
 
-/** Offline: prefer cache; never return plain-text 503 (breaks Next.js). */
 async function cacheFirstWithNetwork(request, cacheName) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request);
   if (cached) return cached;
+
+  const pathname = new URL(request.url).pathname;
+  const byPath = await matchCachedByPathname(pathname);
+  if (byPath) return byPath;
 
   try {
     const response = await fetch(request);
@@ -143,7 +167,7 @@ async function serveOfflineInspectionNavigate(request, url) {
   return null;
 }
 
-async function handleOfflineNavigate(request, url) {
+async function offlineNavigateResponse(request, url) {
   const isInspect =
     url.pathname.startsWith("/inspect/") || url.pathname === "/inspect/offline";
   const cacheName = isInspect ? INSPECT_CACHE : PAGE_CACHE;
@@ -155,15 +179,44 @@ async function handleOfflineNavigate(request, url) {
       const offline = await serveOfflineInspectionNavigate(request, url);
       if (offline) return offline;
     }
-    const cached = await caches.match(request);
-    if (cached) return cached;
-    throw new Error("offline-navigate-miss");
+
+    for (const path of OFFLINE_NAV_FALLBACKS) {
+      if (path === url.pathname) {
+        const hit = await matchCachedByPathname(path);
+        if (hit) return hit;
+      }
+    }
+
+    for (const path of OFFLINE_NAV_FALLBACKS) {
+      if (path !== url.pathname) {
+        const hit = await matchCachedByPathname(path);
+        if (hit) {
+          return Response.redirect(new URL(path, url.origin).href, 302);
+        }
+      }
+    }
+
+    const offlinePage = await matchCachedByPathname(OFFLINE_FALLBACK_PATH);
+    if (offlinePage) return offlinePage;
+
+    const fallback = await caches.match(OFFLINE_FALLBACK_PATH);
+    if (fallback) return fallback;
+
+    return new Response("Offline — open the app online once, then try My Jobs again.", {
+      status: 200,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
   }
 }
 
 async function cacheUrlMessage(urlString) {
   const request = new Request(urlString, { credentials: "include" });
-  const response = await fetch(request);
+  let response;
+  try {
+    response = await fetch(request);
+  } catch {
+    return;
+  }
   if (!response.ok) return;
 
   const url = new URL(urlString);
@@ -180,10 +233,40 @@ async function cacheUrlMessage(urlString) {
   }
 }
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => cache.addAll(STATIC_ASSETS)),
+async function precacheCriticalPages() {
+  const pageCache = await caches.open(PAGE_CACHE);
+  const inspectCache = await caches.open(INSPECT_CACHE);
+  const staticCache = await caches.open(STATIC_CACHE);
+
+  await staticCache.addAll([
+    OFFLINE_FALLBACK_PATH,
+    "/manifest.webmanifest",
+    "/icons/icon-192.svg",
+    "/icons/icon-512.svg",
+  ]);
+
+  await Promise.allSettled(
+    PRECACHE_URLS.filter((path) => path !== OFFLINE_FALLBACK_PATH).map(async (path) => {
+      const request = new Request(path, { credentials: "include" });
+      try {
+        const response = await fetch(request);
+        if (!response.ok) return;
+        const cache = path.startsWith("/inspect") ? inspectCache : pageCache;
+        await cachePutSafe(cache, request, response);
+        if (response.headers.get("Content-Type")?.includes("text/html")) {
+          const html = await response.clone().text();
+          const assetCache = await caches.open(ASSET_CACHE);
+          await warmAssetsFromHtml(html, self.location.origin, assetCache);
+        }
+      } catch {
+        /* offline install — skip */
+      }
+    }),
   );
+}
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(precacheCriticalPages());
   self.skipWaiting();
 });
 
@@ -230,38 +313,35 @@ self.addEventListener("fetch", (event) => {
       (online
         ? networkFirstWithCache(request, ASSET_CACHE)
         : cacheFirstWithNetwork(request, ASSET_CACHE)
-      ).catch(() => fetch(request)),
-    );
-    return;
-  }
-
-  // Online: let navigations go to the network (Next.js + Clerk). Assets above are still cached.
-  if (online) {
-    return;
-  }
-
-  if (
-    (url.pathname.startsWith("/inspect/") || url.pathname === "/inspect/offline") &&
-    request.mode === "navigate"
-  ) {
-    event.respondWith(
-      handleOfflineNavigate(request, url).catch(async () => {
-        const offline = await serveOfflineInspectionNavigate(request, url);
-        if (offline) return offline;
-        return matchCached(request, INSPECT_CACHE);
-      }),
+      ).catch(() => fetch(request).catch(() => caches.match(OFFLINE_FALLBACK_PATH))),
     );
     return;
   }
 
   if (request.mode === "navigate") {
+    const isInspect =
+      url.pathname.startsWith("/inspect/") || url.pathname === "/inspect/offline";
+    const cacheName = isInspect ? INSPECT_CACHE : PAGE_CACHE;
+
     event.respondWith(
-      handleOfflineNavigate(request, url).catch(() => matchCached(request, PAGE_CACHE)),
+      (online
+        ? networkFirstWithCache(request, cacheName)
+        : offlineNavigateResponse(request, url)
+      ).then(
+        (response) =>
+          response ||
+          matchCachedByPathname(OFFLINE_FALLBACK_PATH) ||
+          caches.match(OFFLINE_FALLBACK_PATH),
+      ),
     );
     return;
   }
 
-  if (url.pathname.startsWith("/icons/")) {
-    event.respondWith(cacheFirstWithNetwork(request, STATIC_CACHE));
+  if (url.pathname === OFFLINE_FALLBACK_PATH || url.pathname.startsWith("/icons/")) {
+    event.respondWith(
+      cacheFirstWithNetwork(request, STATIC_CACHE).catch(() =>
+        caches.match(OFFLINE_FALLBACK_PATH),
+      ),
+    );
   }
 });
