@@ -3,8 +3,5 @@ export function inspectOfflineHref(inspectionId: string): string {
 }
 
 export function inspectHref(inspectionId: string): string {
-  if (typeof navigator !== "undefined" && !navigator.onLine) {
-    return inspectOfflineHref(inspectionId);
-  }
-  return `/inspect/${inspectionId}`;
+  return inspectOfflineHref(inspectionId);
 }

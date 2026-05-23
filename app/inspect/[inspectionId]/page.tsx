@@ -1,24 +1,11 @@
-import { notFound, redirect } from "next/navigation";
-import { InspectionFormShell } from "@/components/inspect/inspection-form-shell";
-import { getInspectSession } from "@/lib/inspect/access";
-import { serializeInspectionForClient } from "@/lib/inspect/serialize-for-client";
-import { getInspectionForForm } from "@/lib/inspect/queries";
+import { redirect } from "next/navigation";
+import { inspectOfflineHref } from "@/lib/offline/inspect-route";
 
 type InspectPageProps = {
   params: { inspectionId: string };
 };
 
-export default async function InspectPage({ params }: InspectPageProps) {
-  const session = await getInspectSession();
-  if (!session) redirect("/sign-in");
-
-  const inspection = await getInspectionForForm(session, params.inspectionId);
-  if (!inspection) notFound();
-
-  return (
-    <InspectionFormShell
-      inspectionId={params.inspectionId}
-      serverInspection={serializeInspectionForClient(inspection)}
-    />
-  );
+/** All field inspections use the client shell + API/IndexedDB (works online and offline). */
+export default function InspectPage({ params }: InspectPageProps) {
+  redirect(inspectOfflineHref(params.inspectionId));
 }

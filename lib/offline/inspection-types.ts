@@ -6,6 +6,10 @@ export type InspectActionResponse =
   | { ok: true; reportEmail?: ReportEmailOutcome; photoId?: string; url?: string }
   | { ok: false; error: string };
 
+export type InspectionFetchResponse =
+  | { ok: true; inspection: unknown }
+  | { ok: false; error: string };
+
 export type OfflineMutationType =
   | "inspection.start"
   | "checklist.update"

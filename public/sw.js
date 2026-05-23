@@ -1,13 +1,14 @@
-const STATIC_CACHE = "flareflow-static-v13";
-const PAGE_CACHE = "flareflow-pages-v13";
-const INSPECT_CACHE = "flareflow-inspect-v13";
-const ASSET_CACHE = "flareflow-assets-v13";
+const STATIC_CACHE = "flareflow-static-v14";
+const INSPECT_SHELL_CACHE = "flareflow-inspect-shell-v14";
+const ASSET_CACHE = "flareflow-assets-v14";
 
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
   "/icons/icon-192.svg",
   "/icons/icon-512.svg",
 ];
+
+const OFFLINE_SHELL_PATH = "/inspect/offline";
 
 function getInspectionIdFromPath(pathname) {
   const match = pathname.match(/^\/inspect\/([^/]+)$/);
@@ -17,29 +18,19 @@ function getInspectionIdFromPath(pathname) {
   return id;
 }
 
-function isNextInternalRequest(url, request) {
-  if (url.pathname.startsWith("/_next/")) return true;
-  if (request.headers.get("RSC") === "1") return true;
-  if (request.headers.get("Next-Router-Prefetch")) return true;
-  if (request.headers.get("Next-Router-State-Tree")) return true;
-  return false;
-}
-
-function extractNextAssetPaths(html) {
-  const paths = new Set();
-  const re = /(?:src|href)="(\/_next\/[^"?#]+)/g;
-  let match = re.exec(html);
-  while (match) {
-    paths.add(match[1]);
-    match = re.exec(html);
+async function cachePutSafe(cache, request, response) {
+  if (!response?.ok) return;
+  try {
+    await cache.put(request, response.clone());
+  } catch {
+    /* quota */
   }
-  return Array.from(paths);
 }
 
-async function matchOfflineInspectShell() {
-  const cache = await caches.open(INSPECT_CACHE);
+async function matchOfflineShell() {
+  const cache = await caches.open(INSPECT_SHELL_CACHE);
   for (const req of await cache.keys()) {
-    if (new URL(req.url).pathname === "/inspect/offline") {
+    if (new URL(req.url).pathname === OFFLINE_SHELL_PATH) {
       const hit = await cache.match(req);
       if (hit) return hit;
     }
@@ -47,84 +38,17 @@ async function matchOfflineInspectShell() {
   return null;
 }
 
-async function cachePutSafe(cache, request, response) {
-  if (!response || !response.ok) return;
-  try {
-    await cache.put(request, response.clone());
-  } catch {
-    /* quota or opaque response */
-  }
-}
-
-async function warmAssetsFromHtml(html, origin, cache) {
-  const paths = extractNextAssetPaths(html);
-  await Promise.allSettled(
-    paths.map(async (path) => {
-      const assetUrl = `${origin}${path}`;
-      const request = new Request(assetUrl, { credentials: "same-origin" });
-      const existing = await cache.match(request);
-      if (existing) return;
-      try {
-        const response = await fetch(request);
-        await cachePutSafe(cache, request, response);
-      } catch {
-        /* ignore */
-      }
-    }),
-  );
-}
-
 async function cacheFirst(request, cacheName) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request);
   if (cached) return cached;
 
-  try {
-    const response = await fetch(request);
-    await cachePutSafe(cache, request, response);
-    return response;
-  } catch {
-    const fallback = await cache.match(request);
-    if (fallback) return fallback;
-    throw new Error("offline");
-  }
+  const response = await fetch(request);
+  await cachePutSafe(cache, request, response);
+  return response;
 }
 
-/** Online: fresh HTML/chunks after deploy. Offline: cached shell. */
-async function networkFirstNavigate(request, cacheName) {
-  const cache = await caches.open(cacheName);
-
-  if (self.navigator.onLine) {
-    try {
-      const response = await fetch(request);
-      if (response.ok) {
-        await cachePutSafe(cache, request, response);
-        const contentType = response.headers.get("Content-Type") ?? "";
-        if (contentType.includes("text/html")) {
-          const html = await response.clone().text();
-          const assetCache = await caches.open(ASSET_CACHE);
-          await warmAssetsFromHtml(html, new URL(request.url).origin, assetCache);
-        }
-        return response;
-      }
-    } catch {
-      /* fall through to cache */
-    }
-  }
-
-  const cached = await cache.match(request);
-  if (cached) return cached;
-
-  try {
-    const response = await fetch(request);
-    await cachePutSafe(cache, request, response);
-    return response;
-  } catch {
-    throw new Error("offline");
-  }
-}
-
-async function networkFirstAsset(request) {
+async function networkFirstStatic(request) {
   const cache = await caches.open(ASSET_CACHE);
 
   if (self.navigator.onLine) {
@@ -135,80 +59,55 @@ async function networkFirstAsset(request) {
         return response;
       }
     } catch {
-      /* use cache */
+      /* cache */
     }
   }
 
   const cached = await cache.match(request);
   if (cached) return cached;
 
-  try {
-    const response = await fetch(request);
-    await cachePutSafe(cache, request, response);
-    return response;
-  } catch {
-    const url = new URL(request.url);
-    if (url.pathname.startsWith("/_next/static/")) {
-      const keys = await cache.keys();
-      for (const key of keys) {
-        if (new URL(key.url).pathname === url.pathname) {
-          const hit = await cache.match(key);
-          if (hit) return hit;
-        }
-      }
-    }
-    throw new Error("offline");
-  }
+  return fetch(request);
 }
 
-async function networkFirstRsc(request) {
-  const cache = await caches.open(ASSET_CACHE);
-
-  if (self.navigator.onLine) {
-    try {
-      const response = await fetch(request);
-      if (response.ok) {
-        await cachePutSafe(cache, request, response);
-        return response;
-      }
-    } catch {
-      /* use cache */
-    }
-  }
-
-  const cached = await cache.match(request);
-  if (cached) return cached;
-
-  try {
-    const response = await fetch(request);
-    await cachePutSafe(cache, request, response);
-    return response;
-  } catch {
-    throw new Error("offline");
-  }
-}
-
-async function serveOfflineInspectionNavigate(request, url) {
-  const shell = await matchOfflineInspectShell();
+async function handleInspectNavigate(request, url) {
+  const shellCache = await caches.open(INSPECT_SHELL_CACHE);
   const inspectionId =
     getInspectionIdFromPath(url.pathname) || url.searchParams.get("inspectionId");
 
-  if (url.pathname === "/inspect/offline") {
-    if (shell) return shell;
-    const cached = await caches.match(request);
-    if (cached) return cached;
-  }
-
-  if (inspectionId && shell) {
-    const offlineUrl = new URL("/inspect/offline", url.origin);
-    offlineUrl.searchParams.set("inspectionId", inspectionId);
-    if (request.url !== offlineUrl.href) {
-      return Response.redirect(offlineUrl.href, 302);
+  if (!self.navigator.onLine) {
+    if (url.pathname === OFFLINE_SHELL_PATH) {
+      const shell = await matchOfflineShell();
+      if (shell) return shell;
+      const cached = await shellCache.match(request);
+      if (cached) return cached;
     }
-    return shell;
+
+    if (inspectionId) {
+      const offlineUrl = new URL(OFFLINE_SHELL_PATH, url.origin);
+      offlineUrl.searchParams.set("inspectionId", inspectionId);
+      if (request.url !== offlineUrl.href) {
+        return Response.redirect(offlineUrl.href, 302);
+      }
+      const shell = await matchOfflineShell();
+      if (shell) return shell;
+    }
+
+    throw new Error("offline");
   }
 
-  return null;
+  try {
+    const response = await fetch(request);
+    if (response.ok && url.pathname === OFFLINE_SHELL_PATH) {
+      await cachePutSafe(shellCache, request, response);
+    }
+    return response;
+  } catch {
+    if (url.pathname === OFFLINE_SHELL_PATH) {
+      const shell = await matchOfflineShell();
+      if (shell) return shell;
+    }
+    throw new Error("offline");
+  }
 }
 
 async function cacheUrlMessage(urlString) {
@@ -217,16 +116,9 @@ async function cacheUrlMessage(urlString) {
   if (!response.ok) return;
 
   const url = new URL(urlString);
-  const isInspect = url.pathname.startsWith("/inspect");
-  const cacheName = isInspect ? INSPECT_CACHE : PAGE_CACHE;
-  const cache = await caches.open(cacheName);
-  await cachePutSafe(cache, request, response);
-
-  const contentType = response.headers.get("Content-Type") ?? "";
-  if (contentType.includes("text/html")) {
-    const html = await response.clone().text();
-    const assetCache = await caches.open(ASSET_CACHE);
-    await warmAssetsFromHtml(html, url.origin, assetCache);
+  if (url.pathname === OFFLINE_SHELL_PATH || url.pathname.startsWith("/inspect")) {
+    const cache = await caches.open(INSPECT_SHELL_CACHE);
+    await cachePutSafe(cache, request, response);
   }
 }
 
@@ -244,10 +136,7 @@ self.addEventListener("activate", (event) => {
         keys
           .filter(
             (key) =>
-              key !== STATIC_CACHE &&
-              key !== PAGE_CACHE &&
-              key !== INSPECT_CACHE &&
-              key !== ASSET_CACHE,
+              key !== STATIC_CACHE && key !== INSPECT_SHELL_CACHE && key !== ASSET_CACHE,
           )
           .map((key) => caches.delete(key)),
       ),
@@ -275,22 +164,9 @@ self.addEventListener("fetch", (event) => {
 
   if (url.pathname.startsWith("/_next/static/")) {
     event.respondWith(
-      networkFirstAsset(request).catch(
+      networkFirstStatic(request).catch(
         () =>
-          new Response("Offline — open the app online once to download updates.", {
-            status: 503,
-            headers: { "Content-Type": "text/plain" },
-          }),
-      ),
-    );
-    return;
-  }
-
-  if (isNextInternalRequest(url, request)) {
-    event.respondWith(
-      networkFirstRsc(request).catch(
-        () =>
-          new Response("Offline — reload after connecting once.", {
+          new Response("Offline — connect once to download the app.", {
             status: 503,
             headers: { "Content-Type": "text/plain" },
           }),
@@ -300,37 +176,22 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (
-    (url.pathname.startsWith("/inspect/") || url.pathname === "/inspect/offline") &&
-    request.mode === "navigate"
+    request.mode === "navigate" &&
+    (url.pathname === OFFLINE_SHELL_PATH || url.pathname.startsWith("/inspect/"))
   ) {
     event.respondWith(
-      networkFirstNavigate(request, INSPECT_CACHE).catch(async () => {
-        const offline = await serveOfflineInspectionNavigate(request, url);
-        if (offline) return offline;
-        return new Response(
-          "Offline — open My Jobs online, open each inspection once, then try again.",
-          { status: 503, headers: { "Content-Type": "text/plain" } },
-        );
-      }),
+      handleInspectNavigate(request, url).catch(
+        () =>
+          new Response(
+            "Offline — open My Jobs while online and tap each job once before going offline.",
+            { status: 503, headers: { "Content-Type": "text/plain" } },
+          ),
+      ),
     );
     return;
   }
 
-  if (request.mode === "navigate") {
-    event.respondWith(
-      networkFirstNavigate(request, PAGE_CACHE).catch(async () => {
-        const cached = await caches.match(request);
-        if (cached) return cached;
-        return new Response(
-          "Offline — open My Jobs once while online, then try again.",
-          { status: 503, headers: { "Content-Type": "text/plain" } },
-        );
-      }),
-    );
-    return;
-  }
-
-  if (url.pathname.startsWith("/icons/")) {
+  if (url.pathname.startsWith("/icons/") || url.pathname === "/manifest.webmanifest") {
     event.respondWith(cacheFirst(request, STATIC_CACHE));
   }
 });

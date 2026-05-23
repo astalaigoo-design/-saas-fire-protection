@@ -1,9 +1,21 @@
-import type { InspectActionResponse } from "@/lib/offline/inspection-types";
+import type {
+  InspectActionResponse,
+  InspectionFetchResponse,
+} from "@/lib/offline/inspection-types";
 
 async function parseJsonResponse(response: Response): Promise<InspectActionResponse> {
   const body = (await response.json()) as InspectActionResponse;
   if (!response.ok && !body.ok) return body;
   return body;
+}
+
+export async function apiFetchInspection(
+  inspectionId: string,
+): Promise<InspectionFetchResponse> {
+  const response = await fetch(`/api/inspect/${inspectionId}`, {
+    credentials: "include",
+  });
+  return (await response.json()) as InspectionFetchResponse;
 }
 
 export async function apiStartInspection(
