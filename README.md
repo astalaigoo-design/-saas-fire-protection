@@ -69,6 +69,12 @@ If the build log shows `prisma generate` or `next build` errors, fix those first
 - **Owner / Admin:** Dashboard, customers, buildings, calendar, inspections list, reports, settings (owner).
 - **Technician:** Dashboard, my jobs → mobile inspect form at `/inspect/[id]`.
 
+## Pilot onboarding
+
+Step-by-step guide for one real client (owner login → customer → building → inspection → reports):
+
+**[docs/PILOT.md](docs/PILOT.md)**
+
 ## Troubleshooting
 
 ### `prisma migrate deploy` fails (column already exists / P3009)
