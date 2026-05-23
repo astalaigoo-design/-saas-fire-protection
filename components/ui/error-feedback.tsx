@@ -25,6 +25,8 @@ function getSafeUserMessage(error: Error | undefined, fallbackMessage: string): 
     "env",
     "server components render",
     "digest",
+    "loading chunk",
+    "chunkloaderror",
   ];
 
   const normalized = raw.toLowerCase();
@@ -51,7 +53,8 @@ export function ErrorFeedback({
       <h2 className="text-lg font-semibold text-red-200">{title}</h2>
       <p className="mt-2 text-sm text-red-300/80">{userMessage}</p>
       <p className="mt-2 text-xs text-red-300/70">
-        If it keeps happening, refresh the page and try again.
+        If it keeps happening, close the app completely, reopen it online, and try again. After an
+        update, a full refresh fixes most inspection page errors.
       </p>
       {error?.digest ? (
         <p className="mt-2 text-xs text-red-300/60">Reference: {error.digest}</p>

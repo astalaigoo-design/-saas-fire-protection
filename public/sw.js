@@ -1,7 +1,7 @@
-const STATIC_CACHE = "flareflow-static-v12";
-const PAGE_CACHE = "flareflow-pages-v12";
-const INSPECT_CACHE = "flareflow-inspect-v12";
-const ASSET_CACHE = "flareflow-assets-v12";
+const STATIC_CACHE = "flareflow-static-v13";
+const PAGE_CACHE = "flareflow-pages-v13";
+const INSPECT_CACHE = "flareflow-inspect-v13";
+const ASSET_CACHE = "flareflow-assets-v13";
 
 const STATIC_ASSETS = [
   "/manifest.webmanifest",
@@ -28,10 +28,12 @@ function isNextInternalRequest(url, request) {
 function extractNextAssetPaths(html) {
   const paths = new Set();
   const re = /(?:src|href)="(\/_next\/[^"?#]+)/g;
-  for (const match of html.matchAll(re)) {
+  let match = re.exec(html);
+  while (match) {
     paths.add(match[1]);
+    match = re.exec(html);
   }
-  return [...paths];
+  return Array.from(paths);
 }
 
 async function matchOfflineInspectShell() {
@@ -88,8 +90,28 @@ async function cacheFirst(request, cacheName) {
   }
 }
 
-async function cacheFirstAsset(request) {
-  const cache = await caches.open(ASSET_CACHE);
+/** Online: fresh HTML/chunks after deploy. Offline: cached shell. */
+async function networkFirstNavigate(request, cacheName) {
+  const cache = await caches.open(cacheName);
+
+  if (self.navigator.onLine) {
+    try {
+      const response = await fetch(request);
+      if (response.ok) {
+        await cachePutSafe(cache, request, response);
+        const contentType = response.headers.get("Content-Type") ?? "";
+        if (contentType.includes("text/html")) {
+          const html = await response.clone().text();
+          const assetCache = await caches.open(ASSET_CACHE);
+          await warmAssetsFromHtml(html, new URL(request.url).origin, assetCache);
+        }
+        return response;
+      }
+    } catch {
+      /* fall through to cache */
+    }
+  }
+
   const cached = await cache.match(request);
   if (cached) return cached;
 
@@ -98,9 +120,33 @@ async function cacheFirstAsset(request) {
     await cachePutSafe(cache, request, response);
     return response;
   } catch {
-    const fallback = await cache.match(request);
-    if (fallback) return fallback;
+    throw new Error("offline");
+  }
+}
 
+async function networkFirstAsset(request) {
+  const cache = await caches.open(ASSET_CACHE);
+
+  if (self.navigator.onLine) {
+    try {
+      const response = await fetch(request);
+      if (response.ok) {
+        await cachePutSafe(cache, request, response);
+        return response;
+      }
+    } catch {
+      /* use cache */
+    }
+  }
+
+  const cached = await cache.match(request);
+  if (cached) return cached;
+
+  try {
+    const response = await fetch(request);
+    await cachePutSafe(cache, request, response);
+    return response;
+  } catch {
     const url = new URL(request.url);
     if (url.pathname.startsWith("/_next/static/")) {
       const keys = await cache.keys();
@@ -115,8 +161,21 @@ async function cacheFirstAsset(request) {
   }
 }
 
-async function cacheFirstRsc(request) {
+async function networkFirstRsc(request) {
   const cache = await caches.open(ASSET_CACHE);
+
+  if (self.navigator.onLine) {
+    try {
+      const response = await fetch(request);
+      if (response.ok) {
+        await cachePutSafe(cache, request, response);
+        return response;
+      }
+    } catch {
+      /* use cache */
+    }
+  }
+
   const cached = await cache.match(request);
   if (cached) return cached;
 
@@ -125,8 +184,6 @@ async function cacheFirstRsc(request) {
     await cachePutSafe(cache, request, response);
     return response;
   } catch {
-    const fallback = await cache.match(request);
-    if (fallback) return fallback;
     throw new Error("offline");
   }
 }
@@ -218,7 +275,7 @@ self.addEventListener("fetch", (event) => {
 
   if (url.pathname.startsWith("/_next/static/")) {
     event.respondWith(
-      cacheFirstAsset(request).catch(
+      networkFirstAsset(request).catch(
         () =>
           new Response("Offline — open the app online once to download updates.", {
             status: 503,
@@ -231,7 +288,7 @@ self.addEventListener("fetch", (event) => {
 
   if (isNextInternalRequest(url, request)) {
     event.respondWith(
-      cacheFirstRsc(request).catch(
+      networkFirstRsc(request).catch(
         () =>
           new Response("Offline — reload after connecting once.", {
             status: 503,
@@ -247,7 +304,7 @@ self.addEventListener("fetch", (event) => {
     request.mode === "navigate"
   ) {
     event.respondWith(
-      cacheFirst(request, INSPECT_CACHE).catch(async () => {
+      networkFirstNavigate(request, INSPECT_CACHE).catch(async () => {
         const offline = await serveOfflineInspectionNavigate(request, url);
         if (offline) return offline;
         return new Response(
@@ -261,7 +318,7 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(
-      cacheFirst(request, PAGE_CACHE).catch(async () => {
+      networkFirstNavigate(request, PAGE_CACHE).catch(async () => {
         const cached = await caches.match(request);
         if (cached) return cached;
         return new Response(
