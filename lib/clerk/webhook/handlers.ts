@@ -1,6 +1,7 @@
-import { prisma } from "@/lib/prisma";
+import { syncClerkPublicMetadata } from "@/lib/clerk/sync-public-metadata";
 import { parseClerkUserPayload } from "@/lib/clerk/webhook/parse-clerk-user";
 import { resolveCompanyIdForClerkUser } from "@/lib/clerk/webhook/resolve-company";
+import { prisma } from "@/lib/prisma";
 
 export type WebhookHandlerResult =
   | { ok: true; action: string }
@@ -44,6 +45,18 @@ export async function handleUserCreated(data: unknown): Promise<WebhookHandlerRe
       },
     });
 
+    const metadataSync = await syncClerkPublicMetadata(user.clerkUserId, {
+      role: user.role,
+      companyId: companyResult.companyId,
+    });
+    if (!metadataSync.ok) {
+      console.error(
+        "Clerk webhook user.created: provisioned DB but metadata sync failed",
+        metadataSync.error,
+        user.clerkUserId,
+      );
+    }
+
     console.info("Clerk webhook user.created: provisioned", user.clerkUserId);
     return { ok: true, action: "user.created" };
   } catch (error) {
@@ -86,6 +99,21 @@ export async function handleUserUpdated(data: unknown): Promise<WebhookHandlerRe
         }),
       ),
     );
+
+    const primaryCompanyId = existing[0]?.companyId;
+    if (primaryCompanyId) {
+      const metadataSync = await syncClerkPublicMetadata(user.clerkUserId, {
+        role: user.role,
+        companyId: primaryCompanyId,
+      });
+      if (!metadataSync.ok) {
+        console.error(
+          "Clerk webhook user.updated: DB synced but metadata sync failed",
+          metadataSync.error,
+          user.clerkUserId,
+        );
+      }
+    }
 
     console.info("Clerk webhook user.updated: synced", user.clerkUserId, existing.length);
     return { ok: true, action: "user.updated" };

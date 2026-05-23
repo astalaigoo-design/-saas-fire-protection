@@ -37,16 +37,26 @@ Complete these once per environment:
 
 **If dashboard is empty or role is wrong:**
 
-1. [Clerk Dashboard](https://dashboard.clerk.com) → **Users** → select the user → **Metadata** → **Public metadata**:
+New sign-ups should get both fields automatically via the Clerk webhook (`user.created`). For an existing pilot owner, run (with production `.env` / Clerk secret):
+
+```bash
+npm run fix-user -- <clerk_user_id> owner
+```
+
+Optional: `FIX_COMPANY_ID=<cuid>` if the user belongs to a specific company (not the demo tenant).
+
+That links the user in Postgres **and** sets Clerk **public metadata**:
 
 ```json
 {
   "role": "owner",
-  "companyId": "<paste Company id from Prisma Studio or DB>"
+  "companyId": "<your-company-cuid>"
 }
 ```
 
-2. Sign out and sign in again.
+**Manual alternative:** [Clerk Dashboard](https://dashboard.clerk.com) → **Users** → **Public metadata** → paste the JSON above.
+
+Then **sign out and sign in again** at https://getflareflow.com.
 
 To find `companyId`: `npm run db:studio` → `Company` table → copy `id` for your company row.
 

@@ -7,7 +7,8 @@
  */
 import { PrismaClient, type UserRole } from "@prisma/client";
 import { z } from "zod";
-import { APP_ROLES, isAppRole, ROLE_METADATA_KEY } from "../lib/auth/roles";
+import { APP_ROLES, isAppRole } from "../lib/auth/roles";
+import { syncClerkPublicMetadata } from "../lib/clerk/sync-public-metadata";
 
 import { DEMO_COMPANY_NAME } from "../lib/branding";
 
@@ -24,29 +25,6 @@ const argsSchema = z.object({
 });
 
 const prisma = new PrismaClient();
-
-async function updateClerkPublicRole(clerkUserId: string, role: UserRole) {
-  const secret = process.env.CLERK_SECRET_KEY?.trim();
-  if (!secret) {
-    throw new Error("CLERK_SECRET_KEY is missing from .env");
-  }
-
-  const response = await fetch(`https://api.clerk.com/v1/users/${clerkUserId}`, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${secret}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      public_metadata: { [ROLE_METADATA_KEY]: role },
-    }),
-  });
-
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`Clerk API ${response.status}: ${body}`);
-  }
-}
 
 async function fetchClerkProfile(clerkUserId: string) {
   const secret = process.env.CLERK_SECRET_KEY?.trim();
@@ -125,13 +103,29 @@ async function main() {
     name: combinedName,
   });
 
-  const company =
-    (await prisma.company.findFirst({
-      where: { name: DEMO_COMPANY_NAME },
-    })) ?? (await prisma.company.findFirst({ orderBy: { createdAt: "asc" } }));
+  const envCompanyId = process.env.FIX_COMPANY_ID?.trim();
+  let company =
+    envCompanyId != null && envCompanyId.length > 0
+      ? await prisma.company.findUnique({ where: { id: envCompanyId } })
+      : null;
 
   if (!company) {
-    console.error("No company found. Run: npm run db:seed");
+    const existingLink = await prisma.user.findFirst({
+      where: { clerkUserId: parsed.clerkUserId, active: true },
+      include: { company: true },
+    });
+    company = existingLink?.company ?? null;
+  }
+
+  if (!company) {
+    company =
+      (await prisma.company.findFirst({
+        where: { name: DEMO_COMPANY_NAME },
+      })) ?? (await prisma.company.findFirst({ orderBy: { createdAt: "asc" } }));
+  }
+
+  if (!company) {
+    console.error("No company found. Run: npm run db:seed or set FIX_COMPANY_ID");
     process.exitCode = 1;
     return;
   }
@@ -161,14 +155,23 @@ async function main() {
     },
   });
 
-  await updateClerkPublicRole(parsed.clerkUserId, parsed.role);
+  const metadataSync = await syncClerkPublicMetadata(parsed.clerkUserId, {
+    role: parsed.role,
+    companyId: company.id,
+  });
+  if (!metadataSync.ok) {
+    throw new Error(metadataSync.error);
+  }
 
   console.log("User linked!");
   console.log("  ID:", user.id);
   console.log("  Email:", user.email);
   console.log("  Name:", user.name);
   console.log("  Role:", user.role, "(DB + Clerk publicMetadata)");
-  console.log("  CompanyId:", user.companyId);
+  console.log("  CompanyId:", user.companyId, "(DB + Clerk publicMetadata)");
+  console.log("\nClerk public metadata should now include:");
+  console.log(`  { "role": "${parsed.role}", "companyId": "${company.id}" }`);
+  console.log("\nSign out and sign in again at https://getflareflow.com");
 }
 
 main()
