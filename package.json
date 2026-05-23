@@ -14,6 +14,7 @@
     "db:studio": "prisma studio",
     "db:seed": "prisma db seed",
     "db:check-demo": "node scripts/check-demo-data.mjs",
+    "db:cleanup-smoke": "node scripts/cleanup-smoke-demo-data.mjs --apply",
     "db:test": "node scripts/test-supabase-connection.mjs",
     "storage:ensure-bucket": "node scripts/ensure-inspection-photos-bucket.mjs",
     "fix-user": "tsx scripts/fix-user.ts"
