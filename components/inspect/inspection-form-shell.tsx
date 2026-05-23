@@ -14,10 +14,14 @@ import {
   preferOfflineInspection,
 } from "@/lib/offline/inspection-snapshot";
 import type { InspectionFormData } from "@/lib/inspect/queries";
+import {
+  hydrateInspectionFormData,
+  type ClientInspectionFormData,
+} from "@/lib/inspect/serialize-for-client";
 
 type InspectionFormShellProps = {
   inspectionId: string;
-  serverInspection: InspectionFormData | null;
+  serverInspection: ClientInspectionFormData | null;
 };
 
 function InspectionFormSkeleton() {
@@ -60,14 +64,14 @@ export function InspectionFormShell({
   const [inspection, setInspection] = useState<InspectionFormData | null>(null);
   const [ready, setReady] = useState(false);
   const [offlineOnly, setOfflineOnly] = useState(false);
-  const serverRef = useRef(serverInspection);
+  const serverRef = useRef<ClientInspectionFormData | null>(serverInspection);
   if (serverInspection) serverRef.current = serverInspection;
 
   const bootstrap = useCallback(async () => {
     const cachedRow = await getInspectionSnapshot(inspectionId);
     const cached = cachedRow ? parseInspectionSnapshot(cachedRow.snapshot) : null;
     const offline = typeof navigator !== "undefined" && !navigator.onLine;
-    const server = serverRef.current;
+    const server = serverRef.current ? hydrateInspectionFormData(serverRef.current) : null;
     const resolved = preferOfflineInspection(server, cached, offline);
 
     if (resolved) {

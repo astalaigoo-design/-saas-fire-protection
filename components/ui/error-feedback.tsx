@@ -57,7 +57,9 @@ export function ErrorFeedback({
         update, a full refresh fixes most inspection page errors.
       </p>
       {error?.digest ? (
-        <p className="mt-2 text-xs text-red-300/60">Reference: {error.digest}</p>
+        <p className="mt-2 text-xs text-red-300/60">
+          Reference: {error.digest}. Close the app fully, reopen online, and try again.
+        </p>
       ) : null}
 
       {showDebugDetails ? (

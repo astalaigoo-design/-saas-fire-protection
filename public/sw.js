@@ -1,7 +1,7 @@
-const STATIC_CACHE = "flareflow-static-v15";
-const PAGE_CACHE = "flareflow-pages-v15";
-const INSPECT_CACHE = "flareflow-inspect-v15";
-const ASSET_CACHE = "flareflow-assets-v15";
+const STATIC_CACHE = "flareflow-static-v16";
+const PAGE_CACHE = "flareflow-pages-v16";
+const INSPECT_CACHE = "flareflow-inspect-v16";
+const ASSET_CACHE = "flareflow-assets-v16";
 
 const OFFLINE_FALLBACK_PATH = "/offline.html";
 
@@ -29,8 +29,7 @@ function getInspectionIdFromPath(pathname) {
   return id;
 }
 
-function isNextInternalRequest(url, request) {
-  if (url.pathname.startsWith("/_next/")) return true;
+function isRscRequest(request) {
   if (request.headers.get("RSC") === "1") return true;
   if (request.headers.get("Next-Router-Prefetch")) return true;
   if (request.headers.get("Next-Router-State-Tree")) return true;
@@ -100,27 +99,26 @@ async function matchCachedByPathname(pathname) {
   return caches.match(OFFLINE_FALLBACK_PATH);
 }
 
-async function networkFirstWithCache(request, cacheName) {
-  const cache = await caches.open(cacheName);
+/** Cache hashed JS/CSS for offline; always try network first when online. */
+async function networkFirstStatic(request) {
+  const cache = await caches.open(ASSET_CACHE);
   try {
     const response = await fetch(request);
-    if (response.ok) {
-      await cachePutSafe(cache, request, response);
-      const contentType = response.headers.get("Content-Type") ?? "";
-      if (contentType.includes("text/html")) {
-        const html = await response.clone().text();
-        const assetCache = await caches.open(ASSET_CACHE);
-        await warmAssetsFromHtml(html, new URL(request.url).origin, assetCache);
-      }
-    }
+    if (response.ok) await cachePutSafe(cache, request, response);
     return response;
   } catch {
     const cached = await cache.match(request);
     if (cached) return cached;
-    const pathname = new URL(request.url).pathname;
-    const byPath = await matchCachedByPathname(pathname);
-    if (byPath) return byPath;
-    throw new Error("network-unavailable");
+    const url = new URL(request.url);
+    if (url.pathname.startsWith("/_next/static/")) {
+      for (const req of await cache.keys()) {
+        if (new URL(req.url).pathname === url.pathname) {
+          const hit = await cache.match(req);
+          if (hit) return hit;
+        }
+      }
+    }
+    throw new Error("asset-miss");
   }
 }
 
@@ -199,14 +197,18 @@ async function offlineNavigateResponse(request, url) {
     const offlinePage = await matchCachedByPathname(OFFLINE_FALLBACK_PATH);
     if (offlinePage) return offlinePage;
 
-    const fallback = await caches.match(OFFLINE_FALLBACK_PATH);
-    if (fallback) return fallback;
-
-    return new Response("Offline — open the app online once, then try My Jobs again.", {
-      status: 200,
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
-    });
+    return (
+      (await caches.match(OFFLINE_FALLBACK_PATH)) ??
+      new Response("Offline — open the app online once, then try My Jobs again.", {
+        status: 200,
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+      })
+    );
   }
+}
+
+async function offlineRscOrAsset(request) {
+  return cacheFirstWithNetwork(request, ASSET_CACHE).catch(() => fetch(request));
 }
 
 async function cacheUrlMessage(urlString) {
@@ -308,26 +310,25 @@ self.addEventListener("fetch", (event) => {
 
   const online = self.navigator.onLine;
 
-  if (url.pathname.startsWith("/_next/static/") || isNextInternalRequest(url, request)) {
-    event.respondWith(
-      (online
-        ? networkFirstWithCache(request, ASSET_CACHE)
-        : cacheFirstWithNetwork(request, ASSET_CACHE)
-      ).catch(() => fetch(request).catch(() => caches.match(OFFLINE_FALLBACK_PATH))),
-    );
+  // Online: only cache immutable build chunks. Pages + RSC go to the network (fixes refresh).
+  if (online) {
+    if (url.pathname.startsWith("/_next/static/")) {
+      event.respondWith(
+        networkFirstStatic(request).catch(() => fetch(request)),
+      );
+    }
+    return;
+  }
+
+  // Offline handling below
+  if (url.pathname.startsWith("/_next/static/") || isRscRequest(request)) {
+    event.respondWith(offlineRscOrAsset(request));
     return;
   }
 
   if (request.mode === "navigate") {
-    const isInspect =
-      url.pathname.startsWith("/inspect/") || url.pathname === "/inspect/offline";
-    const cacheName = isInspect ? INSPECT_CACHE : PAGE_CACHE;
-
     event.respondWith(
-      (online
-        ? networkFirstWithCache(request, cacheName)
-        : offlineNavigateResponse(request, url)
-      ).then(
+      offlineNavigateResponse(request, url).then(
         (response) =>
           response ||
           matchCachedByPathname(OFFLINE_FALLBACK_PATH) ||

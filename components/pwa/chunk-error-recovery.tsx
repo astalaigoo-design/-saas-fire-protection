@@ -13,45 +13,64 @@ function isChunkLoadFailure(message: string): boolean {
   );
 }
 
-/** After a deploy, clear stale HTML caches once and reload — keep the service worker registered. */
+function tryRecoverFromChunkError(): void {
+  if (sessionStorage.getItem(RELOAD_GUARD_KEY) === "1") return;
+  sessionStorage.setItem(RELOAD_GUARD_KEY, "1");
+
+  void (async () => {
+    try {
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        await Promise.all(
+          keys
+            .filter(
+              (key) =>
+                key.includes("pages") ||
+                key.includes("inspect") ||
+                key.includes("assets"),
+            )
+            .map((key) => caches.delete(key)),
+        );
+      }
+    } finally {
+      window.location.reload();
+    }
+  })();
+}
+
+/** After a deploy, clear stale HTML caches once and reload. */
 export function ChunkErrorRecovery() {
   useEffect(() => {
     const clearGuardTimer = window.setTimeout(() => {
       sessionStorage.removeItem(RELOAD_GUARD_KEY);
-    }, 15_000);
+    }, 30_000);
 
     const handleError = (event: ErrorEvent) => {
+      if (event.error instanceof DOMException) return;
       const message = event.message ?? "";
       if (!isChunkLoadFailure(message)) return;
-      if (sessionStorage.getItem(RELOAD_GUARD_KEY) === "1") return;
+      tryRecoverFromChunkError();
+    };
 
-      sessionStorage.setItem(RELOAD_GUARD_KEY, "1");
-
-      void (async () => {
-        try {
-          if ("caches" in window) {
-            const keys = await caches.keys();
-            await Promise.all(
-              keys
-                .filter(
-                  (key) =>
-                    key.includes("pages") ||
-                    key.includes("inspect") ||
-                    key.includes("assets"),
-                )
-                .map((key) => caches.delete(key)),
-            );
-          }
-        } finally {
-          window.location.reload();
-        }
-      })();
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason;
+      if (reason instanceof DOMException) return;
+      const message =
+        reason instanceof Error
+          ? reason.message
+          : typeof reason === "string"
+            ? reason
+            : "";
+      if (!isChunkLoadFailure(message)) return;
+      tryRecoverFromChunkError();
     };
 
     window.addEventListener("error", handleError);
+    window.addEventListener("unhandledrejection", handleRejection);
     return () => {
       window.clearTimeout(clearGuardTimer);
       window.removeEventListener("error", handleError);
+      window.removeEventListener("unhandledrejection", handleRejection);
     };
   }, []);
 

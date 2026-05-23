@@ -1,3 +1,4 @@
+import { hydrateInspectionFormData } from "@/lib/inspect/serialize-for-client";
 import type { InspectionFormData } from "@/lib/inspect/queries";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -17,7 +18,7 @@ export function isInspectionFormData(value: unknown): value is InspectionFormDat
 
 export function parseInspectionSnapshot(snapshot: unknown): InspectionFormData | null {
   if (!isInspectionFormData(snapshot)) return null;
-  return snapshot;
+  return hydrateInspectionFormData(snapshot);
 }
 
 export function mergeInspectionWithCache(
