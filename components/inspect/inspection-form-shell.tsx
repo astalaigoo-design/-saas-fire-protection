@@ -5,6 +5,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { InspectionForm } from "@/components/inspect/inspection-form";
 import { setActiveInspectionId } from "@/lib/offline/active-inspection";
 import { cacheInspectionForOffline } from "@/lib/offline/cache-page";
+import { warmUrlForOffline } from "@/lib/offline/warm-cache";
+import { getJobCatalog, saveJobCatalog } from "@/lib/offline/job-catalog";
+import { buildingLabel } from "@/lib/customers/format";
 import { getInspectionSnapshot } from "@/lib/offline/indexeddb";
 import {
   parseInspectionSnapshot,
@@ -100,6 +103,20 @@ export function InspectionFormShell({
   useEffect(() => {
     if (!ready || !inspection) return;
     cacheInspectionForOffline(inspectionId);
+    if (navigator.onLine) {
+      void warmUrlForOffline("/inspect/offline");
+    }
+
+    const label = buildingLabel(inspection.building);
+    const subtitle = `${inspection.building.customer.name} · ${inspection.inspectionType.name}`;
+    const entry = {
+      inspectionId,
+      label,
+      subtitle,
+      scheduledAt: new Date(inspection.scheduledAt).toISOString(),
+    };
+    const catalog = getJobCatalog().filter((row) => row.inspectionId !== inspectionId);
+    saveJobCatalog([entry, ...catalog]);
   }, [ready, inspection, inspectionId]);
 
   if (!ready) return <InspectionFormSkeleton />;

@@ -1,9 +1,6 @@
-import { InspectJobLink } from "@/components/inspect/inspect-job-link";
+import { MyJobsClient } from "@/components/dashboard/my-jobs-client";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/dashboard/page-header";
-import { Card, CardContent } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
-import { formatDateTime } from "@/lib/dashboard/dates";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { getMyAssignedInspections } from "@/lib/inspect/my-jobs";
 import { CacheRouteOnVisit } from "@/components/offline/cache-route-on-visit";
@@ -27,34 +24,14 @@ export default async function MyJobsPage() {
       <CacheRouteOnVisit path="/dashboard/my-jobs" />
       <ResumeActiveInspection />
 
-      {jobs.length === 0 ? (
-        <EmptyState title="No assigned inspections right now" />
-      ) : (
-        <ul className="space-y-3">
-          {jobs.map((job) => (
-            <li key={job.id}>
-              <InspectJobLink
-                inspectionId={job.id}
-                className="block rounded-xl transition-opacity hover:opacity-95"
-              >
-                <Card>
-                  <CardContent>
-                    <span className="font-medium text-foreground">
-                      {buildingLabel(job.building)}
-                    </span>
-                    <span className="mt-1 block text-sm text-muted-foreground">
-                      {job.building.customer.name} · {job.inspectionType.name}
-                    </span>
-                    <span className="mt-2 block text-sm font-medium text-primary">
-                      {formatDateTime(job.scheduledAt)}
-                    </span>
-                  </CardContent>
-                </Card>
-              </InspectJobLink>
-            </li>
-          ))}
-        </ul>
-      )}
+      <MyJobsClient
+        serverJobs={jobs.map((job) => ({
+          inspectionId: job.id,
+          label: buildingLabel(job.building),
+          subtitle: `${job.building.customer.name} · ${job.inspectionType.name}`,
+          scheduledAt: job.scheduledAt.toISOString(),
+        }))}
+      />
     </div>
   );
 }
