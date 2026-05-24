@@ -104,6 +104,12 @@ const styles = StyleSheet.create({
     fontSize: 9,
   },
   colItem: { width: "46%" },
+  nfpaRef: {
+    fontSize: 7,
+    color: "#64748b",
+    marginTop: 2,
+    lineHeight: 1.3,
+  },
   colResult: { width: "14%" },
   colNotes: { width: "40%" },
   resultPass: { color: "#047857" },
@@ -232,7 +238,12 @@ export function ComplianceReportDocument({ data }: ComplianceReportDocumentProps
           </View>
           {data.items.map((item) => (
             <View key={`${item.sortOrder}-${item.label}`} style={styles.tableRow}>
-              <Text style={styles.colItem}>{item.label}</Text>
+              <View style={styles.colItem}>
+                <Text>{item.label}</Text>
+                {item.description ? (
+                  <Text style={styles.nfpaRef}>{item.description}</Text>
+                ) : null}
+              </View>
               <Text style={[styles.colResult, resultStyle(item.result)]}>
                 {formatResultLabel(item.result)}
               </Text>

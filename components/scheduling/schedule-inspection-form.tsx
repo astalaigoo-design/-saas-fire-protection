@@ -165,6 +165,10 @@ export function ScheduleInspectionForm({
                 </option>
               ))}
             </select>
+            <p className="text-xs text-muted-foreground">
+              Checklist items are created from NFPA rules for the selected cadence (monthly,
+              quarterly, or annual).
+            </p>
           </div>
 
           <div className="space-y-2">

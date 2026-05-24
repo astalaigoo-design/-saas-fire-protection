@@ -1,11 +1,11 @@
 "use server";
 
-import { InspectionItemResult, type RecurrenceInterval } from "@prisma/client";
+import { type RecurrenceInterval } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { canManageJobs } from "@/lib/auth/permissions";
 import { getDashboardSession } from "@/lib/dashboard/session";
-import { DEFAULT_INSPECTION_CHECKLIST } from "@/lib/inspections/default-checklist";
+import { buildInspectionChecklistItems } from "@/lib/inspections/build-checklist";
 import { syncBuildingComplianceStatus } from "@/lib/buildings/sync-compliance";
 import { prisma } from "@/lib/prisma";
 import {
@@ -40,7 +40,9 @@ async function assertScheduleEntities(
   buildingId: string,
   inspectionTypeId: string,
   assignedToUserId: string | undefined,
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<
+  { ok: true; inspectionTypeCode: string } | { ok: false; error: string }
+> {
   const building = await prisma.building.findFirst({
     where: { id: buildingId, customer: { companyId } },
     select: { id: true },
@@ -51,7 +53,7 @@ async function assertScheduleEntities(
 
   const inspectionType = await prisma.inspectionType.findFirst({
     where: { id: inspectionTypeId, companyId },
-    select: { id: true },
+    select: { id: true, code: true },
   });
   if (!inspectionType) {
     return { ok: false, error: "Inspection type not found." };
@@ -67,7 +69,7 @@ async function assertScheduleEntities(
     }
   }
 
-  return { ok: true };
+  return { ok: true, inspectionTypeCode: inspectionType.code };
 }
 
 export async function scheduleInspection(
@@ -118,11 +120,7 @@ export async function scheduleInspection(
   const recurrenceInterval: RecurrenceInterval | null =
     recurrence === "none" ? null : recurrence;
 
-  const checklistItems = DEFAULT_INSPECTION_CHECKLIST.map((label, index) => ({
-    label,
-    sortOrder: index,
-    result: InspectionItemResult.pending,
-  }));
+  const checklistItems = buildInspectionChecklistItems(entityCheck.inspectionTypeCode);
 
   const redirectMonth: CalendarMonth = {
     year: scheduledAt.getFullYear(),

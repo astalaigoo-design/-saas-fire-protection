@@ -23,6 +23,7 @@ export async function createDraftQuoteFromInspection(
         select: {
           id: true,
           label: true,
+          description: true,
           notes: true,
           sortOrder: true,
         },
@@ -52,6 +53,7 @@ export async function createDraftQuoteFromInspection(
           label: item.label,
           description:
             item.notes?.trim() ||
+            item.description ||
             "Repair required based on failed inspection checklist item.",
           quantity: 1,
           unitPriceCents: 0,
@@ -81,6 +83,7 @@ export async function createDraftQuoteFromInspection(
           label: item.label,
           description:
             item.notes?.trim() ||
+            item.description ||
             "Repair required based on failed inspection checklist item.",
           quantity: 1,
           unitPriceCents: 0,

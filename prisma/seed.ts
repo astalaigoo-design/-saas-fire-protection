@@ -1,12 +1,8 @@
-import {
-  InspectionItemResult,
-  InspectionStatus,
-  PrismaClient,
-  UserRole,
-} from "@prisma/client";
+import { InspectionItemResult, InspectionStatus, PrismaClient, UserRole } from "@prisma/client";
 import { DEMO_COMPANY_NAME } from "../lib/branding";
 import { syncBuildingComplianceStatus } from "../lib/buildings/sync-compliance";
 import { getWeekRange } from "../lib/dashboard/dates";
+import { buildInspectionChecklistItems } from "../lib/inspections/build-checklist";
 
 const prisma = new PrismaClient();
 
@@ -16,13 +12,17 @@ const INSPECTION_TYPES = [
   { code: "monthly", name: "Monthly Inspection" },
 ] as const;
 
-const DEFAULT_CHECKLIST = [
-  "Fire extinguishers accessible and charged",
-  "Emergency exit signs illuminated",
-  "Sprinkler heads unobstructed",
-  "Fire alarm panel shows normal status",
-  "Kitchen hood suppression system inspected",
-] as const;
+function checklistItemsForType(
+  code: "annual" | "quarterly" | "monthly",
+  result: InspectionItemResult,
+) {
+  return buildInspectionChecklistItems(code).map((item) => ({
+    label: item.label,
+    description: item.description,
+    sortOrder: item.sortOrder,
+    result,
+  }));
+}
 
 async function getOrCreateCompany() {
   let company = await prisma.company.findFirst({
@@ -158,11 +158,7 @@ async function seedSampleInspection(companyId: string) {
       status: InspectionStatus.scheduled,
       notes: "Seed data — upcoming annual fire inspection walkthrough.",
       items: {
-        create: DEFAULT_CHECKLIST.map((label, index) => ({
-          label,
-          sortOrder: index,
-          result: InspectionItemResult.pending,
-        })),
+        create: checklistItemsForType("annual", InspectionItemResult.pending),
       },
     },
     include: { items: true },
@@ -180,11 +176,7 @@ async function seedSampleInspection(companyId: string) {
         status: InspectionStatus.completed,
         notes: "Seed data — completed quarterly inspection.",
         items: {
-          create: DEFAULT_CHECKLIST.map((label, index) => ({
-            label,
-            sortOrder: index,
-            result: InspectionItemResult.pass,
-          })),
+          create: checklistItemsForType("quarterly", InspectionItemResult.pass),
         },
       },
     });
@@ -250,11 +242,7 @@ async function ensureUpcomingInspectionThisWeek(companyId: string) {
       status: InspectionStatus.scheduled,
       notes: "Seed data — upcoming inspection this week.",
       items: {
-        create: DEFAULT_CHECKLIST.map((label, index) => ({
-          label,
-          sortOrder: index,
-          result: InspectionItemResult.pending,
-        })),
+        create: checklistItemsForType("annual", InspectionItemResult.pending),
       },
     },
   });
@@ -293,11 +281,7 @@ async function ensureDemoCompletedInspection(companyId: string) {
       status: InspectionStatus.completed,
       notes: "Seed data — completed quarterly inspection.",
       items: {
-        create: DEFAULT_CHECKLIST.map((label, index) => ({
-          label,
-          sortOrder: index,
-          result: InspectionItemResult.pass,
-        })),
+        create: checklistItemsForType("quarterly", InspectionItemResult.pass),
       },
     },
   });
