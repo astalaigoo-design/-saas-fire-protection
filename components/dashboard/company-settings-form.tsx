@@ -1,11 +1,13 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import {
   updateCompanyProfile,
   type UpdateCompanyProfileState,
 } from "@/lib/companies/actions";
 import type { CompanyProfile } from "@/lib/companies/queries";
+import { compressImageFile } from "@/lib/inspect/compress-image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,9 +31,45 @@ export function CompanySettingsForm({ company }: CompanySettingsFormProps) {
     updateCompanyProfile,
     undefined,
   );
+  const [logoUrl, setLogoUrl] = useState(company.logoUrl ?? "");
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleLogoChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setLogoError(null);
+
+    if (!file.type.startsWith("image/")) {
+      setLogoError("Choose a PNG or JPEG image.");
+      return;
+    }
+
+    try {
+      const dataUrl = await compressImageFile(file, 512, 0.88);
+      if (dataUrl.length > 500_000) {
+        setLogoError("Logo is too large after compression. Try a smaller image.");
+        return;
+      }
+      setLogoUrl(dataUrl);
+    } catch {
+      setLogoError("Could not process image.");
+    }
+  }
+
+  function handleRemoveLogo() {
+    setLogoUrl("");
+    setLogoError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
 
   return (
     <form action={formAction} className="max-w-lg space-y-6">
+      <input type="hidden" name="logoUrl" value={logoUrl} />
+
       <div className="space-y-2">
         <Label htmlFor="name">Company name</Label>
         <Input
@@ -46,6 +84,44 @@ export function CompanySettingsForm({ company }: CompanySettingsFormProps) {
           Shown on your dashboard and compliance PDF reports.
         </p>
       </div>
+
+      <fieldset className="space-y-4 rounded-xl border border-border p-4">
+        <legend className="px-1 text-sm font-medium text-foreground">Company logo</legend>
+        {logoUrl ? (
+          <div className="flex items-center gap-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={logoUrl}
+              alt={`${company.name} logo preview`}
+              className="h-16 w-auto max-w-[12rem] rounded-md border border-border bg-background object-contain p-1"
+            />
+            <Button type="button" variant="outline" className="min-h-11" onClick={handleRemoveLogo}>
+              Remove logo
+            </Button>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No logo yet. It appears at the top of compliance PDF reports.
+          </p>
+        )}
+        <div className="space-y-2">
+          <Label htmlFor="logo">Upload logo</Label>
+          <Input
+            ref={fileInputRef}
+            id="logo"
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="min-h-11 file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-medium"
+            onChange={handleLogoChange}
+          />
+          <p className="text-xs text-muted-foreground">PNG or JPEG, square or wide. Max ~350 KB.</p>
+        </div>
+        {logoError ? (
+          <p role="alert" className="text-sm text-destructive">
+            {logoError}
+          </p>
+        ) : null}
+      </fieldset>
 
       <fieldset className="space-y-4 rounded-xl border border-border p-4">
         <legend className="px-1 text-sm font-medium text-foreground">

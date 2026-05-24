@@ -13,6 +13,7 @@ export type UpdateCompanyProfileState =
 function formDataToObject(formData: FormData): Record<string, string> {
   return {
     name: String(formData.get("name") ?? ""),
+    logoUrl: String(formData.get("logoUrl") ?? ""),
     reportEmail: String(formData.get("reportEmail") ?? ""),
     reportPhone: String(formData.get("reportPhone") ?? ""),
     reportAddress: String(formData.get("reportAddress") ?? ""),
@@ -42,6 +43,7 @@ export async function updateCompanyProfile(
       where: { id: session.companyId },
       data: {
         name: parsed.data.name,
+        logoUrl: parsed.data.logoUrl || null,
         reportEmail: parsed.data.reportEmail || null,
         reportPhone: parsed.data.reportPhone || null,
         reportAddress: parsed.data.reportAddress || null,

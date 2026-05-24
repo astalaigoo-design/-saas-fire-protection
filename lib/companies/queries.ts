@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 export type CompanyProfile = {
   id: string;
   name: string;
+  logoUrl: string | null;
   reportEmail: string | null;
   reportPhone: string | null;
   reportAddress: string | null;
@@ -17,6 +18,7 @@ export async function getCompanyProfile(
     select: {
       id: true,
       name: true,
+      logoUrl: true,
       reportEmail: true,
       reportPhone: true,
       reportAddress: true,
