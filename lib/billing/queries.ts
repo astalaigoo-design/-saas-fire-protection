@@ -31,33 +31,33 @@ export async function getCompanyBillingSnapshot(
   return {
     companyId: company.id,
     companyName: company.name,
-    checkoutUrl: buildLemonSqueezyCheckoutUrl(company.id, email),
-    customerPortalUrl: getLemonSqueezyCustomerPortalUrl(),
+    checkoutUrl: buildPaddleCheckoutUrl(company.id, email),
+    customerPortalUrl: getPaddleCustomerPortalUrl(),
     ...access,
   };
 }
 
-export function buildLemonSqueezyCheckoutUrl(
+export function buildPaddleCheckoutUrl(
   companyId: string,
   email: string | null,
 ): string | null {
-  const base = process.env.NEXT_PUBLIC_LEMON_SQUEEZY_CHECKOUT_URL?.trim();
+  const base = process.env.NEXT_PUBLIC_PADDLE_CHECKOUT_URL?.trim();
   if (!base) return null;
 
   try {
     const url = new URL(base);
     if (email) {
-      url.searchParams.set("checkout[email]", email);
+      url.searchParams.set("user_email", email);
     }
-    url.searchParams.set("checkout[custom][company_id]", companyId);
+    url.searchParams.set("custom_data", JSON.stringify({ company_id: companyId }));
     return url.toString();
   } catch {
-    console.error("Invalid NEXT_PUBLIC_LEMON_SQUEEZY_CHECKOUT_URL");
+    console.error("Invalid NEXT_PUBLIC_PADDLE_CHECKOUT_URL");
     return null;
   }
 }
 
-export function getLemonSqueezyCustomerPortalUrl(): string | null {
-  const url = process.env.NEXT_PUBLIC_LEMON_SQUEEZY_CUSTOMER_PORTAL_URL?.trim();
+export function getPaddleCustomerPortalUrl(): string | null {
+  const url = process.env.NEXT_PUBLIC_PADDLE_CUSTOMER_PORTAL_URL?.trim();
   return url || null;
 }

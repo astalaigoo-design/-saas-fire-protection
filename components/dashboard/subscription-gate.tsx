@@ -49,7 +49,7 @@ export function SubscriptionGate({ billing, role, children }: SubscriptionGatePr
                   rel="noopener noreferrer"
                   className={cn(buttonVariants({ variant: "outline" }), "min-h-11 inline-flex")}
                 >
-                  Subscribe with Lemon Squeezy
+                  Subscribe with Paddle
                 </a>
               ) : null}
             </div>

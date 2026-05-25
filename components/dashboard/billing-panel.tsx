@@ -77,7 +77,7 @@ export function BillingPanel({ billing, isOwner }: BillingPanelProps) {
 
       {isOwner ? (
         <section className="space-y-3 rounded-xl border border-border p-5">
-          <h3 className="text-sm font-medium text-foreground">Subscribe with Lemon Squeezy</h3>
+          <h3 className="text-sm font-medium text-foreground">Subscribe with Paddle</h3>
           <p className="text-sm text-muted-foreground">
             New companies get a {TRIAL_DAYS}-day free trial. After checkout, your subscription
             activates automatically via webhook.
@@ -93,7 +93,7 @@ export function BillingPanel({ billing, isOwner }: BillingPanelProps) {
             </a>
           ) : (
             <p role="alert" className="text-sm text-destructive">
-              Checkout URL is not configured. Set NEXT_PUBLIC_LEMON_SQUEEZY_CHECKOUT_URL in your
+              Checkout URL is not configured. Set NEXT_PUBLIC_PADDLE_CHECKOUT_URL in your
               environment.
             </p>
           )}

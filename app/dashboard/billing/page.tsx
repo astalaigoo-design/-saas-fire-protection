@@ -20,7 +20,7 @@ export default async function BillingPage() {
         title="Billing"
         description={
           isOwner
-            ? "Your 14-day free trial and Lemon Squeezy subscription for this organization."
+            ? "Your 14-day free trial and Paddle subscription for this organization."
             : "Subscription status for your organization."
         }
       />

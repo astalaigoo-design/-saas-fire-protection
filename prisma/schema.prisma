@@ -90,8 +90,8 @@ model Company {
   /// App-managed free trial end (14 days from company creation for new tenants).
   trialEndsAt DateTime?
   subscriptionStatus SubscriptionStatus @default(trialing)
-  lemonSqueezyCustomerId String?
-  lemonSqueezySubscriptionId String? @unique
+  paddleCustomerId String?
+  paddleSubscriptionId String? @unique
   subscriptionRenewsAt DateTime?
 
   users           User[]
