@@ -94,7 +94,8 @@ export default function RefundPage() {
 
         <div className="rounded-xl border border-border bg-card p-5 text-sm leading-6 text-muted-foreground shadow-sm sm:p-6">
           <p>
-            This policy explains how refunds, cancellations, trials, and billing
+            Paid billing is currently disabled. If payments are enabled later,
+            this policy explains how refunds, cancellations, trials, and billing
             changes are handled for {APP_NAME} when payments are processed by
             Paddle as Merchant of Record.
           </p>

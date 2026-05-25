@@ -3,9 +3,6 @@ import { UserButton } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 import { BrandLogo } from "@/components/brand-logo";
 import { DashboardNav, DashboardNavMobile } from "@/components/dashboard/dashboard-nav";
-import { SubscriptionGate } from "@/components/dashboard/subscription-gate";
-import { TrialBanner } from "@/components/dashboard/trial-banner";
-import { getCompanyBillingSnapshot } from "@/lib/billing/queries";
 import { getDashboardNavItems } from "@/lib/dashboard/nav-items";
 import { getDashboardSession } from "@/lib/dashboard/session";
 
@@ -16,9 +13,6 @@ export default async function DashboardLayout({
 }) {
   const session = await getDashboardSession();
   if (!session) redirect("/sign-in");
-
-  const billing = await getCompanyBillingSnapshot(session, session.email);
-  if (!billing) redirect("/sign-in");
 
   const navItems = getDashboardNavItems(session.role);
 
@@ -59,17 +53,7 @@ export default async function DashboardLayout({
         </header>
 
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 lg:px-6">
-          <TrialBanner billing={billing} />
-          <SubscriptionGate
-            billing={{
-              hasAccess: billing.hasAccess,
-              message: billing.message,
-              checkoutUrl: billing.checkoutUrl,
-            }}
-            role={session.role}
-          >
-            {children}
-          </SubscriptionGate>
+          {children}
         </main>
       </div>
     </div>

@@ -62,8 +62,8 @@ const sections = [
   {
     title: "8. Fees and Billing",
     body: [
-      "Paid plans, trials, billing cycles, taxes, renewals, cancellations, and refunds are governed by the billing terms shown during checkout or in the billing area of the service.",
-      "You are responsible for keeping payment and billing information current when using a paid plan.",
+      "Paid billing is currently disabled while the service is being prepared for future payment setup.",
+      "If paid plans are introduced later, pricing, billing cycles, taxes, renewals, cancellations, and refunds will be shown before purchase and governed by the checkout or billing terms presented at that time.",
     ],
   },
   {

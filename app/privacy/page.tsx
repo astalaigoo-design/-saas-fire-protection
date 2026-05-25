@@ -36,14 +36,14 @@ const sections = [
   {
     title: "4. Service Providers",
     body: [
-      "We use trusted third-party providers for hosting, database infrastructure, authentication, file storage, email delivery, payments, analytics, monitoring, and related operations.",
+      "We use trusted third-party providers for hosting, database infrastructure, authentication, file storage, email delivery, analytics, monitoring, and related operations. Payment providers may be used if paid billing is enabled later.",
       "These providers may process information only as needed to provide their services to us and are expected to protect information according to their own security and privacy commitments.",
     ],
   },
   {
     title: "5. Emails and Communications",
     body: [
-      "The service may send account, inspection, report, quote, billing, and support emails. These are operational messages related to use of the service.",
+      "The service may send account, inspection, report, quote, and support emails. Billing emails may be sent if paid billing is enabled later. These are operational messages related to use of the service.",
       "If you send reports or quotes to customers through the service, you are responsible for confirming the recipient address and the content being sent.",
     ],
   },

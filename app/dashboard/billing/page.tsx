@@ -1,30 +1,24 @@
 import { redirect } from "next/navigation";
-import { BillingPanel } from "@/components/dashboard/billing-panel";
 import { PageHeader } from "@/components/dashboard/page-header";
-import { canManageOrgSettings } from "@/lib/auth/permissions";
-import { getCompanyBillingSnapshot } from "@/lib/billing/queries";
 import { getDashboardSession } from "@/lib/dashboard/session";
 
 export default async function BillingPage() {
   const session = await getDashboardSession();
   if (!session) redirect("/sign-in");
 
-  const billing = await getCompanyBillingSnapshot(session, session.email);
-  if (!billing) redirect("/dashboard");
-
-  const isOwner = canManageOrgSettings(session.role);
-
   return (
     <div className="space-y-6">
       <PageHeader
         title="Billing"
-        description={
-          isOwner
-            ? "Your 14-day free trial and Paddle subscription for this organization."
-            : "Subscription status for your organization."
-        }
+        description="Billing is temporarily disabled while payment setup is being finalized."
       />
-      <BillingPanel billing={billing} isOwner={isOwner} />
+      <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <h2 className="text-base font-semibold text-foreground">No payment required</h2>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          GetFlareflow is open for current users without subscription checks or checkout.
+          Billing will be added back later when payments are ready.
+        </p>
+      </section>
     </div>
   );
 }
