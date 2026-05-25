@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
+import { BrandLogo } from "@/components/brand-logo";
 import { DashboardNav, DashboardNavMobile } from "@/components/dashboard/dashboard-nav";
 import { SubscriptionGate } from "@/components/dashboard/subscription-gate";
 import { TrialBanner } from "@/components/dashboard/trial-banner";
-import { APP_NAME } from "@/lib/branding";
 import { getCompanyBillingSnapshot } from "@/lib/billing/queries";
 import { getDashboardNavItems } from "@/lib/dashboard/nav-items";
 import { getDashboardSession } from "@/lib/dashboard/session";
@@ -28,9 +28,9 @@ export default async function DashboardLayout({
         <div className="flex flex-col gap-6 p-4">
           <Link
             href="/dashboard"
-            className="font-heading text-sm font-semibold tracking-tight text-foreground"
+            className="rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           >
-            {APP_NAME}
+            <BrandLogo logoClassName="size-9" />
           </Link>
           <DashboardNav items={navItems} />
         </div>
@@ -41,9 +41,9 @@ export default async function DashboardLayout({
           <div className="flex items-center justify-between gap-3 px-4 py-3">
             <Link
               href="/dashboard"
-              className="shrink-0 font-heading text-sm font-semibold tracking-tight text-foreground"
+              className="shrink-0 rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             >
-              {APP_NAME}
+              <BrandLogo logoClassName="size-9" />
             </Link>
             <UserButton afterSignOutUrl="/" />
           </div>

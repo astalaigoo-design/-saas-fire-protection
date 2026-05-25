@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand-logo";
 import { buttonVariants } from "@/components/ui/button";
-import { APP_NAME, APP_TAGLINE } from "@/lib/branding";
+import { APP_TAGLINE } from "@/lib/branding";
 import { cn } from "@/lib/utils";
 
 const valuePoints = [
@@ -14,9 +15,7 @@ export default function Home() {
     <main className="min-h-screen bg-background text-foreground">
       <section className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-16 sm:px-6 lg:py-24">
         <div className="space-y-3">
-          <p className="text-sm font-medium uppercase tracking-wide text-primary">
-            {APP_NAME}
-          </p>
+          <BrandLogo logoClassName="size-14 rounded-2xl" textClassName="text-base" />
           <p className="text-sm text-muted-foreground">{APP_TAGLINE}</p>
         </div>
 
