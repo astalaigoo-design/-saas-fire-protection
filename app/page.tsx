@@ -14,9 +14,21 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <section className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-16 sm:px-6 lg:py-24">
-        <div className="space-y-3">
-          <BrandLogo logoClassName="size-14 rounded-2xl" textClassName="text-base" />
-          <p className="text-sm text-muted-foreground">{APP_TAGLINE}</p>
+        <div className="rounded-3xl border border-primary/20 bg-card/80 p-5 shadow-lg shadow-primary/5 backdrop-blur sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <BrandLogo
+              logoClassName="size-20 rounded-3xl shadow-md shadow-primary/15"
+              textClassName="text-3xl sm:text-4xl"
+            />
+            <div className="max-w-xs text-left sm:text-right">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
+                {APP_TAGLINE}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Professional compliance software for fire protection teams.
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="max-w-3xl space-y-5">
