@@ -1,4 +1,6 @@
+import { SubscriptionStatus } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
+import { addTrialDays } from "@/lib/billing/access";
 import { prisma } from "@/lib/prisma";
 
 export const DEFAULT_INSPECTION_TYPES = [
@@ -19,7 +21,11 @@ export async function createCompanyWithDefaults(
   const client = tx ?? prisma;
 
   const company = await client.company.create({
-    data: { name: trimmed },
+    data: {
+      name: trimmed,
+      trialEndsAt: addTrialDays(),
+      subscriptionStatus: SubscriptionStatus.trialing,
+    },
     select: { id: true, name: true },
   });
 

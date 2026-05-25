@@ -1,26 +1,26 @@
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
-import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { DashboardNav, DashboardNavMobile } from "@/components/dashboard/dashboard-nav";
-import { resolveAppRole } from "@/lib/auth/roles";
+import { SubscriptionGate } from "@/components/dashboard/subscription-gate";
+import { TrialBanner } from "@/components/dashboard/trial-banner";
 import { APP_NAME } from "@/lib/branding";
+import { getCompanyBillingSnapshot } from "@/lib/billing/queries";
 import { getDashboardNavItems } from "@/lib/dashboard/nav-items";
+import { getDashboardSession } from "@/lib/dashboard/session";
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = await currentUser();
-  if (!user) redirect("/sign-in");
+  const session = await getDashboardSession();
+  if (!session) redirect("/sign-in");
 
-  const role = resolveAppRole(
-    user.publicMetadata as Record<string, unknown>,
-    user.unsafeMetadata as Record<string, unknown> | undefined,
-  );
+  const billing = await getCompanyBillingSnapshot(session, session.email);
+  if (!billing) redirect("/sign-in");
 
-  const navItems = getDashboardNavItems(role);
+  const navItems = getDashboardNavItems(session.role);
 
   return (
     <div className="min-h-screen bg-background text-foreground lg:flex">
@@ -58,7 +58,19 @@ export default async function DashboardLayout({
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 lg:px-6">{children}</main>
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 lg:px-6">
+          <TrialBanner billing={billing} />
+          <SubscriptionGate
+            billing={{
+              hasAccess: billing.hasAccess,
+              message: billing.message,
+              checkoutUrl: billing.checkoutUrl,
+            }}
+            role={session.role}
+          >
+            {children}
+          </SubscriptionGate>
+        </main>
       </div>
     </div>
   );

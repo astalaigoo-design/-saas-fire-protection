@@ -7,6 +7,7 @@ import {
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { canViewAllJobs } from "@/lib/auth/permissions";
+import { assertActiveCompanyAccess } from "@/lib/billing/guards";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { isInspectionLocked } from "@/lib/inspect/queries";
 import {
@@ -69,6 +70,8 @@ export async function startInspection(
 ): Promise<InspectActionResult> {
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
+  const access = await assertActiveCompanyAccess(session);
+  if (!access.ok) return access;
 
   const loaded = await loadEditableInspection(inspectionId, session);
   if (!loaded.ok) return { ok: false, error: loaded.error };
@@ -90,6 +93,8 @@ export async function updateChecklistItem(
 ): Promise<InspectActionResult> {
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
+  const access = await assertActiveCompanyAccess(session);
+  if (!access.ok) return access;
 
   const parsed = updateChecklistItemSchema.safeParse(input);
   if (!parsed.success) {
@@ -133,6 +138,8 @@ export async function uploadInspectionPhoto(
 ): Promise<InspectActionResult & { photoId?: string; url?: string }> {
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
+  const access = await assertActiveCompanyAccess(session);
+  if (!access.ok) return access;
 
   const parsed = uploadPhotoSchema.safeParse(input);
   if (!parsed.success) {
@@ -184,6 +191,8 @@ export async function deleteInspectionPhoto(
 ): Promise<InspectActionResult> {
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
+  const access = await assertActiveCompanyAccess(session);
+  if (!access.ok) return access;
 
   const loaded = await loadEditableInspection(inspectionId, session);
   if (!loaded.ok) return { ok: false, error: loaded.error };
@@ -213,6 +222,8 @@ export async function submitInspection(
 ): Promise<InspectActionResult> {
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
+  const access = await assertActiveCompanyAccess(session);
+  if (!access.ok) return access;
 
   const parsed = submitInspectionSchema.safeParse(input);
   if (!parsed.success) {

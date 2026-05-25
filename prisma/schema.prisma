@@ -67,6 +67,14 @@ enum QuoteStatus {
   declined
 }
 
+enum SubscriptionStatus {
+  trialing
+  active
+  past_due
+  cancelled
+  expired
+}
+
 // --- Core tenant -----------------------------------------------------------
 
 /// Fire inspection company (tenant).
@@ -78,6 +86,13 @@ model Company {
   reportEmail   String?
   reportPhone   String?
   reportAddress String? @db.Text
+
+  /// App-managed free trial end (14 days from company creation for new tenants).
+  trialEndsAt DateTime?
+  subscriptionStatus SubscriptionStatus @default(trialing)
+  lemonSqueezyCustomerId String?
+  lemonSqueezySubscriptionId String? @unique
+  subscriptionRenewsAt DateTime?
 
   users           User[]
   customers       Customer[]
