@@ -59,15 +59,20 @@ export default async function Home() {
           </SignUpButton>
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          Full-page auth:{" "}
-          <Link href="/sign-in" className="text-primary hover:underline">
-            /sign-in
+        <p className="text-xs leading-5 text-muted-foreground">
+          By creating an account, you agree to the{" "}
+          <Link href="/terms" className="text-primary hover:underline">
+            Terms of Service
           </Link>{" "}
-          ·{" "}
-          <Link href="/sign-up" className="text-primary hover:underline">
-            /sign-up
+          and{" "}
+          <Link href="/privacy" className="text-primary hover:underline">
+            Privacy Policy
           </Link>
+          , and{" "}
+          <Link href="/refund" className="text-primary hover:underline">
+            Refund Policy
+          </Link>
+          .
         </p>
       </section>
     </main>

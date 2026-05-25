@@ -36,6 +36,9 @@ function clerkPublishableKeyMissing(): NextResponse {
 
 const isPublicRoute = createRouteMatcher([
   "/",
+  "/terms",
+  "/privacy",
+  "/refund",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/api/webhooks/clerk",
