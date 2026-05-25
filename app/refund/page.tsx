@@ -11,49 +11,62 @@ export const metadata: Metadata = {
 
 const sections = [
   {
-    title: "1. Subscriptions",
+    title: "1. Paddle as Merchant of Record",
     body: [
-      `${APP_NAME} is offered as a subscription service for fire inspection businesses. Subscription fees are billed according to the plan, billing interval, and checkout terms shown when you subscribe.`,
-      "Unless a separate written agreement says otherwise, subscription payments are non-refundable once a billing period begins.",
+      `Our order process is conducted by our online reseller Paddle.com. Paddle.com is the Merchant of Record for paid ${APP_NAME} orders. Paddle provides payment support, tax handling, invoices, subscription billing, and refund processing.`,
+      `When you buy or subscribe to ${APP_NAME} through Paddle, you purchase from Paddle, while ${APP_NAME} supplies and supports the software product.`,
     ],
   },
   {
-    title: "2. Cancellations",
+    title: "2. General Refund Position",
     body: [
-      "You may cancel a paid subscription from the billing area of the service or by contacting support. Cancellation stops future renewals but does not automatically refund the current billing period.",
-      "After cancellation, your organization may retain access until the end of the paid billing period, unless access is suspended for a terms, security, or payment issue.",
+      "Unless required by law or approved by Paddle, transactions are generally non-refundable and non-exchangeable once completed.",
+      "Paddle may issue refunds on a discretionary basis or where an applicable statutory withdrawal or refund right applies. Refund requests are reviewed case by case and are not guaranteed.",
+      "Paddle may refuse a refund request where there is evidence of fraud, refund abuse, or other manipulative behavior.",
     ],
   },
   {
-    title: "3. Trials and Promotions",
+    title: "3. Subscription Cancellations",
     body: [
-      "If a free trial or promotional period is offered, billing details and renewal terms will be shown during sign-up or checkout.",
+      "Paid subscriptions renew automatically until canceled. You can cancel from the billing area, through Paddle's subscription management links, or by contacting support.",
+      "Cancellation stops future renewals, but unused subscription periods are not refunded unless Paddle approves a refund or applicable law requires one.",
+      "If you cancel during a paid billing period, your organization may retain access until the end of that billing period unless access is suspended for a terms, security, or payment issue.",
+    ],
+  },
+  {
+    title: "4. Trials and Promotions",
+    body: [
+      "If a free trial or promotional period is offered, the billing details and renewal terms will be shown during sign-up or checkout.",
       "You are responsible for canceling before the trial or promotional period ends if you do not want to continue on a paid plan.",
     ],
   },
   {
-    title: "4. Refund Requests",
+    title: "5. How to Request a Refund",
     body: [
-      "We may review refund requests case by case, especially for duplicate charges, billing errors, or accidental renewals reported promptly.",
-      "Submitting a refund request does not guarantee approval. Approved refunds may take several business days to appear depending on the payment processor and financial institution.",
+      "To withdraw, cancel, or request a refund, use the View receipt or Manage subscription link in your Paddle transaction confirmation email, use the support link in your receipt or billing page, or visit paddle.net and choose the refund request option.",
+      `You may also contact ${APP_NAME} support at support@getflareflow.com. If we agree that a refund should be issued, we will not refund you directly; we will work with Paddle so Paddle can process the refund as Merchant of Record.`,
+      "Include your organization name, account email, Paddle order number or invoice reference, and a short description of the issue.",
     ],
   },
   {
-    title: "5. Downgrades and Plan Changes",
+    title: "6. Refund Timing and Method",
     body: [
-      "Plan changes may affect available features, limits, and billing. Unless stated otherwise during checkout, downgrades take effect at the next renewal and do not create a refund or credit for the current billing period.",
+      "If a refund is approved, Paddle will process it using the original payment method where possible. Timing depends on Paddle, the payment method, and your financial institution.",
+      "Paddle's published refund policy states that eligible refunds are processed within 14 days of approval where applicable.",
+      "Taxes, currency conversion charges, bank fees, and similar third-party charges may be handled according to Paddle's policies and applicable law.",
     ],
   },
   {
-    title: "6. Payment Processor Fees and Taxes",
+    title: "7. Statutory Rights",
     body: [
-      "Payment processor fees, taxes, currency conversion charges, bank fees, and similar third-party charges may be non-refundable where applicable.",
+      "Nothing in this policy limits any mandatory consumer cancellation, withdrawal, refund, or other statutory rights that apply to you.",
+      "Paddle's transaction records may be used to verify refund eligibility and timing, but they do not override statutory rights.",
     ],
   },
   {
-    title: "7. Contact",
+    title: "8. Contact",
     body: [
-      "Refund or billing questions can be sent to support@getflareflow.com. Include your organization name, account email, invoice or payment reference, and a short description of the issue.",
+      "Billing or refund questions can be sent to support@getflareflow.com. For Paddle order support and refund requests, use your Paddle receipt, Paddle subscription management link, or paddle.net.",
     ],
   },
 ];
@@ -82,8 +95,8 @@ export default function RefundPage() {
         <div className="rounded-xl border border-border bg-card p-5 text-sm leading-6 text-muted-foreground shadow-sm sm:p-6">
           <p>
             This policy explains how refunds, cancellations, trials, and billing
-            changes are handled for {APP_NAME}. It is a practical draft and may
-            need legal review before customer rollout.
+            changes are handled for {APP_NAME} when payments are processed by
+            Paddle as Merchant of Record.
           </p>
         </div>
 
