@@ -1,7 +1,4 @@
 import Link from "next/link";
-import { SignInButton, SignUpButton } from "@clerk/nextjs";
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { APP_DESCRIPTION, APP_NAME, APP_TAGLINE } from "@/lib/branding";
 import { cn } from "@/lib/utils";
@@ -12,10 +9,7 @@ const valuePoints = [
   "Mobile-first field workflow for technicians",
 ];
 
-export default async function Home() {
-  const { userId } = await auth();
-  if (userId) redirect("/dashboard");
-
+export default function Home() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <section className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-16 sm:px-6 lg:py-24">
@@ -44,19 +38,15 @@ export default async function Home() {
         </ul>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <SignInButton mode="redirect" forceRedirectUrl="/dashboard">
-            <button type="button" className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-6")}>
-              Sign in
-            </button>
-          </SignInButton>
-          <SignUpButton mode="redirect" forceRedirectUrl="/dashboard">
-            <button
-              type="button"
-              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-11 px-6")}
-            >
-              Create account
-            </button>
-          </SignUpButton>
+          <Link href="/sign-in" className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-6")}>
+            Sign in
+          </Link>
+          <Link
+            href="/sign-up"
+            className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-11 px-6")}
+          >
+            Create account
+          </Link>
         </div>
 
         <p className="text-xs leading-5 text-muted-foreground">
