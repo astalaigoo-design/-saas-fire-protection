@@ -53,24 +53,24 @@ export default function Home() {
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-2">
               <p className="text-sm font-medium uppercase tracking-wide text-primary">
-                Simple pricing
+                Pilot access
               </p>
               <h2 className="font-heading text-2xl font-semibold tracking-tight">
-                $49 / month
+                Start using GetFlareflow
               </h2>
               <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
                 Includes scheduling, customer and building records, mobile field
                 inspections, compliance reports, and repair quote workflows.
               </p>
               <p className="text-sm font-medium text-foreground">
-                Start your 14-day free trial. No credit card required.
+                Billing and checkout are not available yet.
               </p>
             </div>
             <Link
               href="/sign-up"
               className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-6")}
             >
-              Start free trial
+              Create account
             </Link>
           </div>
         </section>
