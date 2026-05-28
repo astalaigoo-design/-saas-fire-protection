@@ -4,6 +4,7 @@ import { QuoteStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
+import { writeAuditEvent } from "@/lib/audit/write-event";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { sendQuoteEmail } from "@/lib/email/send-quote-email";
 import { prisma } from "@/lib/prisma";
@@ -231,6 +232,19 @@ export async function sendDraftQuote(formData: FormData): Promise<void> {
       declinedAt: null,
     },
   });
+
+  await writeAuditEvent({
+    companyId: session.companyId,
+    actorUserId: session.appUserId,
+    action: "quote.sent",
+    entityType: "quote",
+    entityId: quote.id,
+    metadata: {
+      sentTo: customerEmail,
+      messageId: emailResult.messageId,
+    },
+  });
+
   revalidatePath("/dashboard/reports");
 }
 

@@ -26,6 +26,7 @@ import {
 } from "@/lib/reports/email-report-after-submit";
 import { createDraftQuoteFromInspection } from "@/lib/quotes/create-draft-quote-from-inspection";
 import { prisma } from "@/lib/prisma";
+import { writeAuditEvent } from "@/lib/audit/write-event";
 
 export type InspectActionResult =
   | { ok: true; reportEmail?: ReportEmailOutcome }
@@ -250,6 +251,17 @@ export async function submitInspection(
       signedAt: now,
       signatureData: parsed.data.signatureData,
       submittedByUserId: session.appUserId,
+    },
+  });
+
+  await writeAuditEvent({
+    companyId: session.companyId,
+    actorUserId: session.appUserId,
+    action: "inspection.submitted",
+    entityType: "inspection",
+    entityId: parsed.data.inspectionId,
+    metadata: {
+      buildingId: loaded.inspection.buildingId,
     },
   });
 

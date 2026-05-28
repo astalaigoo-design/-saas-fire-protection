@@ -79,8 +79,8 @@ enum SubscriptionStatus {
 
 /// Fire inspection company (tenant).
 model Company {
-  id   String @id @default(cuid())
-  name String
+  id            String  @id @default(cuid())
+  name          String
   /// HTTPS URL or data URL for PDF report header.
   logoUrl       String?
   reportEmail   String?
@@ -88,10 +88,10 @@ model Company {
   reportAddress String? @db.Text
 
   /// App-managed free trial end (14 days from company creation for new tenants).
-  trialEndsAt DateTime?
-  subscriptionStatus SubscriptionStatus @default(trialing)
-  paddleCustomerId String?
-  paddleSubscriptionId String? @unique
+  trialEndsAt          DateTime?
+  subscriptionStatus   SubscriptionStatus @default(trialing)
+  paddleCustomerId     String?
+  paddleSubscriptionId String?            @unique
   subscriptionRenewsAt DateTime?
 
   users           User[]
@@ -99,6 +99,7 @@ model Company {
   inspectionTypes InspectionType[]
   inspections     Inspection[]
   quotes          Quote[]
+  auditEvents     AuditEvent[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -108,9 +109,9 @@ model Company {
 
 /// Staff member linked to Clerk; belongs to one company.
 model User {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   companyId   String
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   /// Clerk user id (`user_...`) — unique per company.
   clerkUserId String
   email       String?
@@ -120,6 +121,7 @@ model User {
   deletedAt   DateTime?
 
   inspectionsAssigned Inspection[] @relation("InspectionAssignee")
+  auditEvents         AuditEvent[] @relation("AuditEventActor")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -164,13 +166,13 @@ model Building {
   region       String
   /// ZIP / postal code.
   postalCode   String
-  country      String @default("US")
+  country      String  @default("US")
 
   buildingType BuildingType?
   /// Fire district or AHJ jurisdiction.
   fireDistrict String?
   /// General site notes (free text).
-  notes        String? @map("generalNotes") @db.Text
+  notes        String?       @map("generalNotes") @db.Text
 
   /// Denormalized from inspections; updated via syncBuildingComplianceStatus.
   currentStatus ComplianceStatus @default(PENDING)
@@ -192,7 +194,7 @@ model BuildingNote {
   buildingId String
   building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
 
-  body       String @db.Text
+  body       String  @db.Text
   authorName String?
 
   createdAt DateTime @default(now())
@@ -257,7 +259,7 @@ model Inspection {
   /// PDF reports for this inspection (also reachable from Building via inspections).
   reports Report[]
   /// Repair estimate created from failed inspection items.
-  quote Quote?
+  quote   Quote?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -319,9 +321,9 @@ model Report {
   generatedAt DateTime?
 
   /// Set when the compliance PDF is emailed to the customer after submit.
-  emailedTo   String?
-  emailedAt   DateTime?
-  emailError  String?   @db.Text
+  emailedTo  String?
+  emailedAt  DateTime?
+  emailError String?   @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -344,20 +346,20 @@ model Quote {
   title  String?
   notes  String?     @db.Text
 
-  currency   String @default("USD")
-  subtotalCents Int @default(0)
+  currency           String @default("USD")
+  subtotalCents      Int    @default(0)
   /// Percentage in basis points (10000 = 100.00%).
-  taxRateBasisPoints Int @default(0)
-  taxCents      Int @default(0)
-  discountCents Int @default(0)
-  totalCents    Int @default(0)
+  taxRateBasisPoints Int    @default(0)
+  taxCents           Int    @default(0)
+  discountCents      Int    @default(0)
+  totalCents         Int    @default(0)
 
-  sentTo           String?
-  sentAt           DateTime?
-  sentMessageId    String?
-  statusChangedAt  DateTime?
-  acceptedAt       DateTime?
-  declinedAt       DateTime?
+  sentTo          String?
+  sentAt          DateTime?
+  sentMessageId   String?
+  statusChangedAt DateTime?
+  acceptedAt      DateTime?
+  declinedAt      DateTime?
 
   lineItems QuoteLineItem[]
 
@@ -372,17 +374,42 @@ model QuoteLineItem {
   id String @id @default(cuid())
 
   quoteId String
-  quote   Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 
-  label       String
-  description String? @db.Text
-  quantity    Int     @default(1)
-  unitPriceCents Int  @default(0)
-  sortOrder   Int     @default(0)
+  label          String
+  description    String? @db.Text
+  quantity       Int     @default(1)
+  unitPriceCents Int     @default(0)
+  sortOrder      Int     @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([quoteId])
   @@map("quote_line_items")
+}
+
+/// Append-only audit trail for important actions within a company.
+model AuditEvent {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  /// Optional actor (staff user) who triggered the event.
+  actorUserId String?
+  actor       User?   @relation("AuditEventActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  action     String
+  entityType String?
+  entityId   String?
+
+  /// Optional structured context for debugging/auditing.
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([companyId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@map("audit_events")
 }

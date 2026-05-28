@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect";
+import { writeAuditEvent } from "@/lib/audit/write-event";
 import { ensureCanManageCustomers } from "@/lib/auth/guards";
 import { getBuildingById } from "@/lib/buildings/queries";
 import {
@@ -67,6 +68,17 @@ export async function createBuilding(
         country: parsed.data.country,
       },
       select: { id: true },
+    });
+
+    await writeAuditEvent({
+      companyId: session.companyId,
+      actorUserId: session.appUserId,
+      action: "building.created",
+      entityType: "building",
+      entityId: building.id,
+      metadata: {
+        customerId: customer.id,
+      },
     });
 
     revalidateBuildingPaths(building.id, customer.id);
