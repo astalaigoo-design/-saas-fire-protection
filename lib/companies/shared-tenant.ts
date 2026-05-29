@@ -1,6 +1,12 @@
 import type { Company } from "@prisma/client";
 import { APP_NAME, DEMO_COMPANY_NAME } from "@/lib/branding";
 
+/** Product owners who may use the shared demo workspace; everyone else gets a private tenant. */
+export const DEFAULT_SHARED_TENANT_OPERATOR_EMAILS = [
+  "astalaigoo@gmail.com",
+  "yuri.joseph19@gmail.com",
+] as const;
+
 function parseCsvEnv(name: string): string[] {
   const raw = process.env[name]?.trim();
   if (!raw) return [];
@@ -10,13 +16,18 @@ function parseCsvEnv(name: string): string[] {
     .filter(Boolean);
 }
 
-/** Clerk user IDs that may intentionally use the shared demo tenant. */
+function operatorEmails(): string[] {
+  const fromEnv = parseCsvEnv("SHARED_TENANT_OPERATOR_EMAILS").map((e) => e.toLowerCase());
+  const defaults = DEFAULT_SHARED_TENANT_OPERATOR_EMAILS.map((e) => e.toLowerCase());
+  return [...new Set([...defaults, ...fromEnv])];
+}
+
+/** Clerk user IDs / emails that may intentionally use the shared demo tenant. */
 export function isSharedTenantOperator(clerkUserId: string, email?: string | null): boolean {
   const ids = parseCsvEnv("SHARED_TENANT_OPERATOR_CLERK_IDS");
   if (ids.includes(clerkUserId)) return true;
 
-  const emails = parseCsvEnv("SHARED_TENANT_OPERATOR_EMAILS").map((e) => e.toLowerCase());
-  if (email && emails.includes(email.toLowerCase())) return true;
+  if (email && operatorEmails().includes(email.toLowerCase())) return true;
 
   return false;
 }
