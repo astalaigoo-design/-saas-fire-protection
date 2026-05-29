@@ -19,7 +19,7 @@ function parseCsvEnv(name: string): string[] {
 function operatorEmails(): string[] {
   const fromEnv = parseCsvEnv("SHARED_TENANT_OPERATOR_EMAILS").map((e) => e.toLowerCase());
   const defaults = DEFAULT_SHARED_TENANT_OPERATOR_EMAILS.map((e) => e.toLowerCase());
-  return [...new Set([...defaults, ...fromEnv])];
+  return Array.from(new Set([...defaults, ...fromEnv]));
 }
 
 /** Clerk user IDs / emails that may intentionally use the shared demo tenant. */

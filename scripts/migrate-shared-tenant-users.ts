@@ -94,11 +94,28 @@ async function migrateClerkUser(clerkUserId: string) {
   console.log("Migrated:", clerkUserId, "→", company.name, company.id);
 }
 
-async function main() {
-  const targetId = process.argv[2]?.trim();
+async function migrateByEmail(email: string) {
+  const normalized = email.trim().toLowerCase();
+  const rows = await prisma.user.findMany({
+    where: { email: { equals: normalized, mode: "insensitive" } },
+    select: { clerkUserId: true },
+    distinct: ["clerkUserId"],
+  });
+  console.log(`Migrating ${rows.length} Clerk account(s) for ${normalized}`);
+  for (const row of rows) {
+    await migrateClerkUser(row.clerkUserId);
+  }
+}
 
-  if (targetId) {
-    await migrateClerkUser(targetId);
+async function main() {
+  const target = process.argv[2]?.trim();
+
+  if (target) {
+    if (target.includes("@")) {
+      await migrateByEmail(target);
+    } else {
+      await migrateClerkUser(target);
+    }
     return;
   }
 

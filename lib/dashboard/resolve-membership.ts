@@ -48,11 +48,65 @@ export function pickActiveMembership(
   return null;
 }
 
-export async function listActiveMemberships(clerkUserId: string): Promise<UserMembership[]> {
-  return prisma.user.findMany({
+export async function listActiveMemberships(
+  clerkUserId: string,
+  email?: string | null,
+): Promise<UserMembership[]> {
+  const byClerk = await prisma.user.findMany({
     where: { clerkUserId, active: true },
     include: { company: true },
     orderBy: { createdAt: "desc" },
+  });
+
+  const normalizedEmail = email?.trim().toLowerCase();
+  if (!normalizedEmail) return byClerk;
+
+  const byEmail = await prisma.user.findMany({
+    where: {
+      active: true,
+      email: { equals: normalizedEmail, mode: "insensitive" },
+    },
+    include: { company: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const merged = new Map<string, UserMembership>();
+  for (const row of [...byClerk, ...byEmail]) {
+    merged.set(row.id, row);
+  }
+  return Array.from(merged.values());
+}
+
+/** Ensure the signed-in Clerk user has an active row on the chosen company. */
+async function linkClerkUserToCompany(
+  clerkUserId: string,
+  companyId: string,
+  input: EnsureMembershipInput,
+): Promise<UserMembership> {
+  return prisma.user.upsert({
+    where: {
+      companyId_clerkUserId: {
+        companyId,
+        clerkUserId,
+      },
+    },
+    create: {
+      companyId,
+      clerkUserId,
+      email: input.email,
+      name: input.name,
+      role: input.role,
+      active: true,
+      deletedAt: null,
+    },
+    update: {
+      email: input.email,
+      name: input.name,
+      role: input.role,
+      active: true,
+      deletedAt: null,
+    },
+    include: { company: true },
   });
 }
 
@@ -75,7 +129,7 @@ export type EnsureMembershipResult =
 export async function ensureUserMembership(
   input: EnsureMembershipInput,
 ): Promise<EnsureMembershipResult> {
-  const memberships = await listActiveMemberships(input.clerkUserId);
+  const memberships = await listActiveMemberships(input.clerkUserId, input.email);
   let chosen = pickActiveMembership(memberships, input.companyIdFromMetadata);
 
   if (!chosen && input.companyIdFromMetadata) {
@@ -114,31 +168,11 @@ export async function ensureUserMembership(
       data: { active: false, deletedAt: new Date() },
     });
 
-    chosen = await prisma.user.upsert({
-      where: {
-        companyId_clerkUserId: {
-          companyId: companyResult.companyId,
-          clerkUserId: input.clerkUserId,
-        },
-      },
-      create: {
-        companyId: companyResult.companyId,
-        clerkUserId: input.clerkUserId,
-        email: input.email,
-        name: input.name,
-        role: input.role,
-        active: true,
-        deletedAt: null,
-      },
-      update: {
-        email: input.email,
-        name: input.name,
-        role: input.role,
-        active: true,
-        deletedAt: null,
-      },
-      include: { company: true },
-    });
+    chosen = await linkClerkUserToCompany(
+      input.clerkUserId,
+      companyResult.companyId,
+      input,
+    );
 
     console.info(
       "Dashboard session: migrated user off shared tenant to",
@@ -157,31 +191,23 @@ export async function ensureUserMembership(
       return { ok: false, error: companyResult.error };
     }
 
-    chosen = await prisma.user.upsert({
-      where: {
-        companyId_clerkUserId: {
-          companyId: companyResult.companyId,
-          clerkUserId: input.clerkUserId,
-        },
-      },
-      create: {
-        companyId: companyResult.companyId,
-        clerkUserId: input.clerkUserId,
-        email: input.email,
-        name: input.name,
-        role: input.role,
-        active: true,
-        deletedAt: null,
-      },
-      update: {
-        email: input.email,
-        name: input.name,
-        role: input.role,
-        active: true,
-        deletedAt: null,
-      },
-      include: { company: true },
-    });
+    chosen = await linkClerkUserToCompany(
+      input.clerkUserId,
+      companyResult.companyId,
+      input,
+    );
+  }
+
+  if (
+    chosen &&
+    chosen.clerkUserId !== input.clerkUserId &&
+    !isSharedTenantCompany(chosen.company)
+  ) {
+    chosen = await linkClerkUserToCompany(
+      input.clerkUserId,
+      chosen.companyId,
+      input,
+    );
   }
 
   const metadataSync = await syncClerkPublicMetadata(input.clerkUserId, {
