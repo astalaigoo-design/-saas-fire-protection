@@ -18,7 +18,8 @@
     "db:test": "node scripts/test-supabase-connection.mjs",
     "storage:ensure-bucket": "node scripts/ensure-inspection-photos-bucket.mjs",
     "fix-user": "tsx scripts/fix-user.ts",
-    "create-company": "tsx scripts/create-company.ts"
+    "create-company": "tsx scripts/create-company.ts",
+    "migrate-shared-tenant-users": "tsx scripts/migrate-shared-tenant-users.ts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"

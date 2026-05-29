@@ -1,4 +1,5 @@
 import { createCompanyWithDefaults } from "@/lib/companies/bootstrap-company";
+import { isSharedTenantCompany } from "@/lib/companies/shared-tenant";
 import { prisma } from "@/lib/prisma";
 import { APP_NAME } from "@/lib/branding";
 
@@ -38,12 +39,22 @@ export async function resolveCompanyIdForClerkUser(
   if (companyIdFromMetadata) {
     const company = await prisma.company.findUnique({
       where: { id: companyIdFromMetadata },
-      select: { id: true },
+      select: { id: true, name: true },
     });
-    if (company) return { companyId: company.id };
-    return {
-      error: `Company not found for companyId in metadata: ${companyIdFromMetadata}`,
-    };
+    if (company) {
+      if (isSharedTenantCompany(company)) {
+        console.warn(
+          "Clerk provisioning: ignoring shared-tenant companyId in metadata; creating private company instead:",
+          companyIdFromMetadata,
+        );
+      } else {
+        return { companyId: company.id };
+      }
+    } else {
+      return {
+        error: `Company not found for companyId in metadata: ${companyIdFromMetadata}`,
+      };
+    }
   }
 
   const companyName = buildCompanyNameForNewSignup(ctx);

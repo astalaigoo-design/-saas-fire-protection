@@ -2,20 +2,16 @@ import type { Company, User } from "@prisma/client";
 import { resolveCompanyIdForClerkUser } from "@/lib/clerk/webhook/resolve-company";
 import { syncClerkPublicMetadata } from "@/lib/clerk/sync-public-metadata";
 import type { AppRole } from "@/lib/auth/roles";
-import { APP_NAME, DEMO_COMPANY_NAME } from "@/lib/branding";
+import {
+  isSharedTenantCompany,
+  isSharedTenantOperator,
+  shouldMigrateOffSharedTenant,
+} from "@/lib/companies/shared-tenant";
 import { prisma } from "@/lib/prisma";
 
 export type UserMembership = User & { company: Company };
 
-/** Companies used for demos / shared testing — not a user's private tenant. */
-export function isSharedTenantCompany(company: Pick<Company, "id" | "name">): boolean {
-  const sharedId = process.env.SHARED_TENANT_COMPANY_ID?.trim();
-  if (sharedId && company.id === sharedId) return true;
-  if (company.name === DEMO_COMPANY_NAME) return true;
-  // Legacy production demo workspace (same name as the product).
-  if (company.name === APP_NAME) return true;
-  return false;
-}
+export { isSharedTenantCompany, shouldMigrateOffSharedTenant };
 
 function sortNewestFirst(memberships: UserMembership[]): UserMembership[] {
   return [...memberships].sort(
@@ -25,7 +21,7 @@ function sortNewestFirst(memberships: UserMembership[]): UserMembership[] {
 
 /**
  * Pick the active company membership for this Clerk user.
- * Prefers explicit metadata, then a private tenant, never a shared demo unless metadata says so.
+ * Never keeps self-serve users on the shared demo; only private tenants or explicit invites.
  */
 export function pickActiveMembership(
   memberships: UserMembership[],
@@ -34,11 +30,10 @@ export function pickActiveMembership(
   if (memberships.length === 0) return null;
 
   if (companyIdFromMetadata) {
-    return memberships.find((m) => m.companyId === companyIdFromMetadata) ?? null;
-  }
-
-  if (memberships.length === 1) {
-    return memberships[0] ?? null;
+    const fromMetadata = memberships.find((m) => m.companyId === companyIdFromMetadata);
+    if (fromMetadata && !shouldMigrateOffSharedTenant(companyIdFromMetadata, fromMetadata.company)) {
+      return fromMetadata;
+    }
   }
 
   const privateTenants = memberships.filter((m) => !isSharedTenantCompany(m.company));
@@ -49,7 +44,7 @@ export function pickActiveMembership(
     return sortNewestFirst(privateTenants)[0] ?? null;
   }
 
-  // Only shared/demo memberships and no metadata — caller should provision a private tenant.
+  // Only shared/demo membership(s) — caller provisions a private tenant.
   return null;
 }
 
@@ -90,12 +85,18 @@ export async function ensureUserMembership(
     };
   }
 
+  const stuckOnSharedOnly =
+    memberships.length > 0 && memberships.every((m) => isSharedTenantCompany(m.company));
+
   if (
     !chosen &&
-    !input.companyIdFromMetadata &&
-    memberships.length > 0 &&
-    memberships.every((m) => isSharedTenantCompany(m.company))
+    stuckOnSharedOnly &&
+    isSharedTenantOperator(input.clerkUserId, input.email)
   ) {
+    chosen = sortNewestFirst(memberships)[0] ?? null;
+  }
+
+  if (!chosen && stuckOnSharedOnly) {
     const companyResult = await resolveCompanyIdForClerkUser(null, {
       userEmail: input.email,
       userName: input.name,
