@@ -13,7 +13,10 @@ export async function handleUserCreated(data: unknown): Promise<WebhookHandlerRe
     return { ok: false, error: "Invalid user.created payload", retryable: false };
   }
 
-  const companyResult = await resolveCompanyIdForClerkUser(user.companyIdFromMetadata);
+  const companyResult = await resolveCompanyIdForClerkUser(user.companyIdFromMetadata, {
+    userEmail: user.email,
+    userName: user.name,
+  });
   if ("error" in companyResult) {
     console.error("Clerk webhook user.created:", companyResult.error, user.clerkUserId);
     return { ok: false, error: companyResult.error, retryable: false };

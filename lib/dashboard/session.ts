@@ -5,8 +5,7 @@ import {
   parseAppRoleFromMetadata,
   resolveAppRole,
 } from "@/lib/auth/roles";
-import { resolveCompanyIdForClerkUser } from "@/lib/clerk/webhook/resolve-company";
-import { prisma } from "@/lib/prisma";
+import { ensureUserMembership } from "@/lib/dashboard/resolve-membership";
 
 export type DashboardSession = {
   clerkUserId: string;
@@ -30,70 +29,41 @@ export async function getDashboardSession(): Promise<DashboardSession | null> {
     clerkUser.unsafeMetadata as Record<string, unknown> | undefined,
   );
 
-  let appUser = await prisma.user.findFirst({
-    where: { clerkUserId: clerkUser.id, active: true },
-    include: { company: true },
+  const companyIdRaw = (clerkUser.publicMetadata as Record<string, unknown> | undefined)?.[
+    COMPANY_METADATA_KEY
+  ];
+  const companyIdFromMetadata =
+    typeof companyIdRaw === "string" && companyIdRaw.trim().length > 0
+      ? companyIdRaw.trim()
+      : null;
+
+  const email = clerkUser.primaryEmailAddress?.emailAddress ?? null;
+  const name =
+    [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ").trim() || null;
+  const resolvedRole = role ?? roleFromMetadata;
+
+  const membershipResult = await ensureUserMembership({
+    clerkUserId: clerkUser.id,
+    email,
+    name,
+    role: resolvedRole,
+    companyIdFromMetadata,
   });
 
-  if (!appUser) {
-    const companyIdRaw = (clerkUser.publicMetadata as Record<string, unknown> | undefined)?.[
-      COMPANY_METADATA_KEY
-    ];
-    const companyIdFromMetadata =
-      typeof companyIdRaw === "string" && companyIdRaw.trim().length > 0
-        ? companyIdRaw.trim()
-        : null;
-
-    const companyResult = await resolveCompanyIdForClerkUser(companyIdFromMetadata);
-    if ("error" in companyResult) {
-      console.error(
-        "Dashboard session: failed to auto-provision user, no company resolved",
-        companyResult.error,
-        clerkUser.id,
-      );
-      return null;
-    }
-
-    try {
-      appUser = await prisma.user.upsert({
-        where: {
-          companyId_clerkUserId: {
-            companyId: companyResult.companyId,
-            clerkUserId: clerkUser.id,
-          },
-        },
-        create: {
-          companyId: companyResult.companyId,
-          clerkUserId: clerkUser.id,
-          email: clerkUser.primaryEmailAddress?.emailAddress ?? null,
-          name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ").trim() || null,
-          role: roleFromMetadata,
-          active: true,
-          deletedAt: null,
-        },
-        update: {
-          email: clerkUser.primaryEmailAddress?.emailAddress ?? null,
-          name: [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ").trim() || null,
-          role: roleFromMetadata,
-          active: true,
-          deletedAt: null,
-        },
-        include: { company: true },
-      });
-    } catch (error) {
-      console.error("Dashboard session: auto-provision upsert failed", error, clerkUser.id);
-      return null;
-    }
+  if (!membershipResult.ok) {
+    console.error(
+      "Dashboard session: could not resolve tenant",
+      membershipResult.error,
+      clerkUser.id,
+    );
+    return null;
   }
 
-  const resolvedRole = role ?? roleFromMetadata;
+  const appUser = membershipResult.membership;
 
   return {
     clerkUserId: clerkUser.id,
-    email:
-      clerkUser.primaryEmailAddress?.emailAddress ??
-      appUser.email ??
-      null,
+    email: email ?? appUser.email ?? null,
     appUserId: appUser.id,
     companyId: appUser.companyId,
     companyName: appUser.company.name,
