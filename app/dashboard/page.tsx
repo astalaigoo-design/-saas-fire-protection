@@ -13,17 +13,23 @@ import {
   getRecentCompletedInspections,
   getUpcomingInspectionsThisWeek,
 } from "@/lib/dashboard/queries";
+import { getOnboardingProgress } from "@/lib/dashboard/onboarding";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { isSharedTenantCompany } from "@/lib/companies/shared-tenant";
+import { canManageCustomers } from "@/lib/auth/permissions";
+import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
 
 export default async function DashboardPage() {
   const session = await getDashboardSession();
   if (!session) redirect("/sign-in");
 
-  const [stats, upcoming, completed] = await Promise.all([
+  const showOnboarding = canManageCustomers(session.role);
+
+  const [stats, upcoming, completed, onboarding] = await Promise.all([
     getDashboardStats(session),
     getUpcomingInspectionsThisWeek(session),
     getRecentCompletedInspections(session),
+    showOnboarding ? getOnboardingProgress(session) : Promise.resolve(null),
   ]);
 
   const workspaceName = isSharedTenantCompany({
@@ -47,6 +53,8 @@ export default async function DashboardPage() {
         description={description}
         actions={<DashboardActions role={session.role} />}
       />
+
+      {onboarding ? <OnboardingChecklist progress={onboarding} /> : null}
 
       <section aria-labelledby="stats-heading">
         <h2 id="stats-heading" className="sr-only">
