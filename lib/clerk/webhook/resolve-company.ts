@@ -1,30 +1,29 @@
 import { createCompanyWithDefaults } from "@/lib/companies/bootstrap-company";
 import { isSharedTenantCompany } from "@/lib/companies/shared-tenant";
 import { prisma } from "@/lib/prisma";
-import { APP_NAME } from "@/lib/branding";
 
 export type ResolveCompanyContext = {
   userEmail?: string | null;
   userName?: string | null;
 };
 
-/** Display name for a company created on self-serve sign-up. */
+/** Display name for a company created on self-serve sign-up (never use the product name alone). */
 export function buildCompanyNameForNewSignup(ctx: ResolveCompanyContext): string {
   const name = ctx.userName?.trim();
   if (name) {
-    return name.includes(APP_NAME) ? name : `${name} — ${APP_NAME}`;
+    return `${name}'s Fire Protection`;
   }
 
   const email = ctx.userEmail?.trim();
   if (email) {
-    const local = email.split("@")[0] ?? "Company";
+    const local = email.split("@")[0] ?? "My";
     const label = local
       .replace(/[._-]+/g, " ")
       .replace(/\b\w/g, (char) => char.toUpperCase());
-    return `${label} — ${APP_NAME}`;
+    return `${label} Fire Protection`;
   }
 
-  return `${APP_NAME} Company`;
+  return "My Fire Protection Company";
 }
 
 /**

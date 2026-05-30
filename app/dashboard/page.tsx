@@ -14,6 +14,7 @@ import {
   getUpcomingInspectionsThisWeek,
 } from "@/lib/dashboard/queries";
 import { getDashboardSession } from "@/lib/dashboard/session";
+import { isSharedTenantCompany } from "@/lib/companies/shared-tenant";
 
 export default async function DashboardPage() {
   const session = await getDashboardSession();
@@ -25,8 +26,15 @@ export default async function DashboardPage() {
     getRecentCompletedInspections(session),
   ]);
 
+  const workspaceName = isSharedTenantCompany({
+    id: session.companyId,
+    name: session.companyName,
+  })
+    ? `${session.companyName} (demo workspace)`
+    : session.companyName;
+
   const description = [
-    session.companyName,
+    workspaceName,
     session.email ? session.email : null,
   ]
     .filter(Boolean)

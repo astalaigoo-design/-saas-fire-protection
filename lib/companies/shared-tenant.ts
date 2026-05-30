@@ -1,5 +1,10 @@
 import type { Company } from "@prisma/client";
-import { APP_NAME, DEMO_COMPANY_NAME } from "@/lib/branding";
+import {
+  APP_NAME,
+  DEMO_COMPANY_NAME,
+  SHARED_DEMO_COMPANY_ID,
+  SHARED_DEMO_COMPANY_NAME,
+} from "@/lib/branding";
 
 /** Product owners who may use the shared demo workspace; everyone else gets a private tenant. */
 export const DEFAULT_SHARED_TENANT_OPERATOR_EMAILS = [
@@ -32,12 +37,15 @@ export function isSharedTenantOperator(clerkUserId: string, email?: string | nul
   return false;
 }
 
+export function sharedTenantCompanyId(): string {
+  return process.env.SHARED_TENANT_COMPANY_ID?.trim() || SHARED_DEMO_COMPANY_ID;
+}
+
 /** Companies used for demos / shared testing — not a user's private tenant. */
 export function isSharedTenantCompany(company: Pick<Company, "id" | "name">): boolean {
-  const sharedId = process.env.SHARED_TENANT_COMPANY_ID?.trim();
-  if (sharedId && company.id === sharedId) return true;
+  if (company.id === sharedTenantCompanyId()) return true;
   if (company.name === DEMO_COMPANY_NAME) return true;
-  // Legacy production demo workspace (same name as the product).
+  if (company.name === SHARED_DEMO_COMPANY_NAME) return true;
   if (company.name === APP_NAME) return true;
   return false;
 }

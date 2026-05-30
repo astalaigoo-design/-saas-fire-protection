@@ -9,3 +9,7 @@ export const APP_DESCRIPTION =
 
 /** Default demo tenant name in seed scripts. */
 export const DEMO_COMPANY_NAME = "GetFlareflow Demo Co.";
+
+/** Production shared demo workspace (legacy name in DB). */
+export const SHARED_DEMO_COMPANY_ID = "cmpc93rk30000tkngtmv98mra";
+export const SHARED_DEMO_COMPANY_NAME = "GetFlareflow";

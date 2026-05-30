@@ -5,6 +5,7 @@ import type { AppRole } from "@/lib/auth/roles";
 import {
   isSharedTenantCompany,
   isSharedTenantOperator,
+  sharedTenantCompanyId,
   shouldMigrateOffSharedTenant,
 } from "@/lib/companies/shared-tenant";
 import { prisma } from "@/lib/prisma";
@@ -207,6 +208,42 @@ export async function ensureUserMembership(
       input.clerkUserId,
       chosen.companyId,
       input,
+    );
+  }
+
+  if (
+    chosen &&
+    isSharedTenantCompany(chosen.company) &&
+    !isSharedTenantOperator(input.clerkUserId, input.email)
+  ) {
+    const companyResult = await resolveCompanyIdForClerkUser(null, {
+      userEmail: input.email,
+      userName: input.name,
+    });
+    if ("error" in companyResult) {
+      return { ok: false, error: companyResult.error };
+    }
+
+    await prisma.user.updateMany({
+      where: {
+        clerkUserId: input.clerkUserId,
+        companyId: sharedTenantCompanyId(),
+        active: true,
+      },
+      data: { active: false, deletedAt: new Date() },
+    });
+
+    chosen = await linkClerkUserToCompany(
+      input.clerkUserId,
+      companyResult.companyId,
+      input,
+    );
+
+    console.info(
+      "Dashboard session: forced migration off shared tenant to",
+      chosen.company.name,
+      chosen.companyId,
+      input.clerkUserId,
     );
   }
 
