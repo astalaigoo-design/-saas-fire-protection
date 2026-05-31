@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Activity,
   Building2,
   Calendar,
   ClipboardList,
@@ -17,6 +18,7 @@ import { cn } from "@/lib/utils";
 
 export type DashboardNavIcon =
   | "layout-dashboard"
+  | "activity"
   | "users"
   | "building"
   | "clipboard-list"
@@ -38,6 +40,7 @@ type DashboardNavProps = {
 
 const navIcons: Record<DashboardNavIcon, LucideIcon> = {
   "layout-dashboard": LayoutDashboard,
+  activity: Activity,
   users: Users,
   building: Building2,
   "clipboard-list": ClipboardList,
