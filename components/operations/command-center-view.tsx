@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDate } from "@/lib/dashboard/dates";
 import type { CommandCenterSnapshot } from "@/lib/operations/queries";
 import type { DueInspectionRow } from "@/lib/operations/due-inspections";
+import { DUE_REMINDER_DAYS } from "@/lib/scheduling/recurrence-policy";
 import { cn } from "@/lib/utils";
 
 function formatCurrency(cents: number, currency: string): string {
@@ -109,7 +110,7 @@ export function CommandCenterView({ snapshot }: CommandCenterViewProps) {
     <div className="space-y-8">
       <PageHeader
         title="Command center"
-        description="Compliance workload, open deficiencies, quotes, and reports at a glance."
+        description={`Compliance workload at a glance. Recurring jobs auto-schedule on submit; due-date emails send ${DUE_REMINDER_DAYS} days ahead to your report email.`}
         actions={
           <Link href="/dashboard/jobs/new" className={cn(buttonVariants({ size: "lg" }), "min-h-11")}>
             Schedule inspection

@@ -212,6 +212,11 @@ export function ScheduleInspectionForm({
                 </label>
               ))}
             </div>
+            <p className="text-xs leading-5 text-muted-foreground">
+              Monthly, quarterly, and annual jobs auto-schedule the next visit when a technician
+              submits the inspection. Email reminders go to your report email 7 days before due
+              dates.
+            </p>
           </fieldset>
 
           <div className="space-y-2">

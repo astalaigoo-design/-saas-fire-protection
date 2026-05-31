@@ -25,6 +25,7 @@ import {
   type ReportEmailOutcome,
 } from "@/lib/reports/email-report-after-submit";
 import { createDraftQuoteFromInspection } from "@/lib/quotes/create-draft-quote-from-inspection";
+import { autoScheduleNextInspection } from "@/lib/scheduling/auto-schedule-next";
 import { prisma } from "@/lib/prisma";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 
@@ -268,6 +269,17 @@ export async function submitInspection(
   await syncBuildingComplianceStatus(loaded.inspection.buildingId);
 
   try {
+    await autoScheduleNextInspection({
+      companyId: session.companyId,
+      actorUserId: session.appUserId,
+      inspectionId: parsed.data.inspectionId,
+      completedAt: now,
+    });
+  } catch (error) {
+    console.error("autoScheduleNextInspection failed", error);
+  }
+
+  try {
     await createDraftQuoteFromInspection({
       companyId: session.companyId,
       inspectionId: parsed.data.inspectionId,
@@ -296,6 +308,7 @@ export async function submitInspection(
   revalidatePath(`/inspect/${parsed.data.inspectionId}`);
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/jobs");
+  revalidatePath("/dashboard/operations");
   revalidatePath("/dashboard/reports");
   return { ok: true, reportEmail };
 }

@@ -17,7 +17,7 @@ export default async function OrgSettingsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Organization"
-        description="Your business name, logo, and contact details on compliance PDF reports. This is not the same as a customer you inspect for."
+        description="Your business name, logo, and contact details on compliance PDF reports. Report email also receives inspection due-date reminders 7 days ahead."
       />
       <CompanySettingsForm company={company} />
     </div>
