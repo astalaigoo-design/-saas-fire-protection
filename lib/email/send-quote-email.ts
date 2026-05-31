@@ -22,6 +22,8 @@ export type SendQuoteEmailInput = {
   totalCents: number;
   lineItems: QuoteEmailLineItem[];
   replyTo?: string | null;
+  pdfBuffer?: Buffer;
+  pdfFilename?: string;
 };
 
 export type SendQuoteEmailResult =
@@ -74,7 +76,7 @@ function buildHtml(input: SendQuoteEmailInput): string {
     <p style="margin:0;">Tax: ${escapeHtml(formatCurrency(input.taxCents, input.currency))}</p>
     <p style="margin:0;">Discount: -${escapeHtml(formatCurrency(input.discountCents, input.currency))}</p>
     <p style="margin-top:8px;"><strong>Total: ${escapeHtml(formatCurrency(input.totalCents, input.currency))}</strong></p>
-    <p style="color:#64748b;font-size:14px;">Reply to this email with questions. Sent by ${escapeHtml(input.companyName)}.</p>
+    <p style="color:#64748b;font-size:14px;">The full quote is attached as a PDF. Reply to this email with questions. Sent by ${escapeHtml(input.companyName)}.</p>
   `.trim();
 }
 
@@ -97,6 +99,10 @@ export async function sendQuoteEmail(
       replyTo: input.replyTo?.trim() || undefined,
       subject: `Repair quote — ${input.buildingLabel}`,
       html: buildHtml(input),
+      attachments:
+        input.pdfBuffer && input.pdfFilename
+          ? [{ filename: input.pdfFilename, content: input.pdfBuffer }]
+          : undefined,
     });
 
     if (error) return { ok: false, error: error.message };

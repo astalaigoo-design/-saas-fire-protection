@@ -1,3 +1,4 @@
+import { publicReportUrl } from "@/lib/app-url";
 import { buildingLabel } from "@/lib/customers/format";
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { sendComplianceReportEmail } from "@/lib/email/send-compliance-report";
@@ -40,12 +41,14 @@ export async function emailComplianceReportAfterSubmit(
   let buffer: Buffer;
   let filename: string;
   let reportId: string;
+  let shareToken: string;
 
   try {
     const generated = await generateComplianceReport(session, inspectionId);
     buffer = generated.buffer;
     filename = generated.filename;
     reportId = generated.reportId;
+    shareToken = generated.shareToken;
   } catch (error) {
     console.error("emailComplianceReportAfterSubmit: PDF generation failed", error);
     return {
@@ -105,6 +108,7 @@ export async function emailComplianceReportAfterSubmit(
     pdfBuffer: buffer,
     filename,
     replyTo: data.company.reportEmail,
+    reportLink: publicReportUrl(shareToken),
   });
 
   if (!sendResult.ok) {

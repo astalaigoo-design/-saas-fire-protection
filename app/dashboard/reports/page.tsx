@@ -2,10 +2,11 @@ import { redirect } from "next/navigation";
 import { DownloadReportButton } from "@/components/inspect/download-report-button";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { QuoteLineItemsEditor } from "@/components/quotes/quote-line-items-editor";
+import { QuoteSendPanel } from "@/components/quotes/quote-send-panel";
+import { ReportShareLink } from "@/components/reports/report-share-link";
 import {
   markQuoteAccepted,
   markQuoteDeclined,
-  sendDraftQuote,
 } from "@/lib/quotes/actions";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -97,15 +98,11 @@ export default async function ReportsPage() {
                       totalCents={quote.totalCents}
                       lineItems={quote.lineItems}
                     />
-                    <form action={sendDraftQuote} className="mt-3">
-                      <input type="hidden" name="quoteId" value={quote.id} />
-                      <button
-                        type="submit"
-                        className="inline-flex min-h-10 items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                      >
-                        Send quote to customer
-                      </button>
-                    </form>
+                    <QuoteSendPanel
+                      quoteId={quote.id}
+                      customerEmail={quote.inspection.building.customer.email}
+                      totalLabel={formatCurrency(quote.totalCents, quote.currency)}
+                    />
                   </CardContent>
                 </Card>
               </li>
@@ -232,12 +229,14 @@ export default async function ReportsPage() {
                       {report.generatedAt
                         ? ` · ${formatDate(report.generatedAt)}`
                         : ""}
+                      {report.emailedTo ? ` · emailed to ${report.emailedTo}` : ""}
                     </p>
-                    <div className="mt-3">
+                    <div className="mt-3 space-y-3">
                       <DownloadReportButton
                         inspectionId={report.inspection.id}
                         variant="dashboard"
                       />
+                      <ReportShareLink reportId={report.id} shareToken={report.shareToken} />
                     </div>
                   </CardContent>
                 </Card>

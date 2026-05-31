@@ -92,6 +92,7 @@ const inspectionWithRelationsSelect = {
       status: true,
       generatedAt: true,
       createdAt: true,
+      shareToken: true,
     },
     orderBy: { createdAt: "desc" as const },
   },

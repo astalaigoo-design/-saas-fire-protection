@@ -127,3 +127,35 @@ export async function getComplianceReportData(
     summary: buildSummary(inspection.items),
   };
 }
+
+function toComplianceReportData(inspection: RawComplianceData): ComplianceReportData | null {
+  if (!inspection.completedAt) return null;
+
+  const nextInspectionDue = calculateNextInspectionDue(
+    inspection.completedAt,
+    inspection.recurrenceInterval,
+    inspection.inspectionType.code,
+  );
+
+  return {
+    ...inspection,
+    inspectorName: resolveInspectorName(inspection.assignedTo),
+    nextInspectionDue,
+    summary: buildSummary(inspection.items),
+  };
+}
+
+/** Loads report data for a completed inspection without session (public share links). */
+export async function getComplianceReportDataForInspection(
+  inspectionId: string,
+): Promise<ComplianceReportData | null> {
+  const inspection = await prisma.inspection.findFirst({
+    where: {
+      id: inspectionId,
+      status: InspectionStatus.completed,
+    },
+    select: complianceReportSelect,
+  });
+  if (!inspection) return null;
+  return toComplianceReportData(inspection);
+}

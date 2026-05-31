@@ -13,6 +13,8 @@ export type SendComplianceReportEmailInput = {
   pdfBuffer: Buffer;
   filename: string;
   replyTo?: string | null;
+  /** Customer-facing read-only link (included in email body). */
+  reportLink?: string | null;
 };
 
 export type SendComplianceReportEmailResult =
@@ -38,6 +40,11 @@ function buildHtml(input: SendComplianceReportEmailInput): string {
     Customer: ${escapeHtml(input.customerName)}<br />
     Prepared by: ${escapeHtml(input.companyName)}</p>
     <p>The full compliance report is attached as a PDF.</p>
+    ${
+      input.reportLink
+        ? `<p>You can also view the report online: <a href="${escapeHtml(input.reportLink)}">${escapeHtml(input.reportLink)}</a></p>`
+        : ""
+    }
     <p style="color:#64748b;font-size:14px;">This message was sent automatically after your technician submitted the inspection.</p>
   `.trim();
 }

@@ -7,6 +7,7 @@ import type { ComplianceReportData } from "@/lib/reports/queries";
 import { getComplianceReportData } from "@/lib/reports/queries";
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { prisma } from "@/lib/prisma";
+import { ensureReportShareToken } from "@/lib/reports/share-token";
 
 export async function fetchComplianceReportData(
   session: DashboardSession,
@@ -52,7 +53,7 @@ function buildFilename(data: ComplianceReportData): string {
 export async function generateComplianceReport(
   session: DashboardSession,
   inspectionId: string,
-): Promise<{ buffer: Buffer; reportId: string; filename: string }> {
+): Promise<{ buffer: Buffer; reportId: string; filename: string; shareToken: string }> {
   const data = await fetchComplianceReportData(session, inspectionId);
   if (!data) {
     throw new Error(
@@ -90,5 +91,7 @@ export async function generateComplianceReport(
         },
       });
 
-  return { buffer, reportId: report.id, filename };
+  const shareToken = await ensureReportShareToken(report.id);
+
+  return { buffer, reportId: report.id, filename, shareToken };
 }

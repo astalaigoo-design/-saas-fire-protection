@@ -320,6 +320,9 @@ model Report {
   status      ReportStatus @default(draft)
   generatedAt DateTime?
 
+  /// Unguessable token for customer read-only report access at /r/[token].
+  shareToken String? @unique
+
   /// Set when the compliance PDF is emailed to the customer after submit.
   emailedTo  String?
   emailedAt  DateTime?

@@ -104,6 +104,9 @@ const reportListSelect = {
   status: true,
   generatedAt: true,
   createdAt: true,
+  shareToken: true,
+  emailedTo: true,
+  emailedAt: true,
   inspection: {
     select: {
       id: true,

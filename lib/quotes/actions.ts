@@ -7,9 +7,11 @@ import { ensureCanManageJobs } from "@/lib/auth/guards";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { sendQuoteEmail } from "@/lib/email/send-quote-email";
+import { generateQuotePdf } from "@/lib/quotes/generate-quote-pdf";
 import { prisma } from "@/lib/prisma";
 
 export type QuoteLineItemsActionResult = { ok: true } | { ok: false; error: string };
+export type SendQuoteActionResult = { ok: true; sentTo: string } | { ok: false; error: string };
 
 const lineItemSchema = z.object({
   id: z.string().min(1),
@@ -144,13 +146,18 @@ export async function updateDraftQuoteLineItems(
   return { ok: true };
 }
 
-export async function sendDraftQuote(formData: FormData): Promise<void> {
+export async function sendDraftQuote(
+  _prev: SendQuoteActionResult | null,
+  formData: FormData,
+): Promise<SendQuoteActionResult> {
   const session = await getDashboardSession();
-  if (!session) return;
+  if (!session) return { ok: false, error: "You must be signed in." };
   ensureCanManageJobs(session.role);
 
   const quoteId = formData.get("quoteId");
-  if (typeof quoteId !== "string" || !quoteId.trim()) return;
+  if (typeof quoteId !== "string" || !quoteId.trim()) {
+    return { ok: false, error: "Missing quote id." };
+  }
 
   const quote = await prisma.quote.findFirst({
     where: {
@@ -192,10 +199,33 @@ export async function sendDraftQuote(formData: FormData): Promise<void> {
       },
     },
   });
-  if (!quote) return;
+  if (!quote) return { ok: false, error: "Draft quote not found." };
 
   const customerEmail = quote.inspection.building.customer.email?.trim();
-  if (!customerEmail) return;
+  if (!customerEmail) {
+    return {
+      ok: false,
+      error: "Add a customer email on the customer profile before sending.",
+    };
+  }
+
+  if (quote.lineItems.some((item) => item.unitPriceCents <= 0)) {
+    return {
+      ok: false,
+      error: "Set a unit price on every line item before sending.",
+    };
+  }
+
+  let pdfBuffer: Buffer;
+  let pdfFilename: string;
+  try {
+    const generated = await generateQuotePdf(session, quote.id);
+    pdfBuffer = generated.buffer;
+    pdfFilename = generated.filename;
+  } catch (error) {
+    console.error("sendDraftQuote: PDF generation failed", error);
+    return { ok: false, error: "Could not generate the quote PDF." };
+  }
 
   const buildingLabel =
     quote.inspection.building.name?.trim() ||
@@ -215,9 +245,13 @@ export async function sendDraftQuote(formData: FormData): Promise<void> {
     totalCents: quote.totalCents,
     lineItems: quote.lineItems,
     replyTo: quote.inspection.company.reportEmail,
+    pdfBuffer,
+    pdfFilename,
   });
 
-  if (!emailResult.ok) return;
+  if (!emailResult.ok) {
+    return { ok: false, error: emailResult.error };
+  }
 
   const now = new Date();
   await prisma.quote.update({
@@ -246,6 +280,8 @@ export async function sendDraftQuote(formData: FormData): Promise<void> {
   });
 
   revalidatePath("/dashboard/reports");
+  revalidatePath("/dashboard/operations");
+  return { ok: true, sentTo: customerEmail };
 }
 
 async function transitionQuoteStatus(

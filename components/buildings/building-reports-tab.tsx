@@ -1,5 +1,6 @@
 import type { BuildingInspectionRow } from "@/lib/buildings/queries";
 import { DownloadReportButton } from "@/components/inspect/download-report-button";
+import { ReportShareLink } from "@/components/reports/report-share-link";
 import { formatDate } from "@/lib/dashboard/dates";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +18,7 @@ type ReportRow = {
   inspectionId: string;
   inspectionLabel: string;
   downloadHref: string;
+  shareToken: string | null;
 };
 
 function collectReports(inspections: BuildingInspectionRow[]): ReportRow[] {
@@ -34,6 +36,7 @@ function collectReports(inspections: BuildingInspectionRow[]): ReportRow[] {
           report.storageUrl.startsWith("/") || report.storageUrl.startsWith("http")
             ? report.storageUrl
             : `/api/inspections/${inspection.id}/report`,
+        shareToken: report.shareToken,
       });
     }
     if (
@@ -48,6 +51,7 @@ function collectReports(inspections: BuildingInspectionRow[]): ReportRow[] {
         inspectionId: inspection.id,
         inspectionLabel: inspection.inspectionType.name,
         downloadHref: `/api/inspections/${inspection.id}/report`,
+        shareToken: null,
       });
     }
   }
@@ -83,7 +87,7 @@ export function BuildingReportsTab({ inspections }: BuildingReportsTabProps) {
                   {report.generatedAt ? formatDate(report.generatedAt) : "On demand"}
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-col gap-2 sm:items-end">
                 <Badge variant="outline" className="capitalize">
                   {report.status.replace("_", " ")}
                 </Badge>
@@ -91,6 +95,9 @@ export function BuildingReportsTab({ inspections }: BuildingReportsTabProps) {
                   inspectionId={report.inspectionId}
                   variant="dashboard"
                 />
+                {!report.id.startsWith("generate-") ? (
+                  <ReportShareLink reportId={report.id} shareToken={report.shareToken} />
+                ) : null}
               </div>
             </CardContent>
           </Card>
