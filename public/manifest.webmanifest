@@ -1,7 +1,7 @@
 {
   "name": "GetFlareflow",
   "short_name": "Flareflow",
-  "description": "Offline-capable fire inspection field workflow.",
+  "description": "The operating system for fire protection contractors — NFPA field inspection to client-ready report and repair quote.",
   "start_url": "/dashboard/my-jobs",
   "scope": "/",
   "display": "standalone",

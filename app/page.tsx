@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
 import { buttonVariants } from "@/components/ui/button";
-import { APP_TAGLINE } from "@/lib/branding";
+import { APP_POSITIONING, APP_TAGLINE } from "@/lib/branding";
 import { cn } from "@/lib/utils";
 
 const valuePoints = [
-  "Smart scheduling and recurring inspection planning",
-  "Customer and building records in one place",
-  "Mobile-first field workflow for technicians",
+  "NFPA checklists on every scheduled visit",
+  "Mobile field inspection — works offline",
+  "Compliance reports and repair quotes, ready to send",
 ];
 
 export default function Home() {
@@ -20,25 +20,18 @@ export default function Home() {
               logoClassName="size-20 rounded-3xl shadow-md shadow-primary/15"
               textClassName="text-3xl sm:text-4xl"
             />
-            <div className="max-w-xs text-left sm:text-right">
+            <div className="max-w-sm text-left sm:text-right">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
                 {APP_TAGLINE}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Professional compliance software for fire protection teams.
               </p>
             </div>
           </div>
         </div>
 
         <div className="max-w-3xl space-y-5">
-          <h1 className="font-heading text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
-            Automated Fire Protection Compliance & Asset Tracking
+          <h1 className="font-heading text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+            {APP_POSITIONING}
           </h1>
-          <p className="text-base text-muted-foreground sm:text-lg">
-            Streamline NFPA field inspections, track asset maintenance, and generate instant
-            repair quotes for commercial facilities.
-          </p>
         </div>
 
         <ul className="grid gap-3 sm:grid-cols-3">
@@ -59,8 +52,8 @@ export default function Home() {
                 Start using GetFlareflow
               </h2>
               <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                Includes scheduling, customer and building records, mobile field
-                inspections, compliance reports, and repair quote workflows.
+                Schedule jobs, run NFPA checklists in the field, email compliance PDFs to clients,
+                and draft repair quotes from failed items — one connected workflow.
               </p>
               <p className="text-sm font-medium text-foreground">
                 Billing and checkout are not available yet.

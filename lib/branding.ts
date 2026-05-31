@@ -1,11 +1,14 @@
 /** Product display name (UI, metadata, emails). */
 export const APP_NAME = "GetFlareflow";
 
-/** Short label for marketing / hero sections. */
-export const APP_TAGLINE = "Fire inspection operations";
+/** Primary positioning line (hero, marketing, metadata). */
+export const APP_POSITIONING =
+  "The operating system for fire protection contractors — from NFPA field inspection to client-ready report and repair quote.";
 
-export const APP_DESCRIPTION =
-  "Schedule inspections, manage customers and sites, and run the field workflow with role-based access for owners, admins, and technicians.";
+/** Short label for eyebrow / compact UI. */
+export const APP_TAGLINE = "Operating system for fire protection contractors";
+
+export const APP_DESCRIPTION = APP_POSITIONING;
 
 /** Default demo tenant name in seed scripts. */
 export const DEMO_COMPANY_NAME = "GetFlareflow Demo Co.";
