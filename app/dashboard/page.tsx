@@ -14,10 +14,12 @@ import {
   getUpcomingInspectionsThisWeek,
 } from "@/lib/dashboard/queries";
 import { getOnboardingProgress } from "@/lib/dashboard/onboarding";
+import { buildSetupPipeline } from "@/lib/dashboard/setup-pipeline";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { isSharedTenantCompany } from "@/lib/companies/shared-tenant";
 import { canManageCustomers } from "@/lib/auth/permissions";
 import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
+import { SetupPipelineEmptyState } from "@/components/dashboard/setup-pipeline-empty-state";
 
 export default async function DashboardPage() {
   const session = await getDashboardSession();
@@ -45,6 +47,14 @@ export default async function DashboardPage() {
   ]
     .filter(Boolean)
     .join(" · ");
+
+  const setupPipeline = showOnboarding
+    ? buildSetupPipeline({
+        customerCount: stats.customerCount,
+        buildingCount: stats.buildingCount,
+        inspectionCount: stats.totalInspectionCount,
+      })
+    : null;
 
   return (
     <div className="space-y-8">
@@ -80,10 +90,23 @@ export default async function DashboardPage() {
           </Link>
         </div>
         {upcoming.length === 0 ? (
-          <EmptyState
-            title="No inspections scheduled this week"
-            description="Schedule a visit from the calendar when you're ready."
-          />
+          setupPipeline?.needsFirstInspection ? (
+            <SetupPipelineEmptyState pipeline={setupPipeline} />
+          ) : (
+            <EmptyState
+              title="No inspections scheduled this week"
+              description="Schedule a visit from the jobs calendar when you're ready."
+            >
+              {showOnboarding ? (
+                <Link
+                  href="/dashboard/jobs/new"
+                  className={cn(buttonVariants({ size: "lg" }), "min-h-11")}
+                >
+                  Schedule job
+                </Link>
+              ) : null}
+            </EmptyState>
+          )
         ) : (
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {upcoming.map((inspection) => (
@@ -102,7 +125,17 @@ export default async function DashboardPage() {
         >
           Recently completed
         </h2>
-        <RecentInspectionsTable inspections={completed} />
+        <RecentInspectionsTable
+          inspections={completed}
+          emptyContent={
+            setupPipeline?.needsFirstInspection ? (
+              <SetupPipelineEmptyState
+                pipeline={setupPipeline}
+                description="Complete your first field inspection — finished visits show up here."
+              />
+            ) : undefined
+          }
+        />
       </section>
 
       <section aria-label="Feedback" className="flex justify-end">

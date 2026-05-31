@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { InspectionListItem } from "@/lib/dashboard/queries";
 import { formatDate } from "@/lib/dashboard/dates";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import {
 
 type RecentInspectionsTableProps = {
   inspections: InspectionListItem[];
+  emptyContent?: ReactNode;
 };
 
 function buildingLabel(inspection: InspectionListItem): string {
@@ -22,8 +24,12 @@ function buildingLabel(inspection: InspectionListItem): string {
   );
 }
 
-export function RecentInspectionsTable({ inspections }: RecentInspectionsTableProps) {
+export function RecentInspectionsTable({
+  inspections,
+  emptyContent,
+}: RecentInspectionsTableProps) {
   if (inspections.length === 0) {
+    if (emptyContent) return emptyContent;
     return (
       <EmptyState
         title="No completed inspections yet"

@@ -35,7 +35,8 @@ export async function getDashboardStats(session: DashboardSession) {
   const { start: monthStart, end: monthEnd } = getMonthRange();
   const inspectionWhere = inspectionScope(session);
 
-  const [customerCount, buildingCount, inspectionsThisMonth] = await Promise.all([
+  const [customerCount, buildingCount, inspectionsThisMonth, totalInspectionCount] =
+    await Promise.all([
     prisma.customer.count({ where: { companyId: session.companyId } }),
     prisma.building.count({
       where: { customer: { companyId: session.companyId } },
@@ -46,9 +47,12 @@ export async function getDashboardStats(session: DashboardSession) {
         scheduledAt: { gte: monthStart, lt: monthEnd },
       },
     }),
+    prisma.inspection.count({
+      where: { companyId: session.companyId },
+    }),
   ]);
 
-  return { customerCount, buildingCount, inspectionsThisMonth };
+  return { customerCount, buildingCount, inspectionsThisMonth, totalInspectionCount };
 }
 
 export async function getUpcomingInspectionsThisWeek(
