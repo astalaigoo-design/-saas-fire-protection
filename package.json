@@ -19,7 +19,9 @@
     "storage:ensure-bucket": "node scripts/ensure-inspection-photos-bucket.mjs",
     "fix-user": "tsx scripts/fix-user.ts",
     "create-company": "tsx scripts/create-company.ts",
-    "migrate-shared-tenant-users": "tsx scripts/migrate-shared-tenant-users.ts"
+    "migrate-shared-tenant-users": "tsx scripts/migrate-shared-tenant-users.ts",
+    "db:list-shared-tenant": "node scripts/list-shared-tenant-users.mjs",
+    "sync-user-clerk-metadata": "tsx scripts/sync-user-clerk-metadata.ts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
