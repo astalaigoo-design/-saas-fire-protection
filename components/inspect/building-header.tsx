@@ -14,7 +14,7 @@ export function BuildingHeader({ inspection, locked }: BuildingHeaderProps) {
     <header className="border-b border-slate-800 bg-slate-900/95 px-4 pb-4 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur">
       {locked ? (
         <p className="mb-2 rounded-lg bg-emerald-500/15 px-3 py-2 text-center text-sm font-medium text-emerald-300">
-          Inspection submitted — locked
+          Done — inspection submitted
         </p>
       ) : null}
       <p className="text-xs font-medium uppercase tracking-wide text-amber-400">

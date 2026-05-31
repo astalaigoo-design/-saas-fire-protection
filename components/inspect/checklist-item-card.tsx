@@ -2,6 +2,8 @@
 
 import { InspectionItemResult } from "@prisma/client";
 import { useState, useTransition } from "react";
+import { FailItemPhotoCapture } from "@/components/inspect/fail-item-photo-capture";
+import { OfflineBadge } from "@/components/inspect/offline-badge";
 import { enqueueOfflineMutation } from "@/lib/offline/indexeddb";
 import { apiUpdateChecklistItem } from "@/lib/offline/inspect-api";
 
@@ -19,14 +21,10 @@ type ChecklistItemCardProps = {
   index: number;
   total: number;
   locked: boolean;
+  itemPhotoCount: number;
   onUpdated: (item: ChecklistItemState) => void;
+  onPhotoAdded: (photo: { id: string; url: string; caption: string | null }) => void;
 };
-
-const resultOptions = [
-  { value: InspectionItemResult.pass, label: "Pass", className: "bg-emerald-600 hover:bg-emerald-500" },
-  { value: InspectionItemResult.fail, label: "Fail", className: "bg-red-600 hover:bg-red-500" },
-  { value: InspectionItemResult.na, label: "N/A", className: "bg-slate-600 hover:bg-slate-500" },
-] as const;
 
 export function ChecklistItemCard({
   inspectionId,
@@ -34,24 +32,20 @@ export function ChecklistItemCard({
   index,
   total,
   locked,
+  itemPhotoCount,
   onUpdated,
+  onPhotoAdded,
 }: ChecklistItemCardProps) {
   const [failNote, setFailNote] = useState(item.notes ?? "");
   const [error, setError] = useState<string | null>(null);
-  const [syncNotice, setSyncNotice] = useState<string | null>(null);
+  const [savedOffline, setSavedOffline] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  const applyResult = (result: InspectionItemResult) => {
+  const persistResult = (result: InspectionItemResult, notes?: string) => {
     if (locked || pending) return;
     setError(null);
 
-    if (result === InspectionItemResult.fail && !failNote.trim()) {
-      setError("Add a note before marking as Fail.");
-      return;
-    }
-
     startTransition(async () => {
-      const notes = result === InspectionItemResult.fail ? failNote.trim() : undefined;
       const optimisticItem: ChecklistItemState = {
         ...item,
         result,
@@ -68,7 +62,7 @@ export function ChecklistItemCard({
             notes,
           },
         });
-        setSyncNotice("Saved offline. Sync will run when connection returns.");
+        setSavedOffline(true);
         onUpdated(optimisticItem);
       };
 
@@ -89,13 +83,31 @@ export function ChecklistItemCard({
           return;
         }
 
-        setSyncNotice(null);
+        setSavedOffline(false);
         onUpdated(optimisticItem);
       } catch {
         await enqueueAsOffline();
       }
     });
   };
+
+  const applyResult = (result: InspectionItemResult) => {
+    if (locked || pending) return;
+
+    if (result === InspectionItemResult.fail) {
+      if (!failNote.trim()) {
+        onUpdated({ ...item, result, notes: null });
+        setError(null);
+        return;
+      }
+      persistResult(result, failNote.trim());
+      return;
+    }
+
+    persistResult(result);
+  };
+
+  const isFail = item.result === InspectionItemResult.fail;
 
   return (
     <article className="flex h-full w-[min(24rem,calc(100vw-2rem))] shrink-0 snap-center flex-col rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg">
@@ -108,44 +120,80 @@ export function ChecklistItemCard({
       ) : null}
 
       <div className="mt-auto space-y-4 pt-6">
-        <div className="grid grid-cols-3 gap-2">
-          {resultOptions.map((option) => {
-            const selected = item.result === option.value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                disabled={locked || pending}
-                onClick={() => applyResult(option.value)}
-                className={`min-h-12 rounded-xl px-2 text-sm font-semibold text-white transition ring-2 ${
-                  selected ? "ring-amber-400" : "ring-transparent"
-                } ${option.className} disabled:opacity-50`}
-              >
-                {option.label}
-              </button>
-            );
-          })}
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            disabled={locked || pending}
+            onClick={() => applyResult(InspectionItemResult.pass)}
+            className={`min-h-[4.5rem] rounded-2xl text-lg font-bold text-white transition ring-2 ${
+              item.result === InspectionItemResult.pass
+                ? "bg-emerald-600 ring-amber-400"
+                : "bg-emerald-700/90 ring-transparent hover:bg-emerald-600"
+            } disabled:opacity-50 active:scale-[0.98]`}
+          >
+            Pass
+          </button>
+          <button
+            type="button"
+            disabled={locked || pending}
+            onClick={() => applyResult(InspectionItemResult.fail)}
+            className={`min-h-[4.5rem] rounded-2xl text-lg font-bold text-white transition ring-2 ${
+              isFail
+                ? "bg-red-600 ring-amber-400"
+                : "bg-red-700/90 ring-transparent hover:bg-red-600"
+            } disabled:opacity-50 active:scale-[0.98]`}
+          >
+            Fail
+          </button>
         </div>
 
-        {item.result === InspectionItemResult.fail || error ? (
-          <label className="block space-y-1.5">
-            <span className="text-sm font-medium text-red-300">
-              Failure note <span className="text-red-400">*</span>
-            </span>
-            <textarea
-              value={failNote}
+        <button
+          type="button"
+          disabled={locked || pending}
+          onClick={() => applyResult(InspectionItemResult.na)}
+          className={`min-h-12 w-full rounded-xl text-sm font-semibold text-white transition ring-2 ${
+            item.result === InspectionItemResult.na
+              ? "bg-slate-600 ring-amber-400"
+              : "bg-slate-700 ring-transparent hover:bg-slate-600"
+          } disabled:opacity-50 active:scale-[0.98]`}
+        >
+          N/A
+        </button>
+
+        {isFail || error ? (
+          <div className="space-y-3 rounded-xl border border-red-500/30 bg-red-950/20 p-3">
+            <label className="block space-y-1.5">
+              <span className="text-sm font-medium text-red-300">
+                What failed? <span className="text-red-400">*</span>
+              </span>
+              <textarea
+                value={failNote}
+                disabled={locked || pending}
+                onChange={(event) => setFailNote(event.target.value)}
+                onBlur={() => {
+                  if (isFail && failNote.trim()) {
+                    persistResult(InspectionItemResult.fail, failNote.trim());
+                  }
+                }}
+                rows={3}
+                placeholder="Describe the deficiency…"
+                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-base text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+              />
+            </label>
+
+            <FailItemPhotoCapture
+              inspectionId={inspectionId}
+              itemLabel={item.label}
               disabled={locked || pending}
-              onChange={(event) => setFailNote(event.target.value)}
-              onBlur={() => {
-                if (item.result === InspectionItemResult.fail && failNote.trim()) {
-                  applyResult(InspectionItemResult.fail);
-                }
-              }}
-              rows={3}
-              placeholder="Describe the issue…"
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+              onPhotoAdded={onPhotoAdded}
             />
-          </label>
+
+            {itemPhotoCount > 0 ? (
+              <p className="text-xs text-emerald-300">
+                {itemPhotoCount} photo{itemPhotoCount === 1 ? "" : "s"} attached
+              </p>
+            ) : null}
+          </div>
         ) : null}
 
         {error ? (
@@ -153,11 +201,7 @@ export function ChecklistItemCard({
             {error}
           </p>
         ) : null}
-        {syncNotice ? (
-          <p role="status" className="text-xs text-amber-200">
-            {syncNotice}
-          </p>
-        ) : null}
+        {savedOffline ? <OfflineBadge className="w-full justify-center" /> : null}
         {pending ? (
           <p role="status" className="text-xs text-slate-400">
             Saving…

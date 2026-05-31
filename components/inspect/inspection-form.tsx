@@ -8,6 +8,7 @@ import { BuildingHeader } from "@/components/inspect/building-header";
 import { ChecklistCarousel } from "@/components/inspect/checklist-carousel";
 import { PhotoUploadSection } from "@/components/inspect/photo-upload-section";
 import { DownloadReportButton } from "@/components/inspect/download-report-button";
+import { OfflineBadge } from "@/components/inspect/offline-badge";
 import { SignaturePad } from "@/components/inspect/signature-pad";
 import type { ChecklistItemState } from "@/components/inspect/checklist-item-card";
 import {
@@ -63,27 +64,26 @@ export function InspectionForm({ inspection, offlineOnly = false }: InspectionFo
     : inspection;
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [emailNotice, setEmailNotice] = useState<ReportEmailOutcome | null>(null);
-  const [syncStatus, setSyncStatus] = useState<string | null>(null);
+  const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [pending, startTransition] = useTransition();
+
+  const showOfflineBadge =
+    isHydrated && (offlineOnly || !isOnline || pendingSyncCount > 0 || submittedOffline);
 
   useEffect(() => {
     let isMounted = true;
     const runSync = async () => {
       const hadSuccess = await syncOfflineInspectionMutations(inspection.id, {
-        onMutationError: (_mutation, error) => setSyncStatus(`Sync paused: ${error}`),
+        onMutationError: () => {
+          /* badge reflects pending count */
+        },
       });
       const pendingMutations = await listOfflineMutations(inspection.id);
 
       if (!isMounted) return;
-      if (pendingMutations.length === 0) {
-        setSyncStatus(null);
-      } else if (isOnline) {
-        setSyncStatus(`Syncing ${pendingMutations.length} offline update(s)…`);
-      } else {
-        setSyncStatus(`${pendingMutations.length} update(s) waiting for connection.`);
-      }
+      setPendingSyncCount(pendingMutations.length);
 
       if (hadSuccess && !offlineOnly && navigator.onLine) router.refresh();
     };
@@ -148,7 +148,8 @@ export function InspectionForm({ inspection, offlineOnly = false }: InspectionFo
             type: "inspection.start",
             payload: {},
           });
-          setSyncStatus("Start action queued offline.");
+          const pendingMutations = await listOfflineMutations(inspection.id);
+          setPendingSyncCount(pendingMutations.length);
           return;
         }
 
@@ -181,12 +182,12 @@ export function InspectionForm({ inspection, offlineOnly = false }: InspectionFo
       item.result !== InspectionItemResult.fail || Boolean(item.notes?.trim()),
   );
 
-  const handleSubmit = () => {
+  const handleDone = () => {
     if (locked) return;
     setSubmitError(null);
 
     if (!allItemsComplete) {
-      setSubmitError("Complete every checklist item before submitting.");
+      setSubmitError("Complete every checklist item before finishing.");
       return;
     }
     if (!failNotesValid) {
@@ -194,7 +195,7 @@ export function InspectionForm({ inspection, offlineOnly = false }: InspectionFo
       return;
     }
     if (!signature) {
-      setSubmitError("Add your signature before submitting.");
+      setSubmitError("Sign above to finish this inspection.");
       return;
     }
 
@@ -206,7 +207,8 @@ export function InspectionForm({ inspection, offlineOnly = false }: InspectionFo
           payload: { signatureData: signature },
         });
         setSubmittedOffline(true);
-        setSyncStatus("Inspection saved offline. Submission will sync when online.");
+        const pendingMutations = await listOfflineMutations(inspection.id);
+        setPendingSyncCount(pendingMutations.length);
         return;
       }
 
@@ -225,105 +227,131 @@ export function InspectionForm({ inspection, offlineOnly = false }: InspectionFo
     });
   };
 
+  const handlePhotoAdded = (photo: InspectionPhoto) => {
+    setPhotos((current) => [...current, photo]);
+    void listOfflineMutations(inspection.id).then((mutations) =>
+      setPendingSyncCount(mutations.length),
+    );
+  };
+
   return (
     <div className="flex min-h-[100dvh] flex-col bg-slate-950 text-slate-50">
-      <BuildingHeader inspection={inspection} locked={locked} />
+      {showOfflineBadge ? (
+        <div className="sticky top-0 z-20 flex justify-center border-b border-amber-500/20 bg-slate-950/95 px-4 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur">
+          <OfflineBadge
+            label={
+              submittedOffline
+                ? "Saved locally — will sync when online"
+                : pendingSyncCount > 0 && isOnline
+                  ? `Syncing ${pendingSyncCount} change${pendingSyncCount === 1 ? "" : "s"}…`
+                  : "Saved locally — will sync"
+            }
+          />
+        </div>
+      ) : null}
 
-      <main className="flex-1 space-y-8 py-6 pb-28">
+      <BuildingHeader inspection={displayInspection} locked={locked} />
+
+      <main className="flex-1 space-y-8 py-6 pb-48">
         <ChecklistCarousel
           inspectionId={inspection.id}
           items={items}
-          locked={locked}
-          onItemsChange={setItems}
-        />
-        <PhotoUploadSection
-          inspectionId={inspection.id}
           photos={photos}
           locked={locked}
-          onPhotosChange={setPhotos}
+          onItemsChange={setItems}
+          onPhotoAdded={handlePhotoAdded}
         />
 
-        <div className="px-4">
-          {locked && inspection.signatureData ? (
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-300">Signature</p>
+        {locked && photos.length > 0 ? (
+          <PhotoUploadSection
+            inspectionId={inspection.id}
+            photos={photos}
+            locked
+            onPhotosChange={setPhotos}
+          />
+        ) : null}
+      </main>
+
+      <footer className="sticky bottom-0 border-t border-slate-800 bg-slate-900/95 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur">
+        {locked ? (
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-5 text-center">
+              <p className="text-2xl font-bold text-emerald-300">Done</p>
+              <p className="mt-1 text-sm text-emerald-200/90">
+                {submittedOffline
+                  ? "Inspection saved on this device. It will sync when you are back online."
+                  : "Inspection submitted and locked."}
+              </p>
+            </div>
+
+            {displayInspection.signatureData ? (
               <div className="overflow-hidden rounded-xl border border-slate-700 bg-white">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={inspection.signatureData}
+                  src={displayInspection.signatureData}
                   alt="Submitted signature"
-                  className="h-36 w-full object-contain"
+                  className="h-24 w-full object-contain"
                 />
               </div>
+            ) : null}
+
+            {emailNotice ? (
+              <p
+                role="status"
+                className={`text-center text-sm ${
+                  emailNotice.status === "sent" ? "text-emerald-300" : "text-amber-200"
+                }`}
+              >
+                {emailNotice.status === "sent"
+                  ? `Report emailed to ${emailNotice.to}.`
+                  : emailNotice.reason}
+              </p>
+            ) : null}
+
+            <div className="flex w-full flex-col gap-3">
+              {submittedOffline && !isOnline ? (
+                <p className="text-center text-xs text-amber-200">
+                  Report download will be available after this inspection syncs online.
+                </p>
+              ) : (
+                <DownloadReportButton inspectionId={inspection.id} />
+              )}
+              <Link
+                href="/dashboard/my-jobs"
+                className="flex min-h-14 w-full items-center justify-center rounded-2xl bg-emerald-600 text-base font-bold text-white hover:bg-emerald-500"
+              >
+                Back to my jobs
+              </Link>
             </div>
-          ) : (
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <h2 className="text-base font-semibold text-white">Finish inspection</h2>
+              <p className="text-xs text-slate-400">Sign below, then tap Done to submit.</p>
+            </div>
+
             <SignaturePad
               disabled={locked || pending}
               initialDataUrl={inspection.signatureData}
               onChange={setSignature}
             />
-          )}
-        </div>
-      </main>
 
-      <footer className="sticky bottom-0 border-t border-slate-800 bg-slate-900/95 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur">
-        {isHydrated && (offlineOnly || !isOnline) ? (
-          <p role="status" className="mb-3 text-center text-xs text-amber-200">
-            Offline mode: updates are saved on this device and synced when connection returns.
-          </p>
-        ) : null}
-        {isHydrated && syncStatus ? (
-          <p role="status" className="mb-3 text-center text-xs text-amber-200">
-            {syncStatus}
-          </p>
-        ) : null}
-        {pending ? (
-          <p role="status" className="mb-3 text-center text-sm text-slate-300">
-            Saving your inspection…
-          </p>
-        ) : null}
-        {submitError ? (
-          <p role="alert" className="mb-3 text-center text-sm text-red-300">
-            {submitError}
-          </p>
-        ) : null}
-        {emailNotice ? (
-          <p
-            role="status"
-            className={`mb-3 text-center text-sm ${
-              emailNotice.status === "sent" ? "text-emerald-300" : "text-amber-200"
-            }`}
-          >
-            {emailNotice.status === "sent"
-              ? `Report emailed to ${emailNotice.to}.`
-              : emailNotice.reason}
-          </p>
-        ) : null}
-        {locked ? (
-          <div className="flex w-full flex-col gap-3">
-            {submittedOffline && !isOnline ? (
-              <p className="text-center text-xs text-amber-200">
-                Report download will be available after this inspection syncs online.
+            {submitError ? (
+              <p role="alert" className="text-center text-sm text-red-300">
+                {submitError}
               </p>
-            ) : (
-              <DownloadReportButton inspectionId={inspection.id} />
-            )}
-            <Link
-              href="/dashboard"
-              className="flex min-h-12 w-full items-center justify-center rounded-xl bg-slate-800 text-sm font-semibold text-white"
+            ) : null}
+
+            <button
+              type="button"
+              disabled={pending}
+              onClick={handleDone}
+              className="flex min-h-14 w-full items-center justify-center rounded-2xl bg-emerald-500 text-lg font-bold text-slate-950 shadow-lg shadow-emerald-500/20 hover:bg-emerald-400 disabled:opacity-60 active:scale-[0.99]"
             >
-              Done
-            </Link>
+              {pending ? "Submitting…" : "Done"}
+            </button>
           </div>
-        ) : (
-          <button
-            type="button"
-            disabled={pending}
-            onClick={handleSubmit}
-            className="flex min-h-12 w-full items-center justify-center rounded-xl bg-amber-500 text-base font-semibold text-slate-950 hover:bg-amber-400 disabled:opacity-60"
-          >
-            {pending ? "Submitting…" : "Submit & lock inspection"}
-          </button>
         )}
       </footer>
     </div>

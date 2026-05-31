@@ -7,18 +7,33 @@ import {
   type ChecklistItemState,
 } from "@/components/inspect/checklist-item-card";
 
+type InspectionPhoto = {
+  id: string;
+  url: string;
+  caption: string | null;
+};
+
 type ChecklistCarouselProps = {
   inspectionId: string;
   items: ChecklistItemState[];
+  photos: InspectionPhoto[];
   locked: boolean;
   onItemsChange: (items: ChecklistItemState[]) => void;
+  onPhotoAdded: (photo: InspectionPhoto) => void;
 };
+
+function photosForItem(photos: InspectionPhoto[], itemLabel: string) {
+  const prefix = `Fail: ${itemLabel}`;
+  return photos.filter((photo) => photo.caption === prefix).length;
+}
 
 export function ChecklistCarousel({
   inspectionId,
   items,
+  photos,
   locked,
   onItemsChange,
+  onPhotoAdded,
 }: ChecklistCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -62,7 +77,9 @@ export function ChecklistCarousel({
             index={index}
             total={items.length}
             locked={locked}
+            itemPhotoCount={photosForItem(photos, item.label)}
             onUpdated={updateItem}
+            onPhotoAdded={onPhotoAdded}
           />
         ))}
       </div>
@@ -87,7 +104,9 @@ export function ChecklistCarousel({
         ))}
       </div>
       <p className="px-4 text-center text-xs text-slate-500">
-        {activeIndex === items.length - 1 ? "Review complete? Add photos and sign below." : "Swipe for next item →"}
+        {activeIndex === items.length - 1
+          ? "All items done? Sign and tap Done below."
+          : "Swipe for next item →"}
       </p>
     </section>
   );

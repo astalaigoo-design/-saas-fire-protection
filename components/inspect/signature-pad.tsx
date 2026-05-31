@@ -125,7 +125,7 @@ export function SignaturePad({
       <div className="overflow-hidden rounded-xl border border-slate-700 bg-slate-950">
         <canvas
           ref={canvasRef}
-          className="h-36 w-full touch-none"
+          className="h-28 w-full touch-none"
           aria-label="Sign with your finger"
           onMouseDown={startDraw}
           onMouseMove={draw}
@@ -136,7 +136,7 @@ export function SignaturePad({
           onTouchEnd={endDraw}
         />
       </div>
-      <p className="text-xs text-slate-500">Sign above to certify this inspection.</p>
+      <p className="text-xs text-slate-500">Sign with your finger, then tap Done.</p>
     </div>
   );
 }
