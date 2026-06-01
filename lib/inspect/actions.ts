@@ -10,7 +10,9 @@ import { canViewAllJobs } from "@/lib/auth/permissions";
 import { assertActiveCompanyAccess } from "@/lib/billing/guards";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { isInspectionLocked } from "@/lib/inspect/queries";
+import { getPendingItemIdsInSection } from "@/lib/inspect/checklist-sections";
 import {
+  bulkMarkSectionNaSchema,
   submitInspectionSchema,
   updateChecklistItemSchema,
   uploadPhotoSchema,
@@ -34,6 +36,10 @@ import { captureServerActionError } from "@/lib/monitoring/capture";
 
 export type InspectActionResult =
   | { ok: true; reportEmail?: ReportEmailOutcome }
+  | { ok: false; error: string };
+
+export type BulkSectionNaResult =
+  | { ok: true; updatedCount: number }
   | { ok: false; error: string };
 
 type EditableInspection = Prisma.InspectionGetPayload<{
@@ -143,6 +149,60 @@ export async function updateChecklistItem(
 
   revalidatePath(`/inspect/${parsed.data.inspectionId}`);
   return { ok: true };
+}
+
+export async function bulkMarkChecklistSectionNa(
+  input: unknown,
+): Promise<BulkSectionNaResult> {
+  const session = await getDashboardSession();
+  if (!session) return { ok: false, error: "You must be signed in." };
+
+  const billing = await requireActiveBilling(session);
+  if (!billing.ok) return { ok: false, error: billing.error };
+
+  const parsed = bulkMarkSectionNaSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  const loaded = await loadEditableInspection(parsed.data.inspectionId, session);
+  if (!loaded.ok) return { ok: false, error: loaded.error };
+
+  const itemIds = getPendingItemIdsInSection(
+    loaded.inspection.items.map((item) => ({
+      id: item.id,
+      label: item.label,
+      description: item.description,
+      result: item.result,
+    })),
+    parsed.data.sectionKey,
+  );
+
+  if (itemIds.length === 0) {
+    return { ok: false, error: "No pending items in this section." };
+  }
+
+  await prisma.inspectionItem.updateMany({
+    where: {
+      inspectionId: parsed.data.inspectionId,
+      id: { in: itemIds },
+      result: InspectionItemResult.pending,
+    },
+    data: {
+      result: InspectionItemResult.na,
+      notes: null,
+    },
+  });
+
+  if (loaded.inspection.status === InspectionStatus.scheduled) {
+    await prisma.inspection.update({
+      where: { id: parsed.data.inspectionId },
+      data: { status: InspectionStatus.in_progress },
+    });
+  }
+
+  revalidatePath(`/inspect/${parsed.data.inspectionId}`);
+  return { ok: true, updatedCount: itemIds.length };
 }
 
 export async function uploadInspectionPhoto(

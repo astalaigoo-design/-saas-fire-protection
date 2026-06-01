@@ -19,6 +19,11 @@ export const updateChecklistItemSchema = z.object({
     .transform((value) => (value === "" ? undefined : value)),
 });
 
+export const bulkMarkSectionNaSchema = z.object({
+  inspectionId: z.string().trim().min(1),
+  sectionKey: z.enum(["nfpa-10", "nfpa-25", "nfpa-72", "nfpa-96", "nfpa-101", "other"]),
+});
+
 export const uploadPhotoSchema = z.object({
   inspectionId: z.string().trim().min(1),
   dataUrl: z

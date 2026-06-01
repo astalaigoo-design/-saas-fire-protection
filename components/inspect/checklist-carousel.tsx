@@ -6,6 +6,7 @@ import {
   ChecklistItemCard,
   type ChecklistItemState,
 } from "@/components/inspect/checklist-item-card";
+import { ChecklistSectionBulkNa } from "@/components/inspect/checklist-section-bulk-na";
 
 type InspectionPhoto = {
   id: string;
@@ -63,6 +64,13 @@ export function ChecklistCarousel({
           {completedCount}/{items.length} done
         </span>
       </div>
+
+      <ChecklistSectionBulkNa
+        inspectionId={inspectionId}
+        items={items}
+        locked={locked}
+        onItemsChange={onItemsChange}
+      />
 
       <div
         ref={scrollRef}
