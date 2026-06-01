@@ -10,13 +10,21 @@ export const APP_TAGLINE = "Operating system for fire protection contractors";
 
 export const APP_DESCRIPTION = APP_POSITIONING;
 
-/** Pilot pricing shown on marketing and billing during early access. */
+/** Pricing shown on marketing and billing. */
 export const PILOT_PRICING = {
+  standard: {
+    label: "GetFlareflow",
+    price: "$49",
+    period: "/mo",
+    detail:
+      "Full platform for fire protection contractors — field inspections, compliance reports, and repair quotes.",
+  },
   designPartner: {
     label: "Design partner",
-    price: "$0–$49",
+    price: "$0",
     period: "/mo",
     detail: "For 2–3 early contractors helping shape the product.",
+    limitNote: "Limited to 2–3 companies.",
   },
 } as const;
 
