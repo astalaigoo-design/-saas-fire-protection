@@ -18,14 +18,18 @@ export default async function BillingPage() {
   const isOwner = session.role === "owner";
   const paddleCheckoutReady = isPaddleInlineCheckoutReady();
 
+  const isDesignPartner = billing?.designPartner ?? false;
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Billing"
         description={
-          paddleCheckoutReady
-            ? `${PILOT_PRICING.standard.price}${PILOT_PRICING.standard.period} after your ${TRIAL_DAYS}-day trial — subscribe below.`
-            : `${PILOT_PRICING.standard.price}${PILOT_PRICING.standard.period} after trial — set Paddle price ID to enable checkout.`
+          isDesignPartner
+            ? "Your workspace is on the design-partner plan — complimentary pilot access."
+            : paddleCheckoutReady
+              ? `${PILOT_PRICING.standard.price}${PILOT_PRICING.standard.period} after your ${TRIAL_DAYS}-day trial — subscribe below.`
+              : `${PILOT_PRICING.standard.price}${PILOT_PRICING.standard.period} after trial — set Paddle price ID to enable checkout.`
         }
       />
 
@@ -33,6 +37,8 @@ export default async function BillingPage() {
         <BillingPanel billing={billing} isOwner={isOwner} customerEmail={session.email} />
       ) : null}
 
+      {!isDesignPartner ? (
+        <>
       <div className="grid gap-4 sm:grid-cols-2">
         <section className="rounded-xl border border-primary/40 bg-card p-6 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">
@@ -84,6 +90,23 @@ export default async function BillingPage() {
           Contact about pilot access
         </Link>
       </section>
+        </>
+      ) : (
+        <section className="rounded-xl border border-primary/40 bg-card p-6 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+            {PILOT_PRICING.designPartner.label}
+          </p>
+          <p className="mt-2 font-heading text-3xl font-semibold text-foreground">
+            {PILOT_PRICING.designPartner.price}
+            <span className="text-base font-medium text-muted-foreground">
+              {PILOT_PRICING.designPartner.period}
+            </span>
+          </p>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            {PILOT_PRICING.designPartner.detail}
+          </p>
+        </section>
+      )}
     </div>
   );
 }

@@ -94,6 +94,9 @@ model Company {
   paddleSubscriptionId String?            @unique
   subscriptionRenewsAt DateTime?
 
+  /// Pilot design partner — complimentary access; Paddle checkout hidden for this tenant.
+  designPartner Boolean @default(false)
+
   users           User[]
   customers       Customer[]
   inspectionTypes InspectionType[]

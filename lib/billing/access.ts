@@ -1,10 +1,12 @@
 import { SubscriptionStatus } from "@prisma/client";
 import { TRIAL_DAYS } from "@/lib/billing/constants";
+import { DESIGN_PARTNER_ACCESS_MESSAGE } from "@/lib/billing/design-partner";
 
 export type CompanyBillingRecord = {
   subscriptionStatus: SubscriptionStatus;
   trialEndsAt: Date | null;
   subscriptionRenewsAt: Date | null;
+  designPartner?: boolean;
 };
 
 export type CompanyAccess = {
@@ -40,6 +42,17 @@ export function resolveCompanyAccess(company: CompanyBillingRecord): CompanyAcce
     company.subscriptionStatus === SubscriptionStatus.trialing && trialEndsAt
       ? daysUntil(trialEndsAt, now)
       : null;
+
+  if (company.designPartner) {
+    return {
+      hasAccess: true,
+      subscriptionStatus: company.subscriptionStatus,
+      daysLeftInTrial,
+      trialEndsAt,
+      subscriptionRenewsAt: company.subscriptionRenewsAt,
+      message: DESIGN_PARTNER_ACCESS_MESSAGE,
+    };
+  }
 
   if (company.subscriptionStatus === SubscriptionStatus.active) {
     return {

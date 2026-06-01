@@ -113,6 +113,7 @@ export async function sendTrialEndingReminders(
 
   const companies = await prisma.company.findMany({
     where: {
+      designPartner: false,
       subscriptionStatus: SubscriptionStatus.trialing,
       trialEndsAt: { not: null, gt: now },
     },

@@ -63,7 +63,7 @@ export default async function DashboardLayout({
         </header>
 
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 lg:px-6">
-          {billing ? <TrialBanner billing={billing} /> : null}
+          {billing ? <TrialBanner billing={billing} role={session.role} /> : null}
           {billing ? (
             <SubscriptionGate billing={billing} role={session.role}>
               {children}

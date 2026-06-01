@@ -34,6 +34,7 @@ export function BillingPanel({ billing, isOwner, customerEmail }: BillingPanelPr
   const inlineCheckoutReady = isPaddleInlineCheckoutReady();
   const showCheckout =
     PAID_CHECKOUT_ENABLED &&
+    !billing.designPartner &&
     isOwner &&
     billing.subscriptionStatus !== SubscriptionStatus.active &&
     (inlineCheckoutReady || billing.checkoutUrl);
@@ -52,11 +53,20 @@ export function BillingPanel({ billing, isOwner, customerEmail }: BillingPanelPr
           Current plan
         </p>
         <h2 className="mt-1 font-heading text-xl font-semibold text-foreground">
-          {statusLabel(billing.subscriptionStatus)}
+          {billing.designPartner ? "Design partner" : statusLabel(billing.subscriptionStatus)}
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">{billing.message}</p>
 
-        {billing.subscriptionStatus === SubscriptionStatus.trialing && billing.trialEndsAt ? (
+        {billing.designPartner ? (
+          <p className="mt-3 text-sm text-foreground">
+            Your workspace is on the complimentary design-partner plan. Paddle checkout is not
+            required for this account.
+          </p>
+        ) : null}
+
+        {!billing.designPartner &&
+        billing.subscriptionStatus === SubscriptionStatus.trialing &&
+        billing.trialEndsAt ? (
           <p className="mt-3 text-sm text-foreground">
             Trial ends{" "}
             <span className="font-medium">

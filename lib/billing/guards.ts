@@ -9,6 +9,7 @@ async function resolveSessionCompanyAccess(session: DashboardSession) {
       subscriptionStatus: true,
       trialEndsAt: true,
       subscriptionRenewsAt: true,
+      designPartner: true,
     },
   });
 

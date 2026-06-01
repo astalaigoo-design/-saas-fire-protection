@@ -39,19 +39,25 @@ export function SubscriptionGate({ billing, role, children }: SubscriptionGatePr
           <p className="mt-2 text-sm text-muted-foreground">{billing.message}</p>
           {role === "owner" ? (
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Link href="/dashboard/billing" className={cn(buttonVariants(), "min-h-11")}>
-                View billing
-              </Link>
               {billing.checkoutUrl ? (
                 <a
                   href={billing.checkoutUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={cn(buttonVariants({ variant: "outline" }), "min-h-11 inline-flex")}
+                  className={cn(buttonVariants(), "min-h-11 inline-flex")}
                 >
                   Subscribe with Paddle
                 </a>
               ) : null}
+              <Link
+                href="/dashboard/billing"
+                className={cn(
+                  buttonVariants({ variant: billing.checkoutUrl ? "outline" : "default" }),
+                  "min-h-11",
+                )}
+              >
+                {billing.checkoutUrl ? "Billing details" : "Open billing"}
+              </Link>
             </div>
           ) : (
             <p className="mt-4 text-sm text-muted-foreground">

@@ -75,4 +75,15 @@ describe("resolveCompanyAccess", () => {
     expect(access.hasAccess).toBe(false);
     expect(access.message).toContain("Subscribe");
   });
+
+  it("grants access for design partners even after trial ends", () => {
+    const access = resolveCompanyAccess({
+      designPartner: true,
+      subscriptionStatus: SubscriptionStatus.trialing,
+      trialEndsAt: new Date("2026-05-01"),
+      subscriptionRenewsAt: null,
+    });
+    expect(access.hasAccess).toBe(true);
+    expect(access.message).toContain("Design partner");
+  });
 });

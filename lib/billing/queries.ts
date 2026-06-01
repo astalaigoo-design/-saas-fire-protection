@@ -1,10 +1,12 @@
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { resolveCompanyAccess, type CompanyAccess } from "@/lib/billing/access";
+import { shouldShowPaidCheckout } from "@/lib/billing/design-partner";
 import { prisma } from "@/lib/prisma";
 
 export type CompanyBillingSnapshot = CompanyAccess & {
   companyId: string;
   companyName: string;
+  designPartner: boolean;
   checkoutUrl: string | null;
   customerPortalUrl: string | null;
 };
@@ -21,18 +23,21 @@ export async function getCompanyBillingSnapshot(
       subscriptionStatus: true,
       trialEndsAt: true,
       subscriptionRenewsAt: true,
+      designPartner: true,
     },
   });
 
   if (!company) return null;
 
   const access = resolveCompanyAccess(company);
+  const showCheckout = shouldShowPaidCheckout(company.designPartner);
 
   return {
     companyId: company.id,
     companyName: company.name,
-    checkoutUrl: buildPaddleCheckoutUrl(company.id, email),
-    customerPortalUrl: getPaddleCustomerPortalUrl(),
+    designPartner: company.designPartner,
+    checkoutUrl: showCheckout ? buildPaddleCheckoutUrl(company.id, email) : null,
+    customerPortalUrl: showCheckout ? getPaddleCustomerPortalUrl() : null,
     ...access,
   };
 }
