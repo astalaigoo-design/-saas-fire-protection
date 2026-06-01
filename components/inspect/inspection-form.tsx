@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { BuildingHeader } from "@/components/inspect/building-header";
+import { PreJobBriefCard } from "@/components/inspect/pre-job-brief-card";
 import { ChecklistCarousel } from "@/components/inspect/checklist-carousel";
 import { PhotoUploadSection } from "@/components/inspect/photo-upload-section";
 import { DownloadReportButton } from "@/components/inspect/download-report-button";
@@ -20,6 +21,7 @@ import {
 } from "@/lib/offline/indexeddb";
 import { apiStartInspection, apiSubmitInspection } from "@/lib/offline/inspect-api";
 import { syncOfflineInspectionMutations } from "@/lib/offline/inspection-sync";
+import type { PreJobBrief } from "@/lib/inspect/pre-job-brief";
 import type { InspectionFormData } from "@/lib/inspect/queries";
 import type { ReportEmailOutcome } from "@/lib/reports/email-report-after-submit";
 
@@ -38,6 +40,7 @@ type InspectionFormProps = {
   billingMessage?: string;
   checkoutUrl?: string | null;
   role?: AppRole;
+  preJobBrief?: PreJobBrief | null;
 };
 
 export function InspectionForm({
@@ -47,6 +50,7 @@ export function InspectionForm({
   billingMessage = "Subscribe to continue using GetFlareflow.",
   checkoutUrl = null,
   role = "technician",
+  preJobBrief = null,
 }: InspectionFormProps) {
   const router = useRouter();
   const serverLocked =
@@ -268,6 +272,8 @@ export function InspectionForm({
       <BuildingHeader inspection={displayInspection} locked={locked} />
 
       <main className="flex-1 space-y-8 py-6 pb-48">
+        {!locked && preJobBrief ? <PreJobBriefCard brief={preJobBrief} /> : null}
+
         <ChecklistCarousel
           inspectionId={inspection.id}
           items={items}

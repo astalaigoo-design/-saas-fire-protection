@@ -16,13 +16,22 @@ import {
 import type { AppRole } from "@/lib/auth/roles";
 import type { InspectionFormData } from "@/lib/inspect/queries";
 import {
+  hydratePreJobBrief,
+  type ClientPreJobBrief,
+  type PreJobBrief,
+} from "@/lib/inspect/pre-job-brief";
+import {
   hydrateInspectionFormData,
   type ClientInspectionFormData,
 } from "@/lib/inspect/serialize-for-client";
 
+const preJobBriefStorageKey = (inspectionId: string) =>
+  `inspect-pre-job-brief-${inspectionId}`;
+
 type InspectionFormShellProps = {
   inspectionId: string;
   serverInspection: ClientInspectionFormData | null;
+  serverPreJobBrief?: ClientPreJobBrief | null;
   /** When omitted (offline shell), writes are allowed locally; server rejects sync if billing expired. */
   writeAccess?: boolean;
   billingMessage?: string;
@@ -66,16 +75,20 @@ function OfflineInspectionUnavailable({ inspectionId }: { inspectionId: string }
 export function InspectionFormShell({
   inspectionId,
   serverInspection,
+  serverPreJobBrief = null,
   writeAccess = true,
   billingMessage = "Subscribe to continue using GetFlareflow.",
   checkoutUrl = null,
   role = "technician",
 }: InspectionFormShellProps) {
   const [inspection, setInspection] = useState<InspectionFormData | null>(null);
+  const [preJobBrief, setPreJobBrief] = useState<PreJobBrief | null>(null);
   const [ready, setReady] = useState(false);
   const [offlineOnly, setOfflineOnly] = useState(false);
   const serverRef = useRef<ClientInspectionFormData | null>(serverInspection);
+  const briefRef = useRef<ClientPreJobBrief | null>(serverPreJobBrief);
   if (serverInspection) serverRef.current = serverInspection;
+  if (serverPreJobBrief) briefRef.current = serverPreJobBrief;
 
   const bootstrap = useCallback(async () => {
     const cachedRow = await getInspectionSnapshot(inspectionId);
@@ -87,6 +100,28 @@ export function InspectionFormShell({
     if (resolved) {
       setInspection(resolved);
       setOfflineOnly(offline && !server);
+
+      let brief: ReturnType<typeof hydratePreJobBrief> | null = null;
+      if (briefRef.current) {
+        brief = hydratePreJobBrief(briefRef.current);
+        try {
+          sessionStorage.setItem(
+            preJobBriefStorageKey(inspectionId),
+            JSON.stringify(briefRef.current),
+          );
+        } catch {
+          /* quota */
+        }
+      } else {
+        try {
+          const raw = sessionStorage.getItem(preJobBriefStorageKey(inspectionId));
+          if (raw) brief = hydratePreJobBrief(JSON.parse(raw) as ClientPreJobBrief);
+        } catch {
+          /* ignore */
+        }
+      }
+      setPreJobBrief(brief);
+
       setActiveInspectionId(inspectionId);
       setReady(true);
       return;
@@ -145,6 +180,7 @@ export function InspectionFormShell({
       billingMessage={billingMessage}
       checkoutUrl={checkoutUrl}
       role={role}
+      preJobBrief={preJobBrief}
     />
   );
 }
