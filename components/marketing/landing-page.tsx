@@ -50,10 +50,10 @@ export function LandingPage() {
               Sign in
             </Link>
             <Link
-              href="/sign-up"
+              href="#pricing"
               className={cn(buttonVariants({ size: "sm" }), "min-h-10 px-4")}
             >
-              Create account
+              Pricing
             </Link>
           </nav>
         </div>
