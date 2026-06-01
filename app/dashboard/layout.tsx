@@ -3,6 +3,9 @@ import { UserButton } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 import { BrandLogo } from "@/components/brand-logo";
 import { DashboardNav, DashboardNavMobile } from "@/components/dashboard/dashboard-nav";
+import { SubscriptionGate } from "@/components/dashboard/subscription-gate";
+import { TrialBanner } from "@/components/dashboard/trial-banner";
+import { getCompanyBillingSnapshot } from "@/lib/billing/queries";
 import { getDashboardNavItems } from "@/lib/dashboard/nav-items";
 import { getDashboardSession } from "@/lib/dashboard/session";
 
@@ -14,7 +17,10 @@ export default async function DashboardLayout({
   const session = await getDashboardSession();
   if (!session) redirect("/sign-in");
 
-  const navItems = getDashboardNavItems(session.role);
+  const [navItems, billing] = await Promise.all([
+    Promise.resolve(getDashboardNavItems(session.role)),
+    getCompanyBillingSnapshot(session, session.email),
+  ]);
 
   return (
     <div className="min-h-screen bg-background text-foreground lg:flex">
@@ -53,7 +59,14 @@ export default async function DashboardLayout({
         </header>
 
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 lg:px-6">
-          {children}
+          {billing ? <TrialBanner billing={billing} /> : null}
+          {billing ? (
+            <SubscriptionGate billing={billing} role={session.role}>
+              {children}
+            </SubscriptionGate>
+          ) : (
+            children
+          )}
         </main>
       </div>
     </div>

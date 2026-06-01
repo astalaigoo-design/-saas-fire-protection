@@ -33,6 +33,7 @@ export function getDashboardNavItems(role: AppRole): DashboardNavItem[] {
 
   if (canManageOrgSettings(role)) {
     items.push(
+      { href: "/dashboard/billing", label: "Billing", icon: "credit-card" },
       { href: "/dashboard/settings", label: "Organization", icon: "settings" },
     );
   }
