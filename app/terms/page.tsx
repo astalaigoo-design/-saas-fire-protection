@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { APP_NAME } from "@/lib/branding";
+import { APP_NAME, PILOT_PRICING } from "@/lib/branding";
+import { TRIAL_DAYS } from "@/lib/billing/constants";
 import { buildPublicPageMetadata } from "@/lib/seo/site-metadata";
 
-const lastUpdated = "May 25, 2026";
+const lastUpdated = "June 1, 2026";
+const standardPlanPrice = `${PILOT_PRICING.standard.price}${PILOT_PRICING.standard.period}`;
 
 export const metadata: Metadata = buildPublicPageMetadata({
   title: `Terms of Service`,
@@ -64,8 +66,12 @@ const sections = [
   {
     title: "8. Fees and Billing",
     body: [
-      "Paid billing is currently disabled while the service is being prepared for future payment setup.",
-      "If paid plans are introduced later, pricing, billing cycles, taxes, renewals, cancellations, and refunds will be shown before purchase and governed by the checkout or billing terms presented at that time.",
+      `${APP_NAME} offers a ${TRIAL_DAYS}-day free trial for new company workspaces. During the trial you can use the service without charge; trial terms are shown at sign-up and in your dashboard.`,
+      `After the trial, continued access requires a paid subscription at ${standardPlanPrice} (USD unless another currency is shown at checkout), billed monthly on a recurring basis unless you cancel.`,
+      "Checkout, payment processing, invoicing, tax calculation, and subscription management are provided by Paddle.com, which acts as Merchant of Record for paid orders. By subscribing you also agree to Paddle buyer terms applicable to your purchase.",
+      "Subscriptions renew automatically each billing period until cancelled. You may cancel at any time from your billing page or through Paddle; cancellation stops future charges and typically takes effect at the end of the current paid period unless otherwise required by law.",
+      "If your trial ends or your subscription lapses, access to paid features may be restricted until you subscribe again.",
+      "Pricing, taxes, and any promotional terms are shown before you complete checkout. Refunds and statutory withdrawal rights are described in our Refund Policy at /refund.",
     ],
   },
   {

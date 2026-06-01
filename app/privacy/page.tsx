@@ -3,7 +3,7 @@ import Link from "next/link";
 import { APP_NAME } from "@/lib/branding";
 import { buildPublicPageMetadata } from "@/lib/seo/site-metadata";
 
-const lastUpdated = "May 25, 2026";
+const lastUpdated = "June 1, 2026";
 
 export const metadata: Metadata = buildPublicPageMetadata({
   title: `Privacy Policy`,
@@ -38,14 +38,16 @@ const sections = [
   {
     title: "4. Service Providers",
     body: [
-      "We use trusted third-party providers for hosting, database infrastructure, authentication, file storage, email delivery, analytics, monitoring, and related operations. Payment providers may be used if paid billing is enabled later.",
+      "We use trusted third-party providers for hosting, database infrastructure, authentication (Clerk), file storage, email delivery, payment and subscription processing (Paddle), analytics, monitoring, and related operations.",
+      "Payment information such as card details is collected and processed by Paddle on our behalf. We receive billing status, subscription identifiers, and transaction metadata needed to manage your account and access to the service.",
       "These providers may process information only as needed to provide their services to us and are expected to protect information according to their own security and privacy commitments.",
     ],
   },
   {
     title: "5. Emails and Communications",
     body: [
-      "The service may send account, inspection, report, quote, and support emails. Billing emails may be sent if paid billing is enabled later. These are operational messages related to use of the service.",
+      "The service may send account, inspection, report, quote, and support emails.",
+      "We may send billing-related emails about your trial, subscription, renewals, payment issues, and receipts through Paddle or our operational email provider.",
       "If you send reports or quotes to customers through the service, you are responsible for confirming the recipient address and the content being sent.",
     ],
   },

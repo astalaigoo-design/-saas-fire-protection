@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { APP_NAME } from "@/lib/branding";
+import { APP_NAME, PILOT_PRICING } from "@/lib/branding";
 import { TRIAL_DAYS } from "@/lib/billing/constants";
 import { buildPublicPageMetadata } from "@/lib/seo/site-metadata";
 
-const lastUpdated = "May 27, 2026";
+const lastUpdated = "June 1, 2026";
+
+const standardPlanPrice = `${PILOT_PRICING.standard.price}${PILOT_PRICING.standard.period}`;
 
 export const metadata: Metadata = buildPublicPageMetadata({
   title: `Refund Policy`,
@@ -91,9 +93,9 @@ const sections = [
     ],
   },
   {
-    title: "8. Free Trial",
+    title: "8. Free Trial and Subscription Price",
     body: [
-      `${APP_NAME} may offer a ${TRIAL_DAYS}-day free trial before paid billing begins. Trial terms are shown at sign-up or checkout.`,
+      `${APP_NAME} offers a ${TRIAL_DAYS}-day free trial for new workspaces. Unless you have a separate written agreement (for example, a limited design-partner program), paid service is ${standardPlanPrice} after the trial. Trial and subscription terms are shown at sign-up, checkout, and in your dashboard.`,
       `When a subscription includes a ${TRIAL_DAYS}-day free trial, statutory withdrawal rights in the European Union / EEA / Switzerland / United Kingdom apply again for 14 calendar days after the free trial ends, as described in section 2.`,
       "Cancel before the trial ends if you do not want to continue on a paid plan. After the trial converts to a paid subscription, refund eligibility follows sections 1–7 above.",
     ],
