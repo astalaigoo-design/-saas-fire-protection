@@ -5,8 +5,19 @@ import {
 } from "@/lib/auth/permissions";
 import type { AppRole } from "@/lib/auth/roles";
 import type { DashboardNavItem } from "@/components/dashboard/dashboard-nav";
+import { getTechnicianHomeHref } from "@/lib/inspect/resume-job";
 
 export function getDashboardNavItems(role: AppRole): DashboardNavItem[] {
+  if (role === "technician") {
+    return [
+      {
+        href: getTechnicianHomeHref(),
+        label: "My jobs",
+        icon: "clipboard-list",
+      },
+    ];
+  }
+
   const items: DashboardNavItem[] = [
     { href: "/dashboard", label: "Dashboard", icon: "layout-dashboard" },
   ];
@@ -24,10 +35,6 @@ export function getDashboardNavItems(role: AppRole): DashboardNavItem[] {
       { href: "/dashboard/inspections", label: "Inspections", icon: "clipboard-list" },
       { href: "/dashboard/jobs", label: "Calendar", icon: "calendar" },
       { href: "/dashboard/reports", label: "Reports", icon: "file-text" },
-    );
-  } else if (role === "technician") {
-    items.push(
-      { href: "/dashboard/my-jobs", label: "Inspections", icon: "clipboard-list" },
     );
   }
 

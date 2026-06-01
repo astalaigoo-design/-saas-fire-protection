@@ -58,7 +58,18 @@
     </p>
     <div class="actions">
       <a class="primary" href="/dashboard/my-jobs">My Jobs</a>
-      <a class="secondary" href="/inspect/offline">Resume inspection</a>
+      <a class="secondary" id="resume-inspection" href="/dashboard/my-jobs">Resume inspection</a>
     </div>
+    <script>
+      (function () {
+        var key = "flareflow-active-inspection-id";
+        var id = localStorage.getItem(key);
+        var link = document.getElementById("resume-inspection");
+        if (id && link) {
+          link.href =
+            "/inspect/offline?inspectionId=" + encodeURIComponent(id);
+        }
+      })();
+    </script>
   </body>
 </html>

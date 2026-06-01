@@ -3,6 +3,7 @@ export type JobCatalogEntry = {
   label: string;
   subtitle: string;
   scheduledAt: string;
+  status?: "scheduled" | "in_progress";
 };
 
 const JOB_CATALOG_KEY = "flareflow-job-catalog";

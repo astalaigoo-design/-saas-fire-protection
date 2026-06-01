@@ -1,7 +1,8 @@
+import { sortTechnicianJobs } from "@/lib/inspect/resume-job";
 import { prisma } from "@/lib/prisma";
 
 export async function getMyAssignedInspections(appUserId: string, companyId: string) {
-  return prisma.inspection.findMany({
+  const rows = await prisma.inspection.findMany({
     where: {
       companyId,
       assignedToUserId: appUserId,
@@ -23,4 +24,6 @@ export async function getMyAssignedInspections(appUserId: string, companyId: str
       inspectionType: { select: { name: true } },
     },
   });
+
+  return sortTechnicianJobs(rows);
 }

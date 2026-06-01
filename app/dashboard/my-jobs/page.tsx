@@ -1,10 +1,11 @@
 import { MyJobsClient } from "@/components/dashboard/my-jobs-client";
+import { ContinueInspectionHero } from "@/components/dashboard/continue-inspection-hero";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { getMyAssignedInspections } from "@/lib/inspect/my-jobs";
+import { pickPromotedResumeJobId } from "@/lib/inspect/resume-job";
 import { CacheRouteOnVisit } from "@/components/offline/cache-route-on-visit";
-import { ResumeActiveInspection } from "@/components/offline/resume-active-inspection";
 import { buildingLabel } from "@/lib/customers/format";
 
 export default async function MyJobsPage() {
@@ -14,24 +15,27 @@ export default async function MyJobsPage() {
 
   const jobs = await getMyAssignedInspections(session.appUserId, session.companyId);
 
+  const catalogJobs = jobs.map((job) => ({
+    inspectionId: job.id,
+    label: buildingLabel(job.building),
+    subtitle: `${job.building.customer.name} · ${job.inspectionType.name}`,
+    scheduledAt: job.scheduledAt.toISOString(),
+    status: job.status as "scheduled" | "in_progress",
+  }));
+
+  const serverResumeJobId = pickPromotedResumeJobId(catalogJobs, null);
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="My jobs"
-        description="Tap a job to open the mobile inspection form."
+        description="Continue an in-progress inspection or pick a job below."
       />
 
       <CacheRouteOnVisit path="/dashboard/my-jobs" />
-      <ResumeActiveInspection />
+      <ContinueInspectionHero jobs={catalogJobs} serverResumeJobId={serverResumeJobId} />
 
-      <MyJobsClient
-        serverJobs={jobs.map((job) => ({
-          inspectionId: job.id,
-          label: buildingLabel(job.building),
-          subtitle: `${job.building.customer.name} · ${job.inspectionType.name}`,
-          scheduledAt: job.scheduledAt.toISOString(),
-        }))}
-      />
+      <MyJobsClient serverJobs={catalogJobs} promotedJobId={serverResumeJobId} />
     </div>
   );
 }
