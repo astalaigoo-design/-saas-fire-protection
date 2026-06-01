@@ -282,7 +282,13 @@ export function LandingPage() {
               support@getflareflow.com
             </a>
           </p>
-          <nav aria-label="Legal links" className="flex flex-wrap gap-x-4 gap-y-2">
+          <nav aria-label="Site links" className="flex flex-wrap gap-x-4 gap-y-2">
+            <Link href="/nfpa-25-inspection-software" className="text-primary hover:underline">
+              NFPA 25 inspection software
+            </Link>
+            <Link href="/fire-sprinkler-inspection-app" className="text-primary hover:underline">
+              Fire sprinkler inspection app
+            </Link>
             <Link href="/terms" className="text-primary hover:underline">
               Terms of Service
             </Link>
