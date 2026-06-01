@@ -144,8 +144,12 @@ After submit:
 
 ## 7. Optional — add a technician
 
-1. Invite a second user (Clerk sign-up or invite).
-2. Set Clerk public metadata:
+1. **Dashboard → Organization** → **Team** → enter email → **Technician** → **Send invite**.
+2. They accept the Clerk email and sign up; `role` and `companyId` are set automatically.
+3. Assign them on the next **Schedule inspection** form.
+4. They use **Dashboard → Inspections** (or **My jobs** if only technician role) → **Open inspection**.
+
+**Manual fallback:** Clerk Dashboard → invite user, then set public metadata:
 
 ```json
 {
@@ -153,9 +157,6 @@ After submit:
   "companyId": "<same company id as owner>"
 }
 ```
-
-3. Assign them on the next **Schedule inspection** form.
-4. They use **Dashboard → Inspections** (or **My jobs** if only technician role) → **Open inspection**.
 
 ---
 
