@@ -13,6 +13,7 @@ import {
   parseInspectionSnapshot,
   preferOfflineInspection,
 } from "@/lib/offline/inspection-snapshot";
+import type { AppRole } from "@/lib/auth/roles";
 import type { InspectionFormData } from "@/lib/inspect/queries";
 import {
   hydrateInspectionFormData,
@@ -22,6 +23,11 @@ import {
 type InspectionFormShellProps = {
   inspectionId: string;
   serverInspection: ClientInspectionFormData | null;
+  /** When omitted (offline shell), writes are allowed locally; server rejects sync if billing expired. */
+  writeAccess?: boolean;
+  billingMessage?: string;
+  checkoutUrl?: string | null;
+  role?: AppRole;
 };
 
 function InspectionFormSkeleton() {
@@ -60,6 +66,10 @@ function OfflineInspectionUnavailable({ inspectionId }: { inspectionId: string }
 export function InspectionFormShell({
   inspectionId,
   serverInspection,
+  writeAccess = true,
+  billingMessage = "Subscribe to continue using GetFlareflow.",
+  checkoutUrl = null,
+  role = "technician",
 }: InspectionFormShellProps) {
   const [inspection, setInspection] = useState<InspectionFormData | null>(null);
   const [ready, setReady] = useState(false);
@@ -131,6 +141,10 @@ export function InspectionFormShell({
       key={`${inspection.id}-${offlineOnly ? "offline" : "online"}`}
       inspection={inspection}
       offlineOnly={offlineOnly}
+      writeAccess={writeAccess}
+      billingMessage={billingMessage}
+      checkoutUrl={checkoutUrl}
+      role={role}
     />
   );
 }

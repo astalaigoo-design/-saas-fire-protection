@@ -69,11 +69,20 @@ async function loadEditableInspection(
   return { ok: true, inspection };
 }
 
+async function requireActiveBilling(
+  session: NonNullable<Awaited<ReturnType<typeof getDashboardSession>>>,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  return assertActiveCompanyAccess(session);
+}
+
 export async function startInspection(
   inspectionId: string,
 ): Promise<InspectActionResult> {
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
+
+  const billing = await requireActiveBilling(session);
+  if (!billing.ok) return { ok: false, error: billing.error };
 
   const loaded = await loadEditableInspection(inspectionId, session);
   if (!loaded.ok) return { ok: false, error: loaded.error };
@@ -95,6 +104,9 @@ export async function updateChecklistItem(
 ): Promise<InspectActionResult> {
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
+
+  const billing = await requireActiveBilling(session);
+  if (!billing.ok) return { ok: false, error: billing.error };
 
   const parsed = updateChecklistItemSchema.safeParse(input);
   if (!parsed.success) {
@@ -138,6 +150,9 @@ export async function uploadInspectionPhoto(
 ): Promise<InspectActionResult & { photoId?: string; url?: string }> {
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
+
+  const billing = await requireActiveBilling(session);
+  if (!billing.ok) return { ok: false, error: billing.error };
 
   const parsed = uploadPhotoSchema.safeParse(input);
   if (!parsed.success) {
@@ -190,6 +205,9 @@ export async function deleteInspectionPhoto(
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
 
+  const billing = await requireActiveBilling(session);
+  if (!billing.ok) return { ok: false, error: billing.error };
+
   const loaded = await loadEditableInspection(inspectionId, session);
   if (!loaded.ok) return { ok: false, error: loaded.error };
 
@@ -219,7 +237,7 @@ export async function submitInspection(
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
 
-  const billing = await assertActiveCompanyAccess(session);
+  const billing = await requireActiveBilling(session);
   if (!billing.ok) return { ok: false, error: billing.error };
 
   const parsed = submitInspectionSchema.safeParse(input);

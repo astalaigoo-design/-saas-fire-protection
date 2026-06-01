@@ -9,7 +9,9 @@ import { ChecklistCarousel } from "@/components/inspect/checklist-carousel";
 import { PhotoUploadSection } from "@/components/inspect/photo-upload-section";
 import { DownloadReportButton } from "@/components/inspect/download-report-button";
 import { OfflineBadge } from "@/components/inspect/offline-badge";
+import { InspectBillingBlock } from "@/components/inspect/inspect-billing-block";
 import { SignaturePad } from "@/components/inspect/signature-pad";
+import type { AppRole } from "@/lib/auth/roles";
 import type { ChecklistItemState } from "@/components/inspect/checklist-item-card";
 import {
   enqueueOfflineMutation,
@@ -32,9 +34,20 @@ type InspectionPhoto = {
 type InspectionFormProps = {
   inspection: InspectionFormData;
   offlineOnly?: boolean;
+  writeAccess?: boolean;
+  billingMessage?: string;
+  checkoutUrl?: string | null;
+  role?: AppRole;
 };
 
-export function InspectionForm({ inspection, offlineOnly = false }: InspectionFormProps) {
+export function InspectionForm({
+  inspection,
+  offlineOnly = false,
+  writeAccess = true,
+  billingMessage = "Subscribe to continue using GetFlareflow.",
+  checkoutUrl = null,
+  role = "technician",
+}: InspectionFormProps) {
   const router = useRouter();
   const serverLocked =
     inspection.status === "completed" || inspection.status === "cancelled";
@@ -52,7 +65,9 @@ export function InspectionForm({ inspection, offlineOnly = false }: InspectionFo
     inspection.signatureData,
   );
   const [photos, setPhotos] = useState<InspectionPhoto[]>(() => inspection.photos);
-  const locked = serverLocked || submittedOffline;
+  const readOnly = !writeAccess;
+  const formLocked = serverLocked || submittedOffline;
+  const locked = formLocked || readOnly;
   const displayInspection = submittedOffline
     ? {
         ...inspection,
@@ -183,7 +198,7 @@ export function InspectionForm({ inspection, offlineOnly = false }: InspectionFo
   );
 
   const handleDone = () => {
-    if (locked) return;
+    if (formLocked || readOnly) return;
     setSubmitError(null);
 
     if (!allItemsComplete) {
@@ -273,7 +288,7 @@ export function InspectionForm({ inspection, offlineOnly = false }: InspectionFo
       </main>
 
       <footer className="sticky bottom-0 border-t border-slate-800 bg-slate-900/95 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur">
-        {locked ? (
+        {formLocked ? (
           <div className="space-y-4">
             <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-5 text-center">
               <p className="text-2xl font-bold text-emerald-300">Done</p>
@@ -324,6 +339,12 @@ export function InspectionForm({ inspection, offlineOnly = false }: InspectionFo
               </Link>
             </div>
           </div>
+        ) : readOnly ? (
+          <InspectBillingBlock
+            message={billingMessage}
+            role={role}
+            checkoutUrl={checkoutUrl}
+          />
         ) : (
           <div className="space-y-4">
             <div className="space-y-1">
