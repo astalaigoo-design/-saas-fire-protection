@@ -48,8 +48,9 @@ function readCompanyId(customData: Record<string, unknown> | null | undefined): 
 function mapPaddleStatus(status: string | undefined): SubscriptionStatus {
   switch (status) {
     case "active":
-    case "trialing":
       return SubscriptionStatus.active;
+    case "trialing":
+      return SubscriptionStatus.trialing;
     case "past_due":
       return SubscriptionStatus.past_due;
     case "canceled":
@@ -128,7 +129,11 @@ export async function handlePaddleWebhook(payload: unknown): Promise<PaddleWebho
           paddleCustomerId: customerId,
           paddleSubscriptionId: subscriptionId,
           subscriptionRenewsAt: renewsAt,
-          ...(mappedStatus === SubscriptionStatus.active ? { trialEndsAt: null } : {}),
+          ...(mappedStatus === SubscriptionStatus.active
+            ? { trialEndsAt: null }
+            : mappedStatus === SubscriptionStatus.trialing && renewsAt
+              ? { trialEndsAt: renewsAt }
+              : {}),
         },
       });
       return { ok: true, action: eventType };
