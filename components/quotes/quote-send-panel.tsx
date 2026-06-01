@@ -33,9 +33,23 @@ export function QuoteSendPanel({ quoteId, customerEmail, totalLabel }: QuoteSend
 
   if (state?.ok) {
     return (
-      <p role="status" className="mt-3 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
-        Quote emailed to {state.sentTo} with PDF attached.
-      </p>
+      <div
+        role="status"
+        className="mt-3 space-y-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300"
+      >
+        <p>Quote emailed to {state.sentTo} with PDF attached.</p>
+        <p>
+          Customer link:{" "}
+          <a
+            href={state.publicUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium underline"
+          >
+            {state.publicUrl}
+          </a>
+        </p>
+      </div>
     );
   }
 

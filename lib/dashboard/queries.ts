@@ -139,6 +139,7 @@ export async function listCompanyReports(companyId: string) {
 
 const quoteListSelect = {
   id: true,
+  shareToken: true,
   title: true,
   status: true,
   notes: true,

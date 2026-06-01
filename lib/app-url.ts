@@ -12,3 +12,7 @@ export function getAppOrigin(): string {
 export function publicReportUrl(shareToken: string): string {
   return `${getAppOrigin()}/r/${shareToken}`;
 }
+
+export function publicQuoteUrl(shareToken: string): string {
+  return `${getAppOrigin()}/q/${shareToken}`;
+}

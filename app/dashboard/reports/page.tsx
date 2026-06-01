@@ -3,6 +3,7 @@ import { DownloadReportButton } from "@/components/inspect/download-report-butto
 import { PageHeader } from "@/components/dashboard/page-header";
 import { QuoteLineItemsEditor } from "@/components/quotes/quote-line-items-editor";
 import { QuoteSendPanel } from "@/components/quotes/quote-send-panel";
+import { QuoteShareLink } from "@/components/quotes/quote-share-link";
 import { ReportShareLink } from "@/components/reports/report-share-link";
 import {
   markQuoteAccepted,
@@ -138,6 +139,9 @@ export default async function ReportsPage() {
                       {quote.sentTo ? ` · sent to ${quote.sentTo}` : ""}
                       {quote.sentAt ? ` · ${formatDate(quote.sentAt)}` : ""}
                     </p>
+                    <div className="mt-3">
+                      <QuoteShareLink quoteId={quote.id} shareToken={quote.shareToken} />
+                    </div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <form action={markQuoteAccepted}>
                         <input type="hidden" name="quoteId" value={quote.id} />
@@ -193,6 +197,9 @@ export default async function ReportsPage() {
                       {quote.acceptedAt ? ` · ${formatDate(quote.acceptedAt)}` : ""}
                       {quote.declinedAt ? ` · ${formatDate(quote.declinedAt)}` : ""}
                     </p>
+                    <div className="mt-3">
+                      <QuoteShareLink quoteId={quote.id} shareToken={quote.shareToken} />
+                    </div>
                   </CardContent>
                 </Card>
               </li>

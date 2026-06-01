@@ -15,4 +15,5 @@ export const ROBOTS_DISALLOW_PREFIXES = [
   "/inspect",
   "/api",
   "/r/",
+  "/q/",
 ] as const;

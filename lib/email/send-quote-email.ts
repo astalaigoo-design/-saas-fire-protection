@@ -22,6 +22,7 @@ export type SendQuoteEmailInput = {
   totalCents: number;
   lineItems: QuoteEmailLineItem[];
   replyTo?: string | null;
+  quoteLink?: string | null;
   pdfBuffer?: Buffer;
   pdfFilename?: string;
 };
@@ -76,6 +77,11 @@ function buildHtml(input: SendQuoteEmailInput): string {
     <p style="margin:0;">Tax: ${escapeHtml(formatCurrency(input.taxCents, input.currency))}</p>
     <p style="margin:0;">Discount: -${escapeHtml(formatCurrency(input.discountCents, input.currency))}</p>
     <p style="margin-top:8px;"><strong>Total: ${escapeHtml(formatCurrency(input.totalCents, input.currency))}</strong></p>
+    ${
+      input.quoteLink
+        ? `<p style="margin-top:12px;"><a href="${escapeHtml(input.quoteLink)}" style="color:#b45309;font-weight:600;">View quote online</a> (no login required).</p>`
+        : ""
+    }
     <p style="color:#64748b;font-size:14px;">The full quote is attached as a PDF. Reply to this email with questions. Sent by ${escapeHtml(input.companyName)}.</p>
   `.trim();
 }

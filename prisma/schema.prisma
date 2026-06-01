@@ -364,6 +364,9 @@ model Quote {
   acceptedAt      DateTime?
   declinedAt      DateTime?
 
+  /// Unguessable token for customer read-only quote access at /q/[token].
+  shareToken String? @unique
+
   lineItems QuoteLineItem[]
 
   createdAt DateTime @default(now())

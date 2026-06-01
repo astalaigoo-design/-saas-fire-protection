@@ -6,12 +6,16 @@ import { z } from "zod";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { getDashboardSession } from "@/lib/dashboard/session";
+import { publicQuoteUrl } from "@/lib/app-url";
 import { sendQuoteEmail } from "@/lib/email/send-quote-email";
 import { generateQuotePdf } from "@/lib/quotes/generate-quote-pdf";
+import { ensureQuoteShareToken } from "@/lib/quotes/share-token";
 import { prisma } from "@/lib/prisma";
 
 export type QuoteLineItemsActionResult = { ok: true } | { ok: false; error: string };
-export type SendQuoteActionResult = { ok: true; sentTo: string } | { ok: false; error: string };
+export type SendQuoteActionResult =
+  | { ok: true; sentTo: string; publicUrl: string }
+  | { ok: false; error: string };
 
 const lineItemSchema = z.object({
   id: z.string().min(1),
@@ -218,14 +222,18 @@ export async function sendDraftQuote(
 
   let pdfBuffer: Buffer;
   let pdfFilename: string;
+  let shareToken: string;
   try {
     const generated = await generateQuotePdf(session, quote.id);
     pdfBuffer = generated.buffer;
     pdfFilename = generated.filename;
+    shareToken = await ensureQuoteShareToken(quote.id);
   } catch (error) {
     console.error("sendDraftQuote: PDF generation failed", error);
     return { ok: false, error: "Could not generate the quote PDF." };
   }
+
+  const publicUrl = publicQuoteUrl(shareToken);
 
   const buildingLabel =
     quote.inspection.building.name?.trim() ||
@@ -245,6 +253,7 @@ export async function sendDraftQuote(
     totalCents: quote.totalCents,
     lineItems: quote.lineItems,
     replyTo: quote.inspection.company.reportEmail,
+    quoteLink: publicUrl,
     pdfBuffer,
     pdfFilename,
   });
@@ -281,7 +290,7 @@ export async function sendDraftQuote(
 
   revalidatePath("/dashboard/reports");
   revalidatePath("/dashboard/operations");
-  return { ok: true, sentTo: customerEmail };
+  return { ok: true, sentTo: customerEmail, publicUrl };
 }
 
 async function transitionQuoteStatus(
