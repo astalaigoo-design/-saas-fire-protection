@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { CompanyBillingSnapshot } from "@/lib/billing/queries";
 import { PaddleInlineCheckout } from "@/components/billing/paddle-inline-checkout";
-import { TRIAL_DAYS } from "@/lib/billing/constants";
+import { PAID_CHECKOUT_ENABLED, TRIAL_DAYS } from "@/lib/billing/constants";
 import { isPaddleInlineCheckoutReady } from "@/lib/billing/paddle-env";
 import { SubscriptionStatus } from "@prisma/client";
 import { buttonVariants } from "@/components/ui/button";
@@ -33,6 +33,7 @@ function statusLabel(status: SubscriptionStatus): string {
 export function BillingPanel({ billing, isOwner, customerEmail }: BillingPanelProps) {
   const inlineCheckoutReady = isPaddleInlineCheckoutReady();
   const showCheckout =
+    PAID_CHECKOUT_ENABLED &&
     isOwner &&
     billing.subscriptionStatus !== SubscriptionStatus.active &&
     (inlineCheckoutReady || billing.checkoutUrl);
