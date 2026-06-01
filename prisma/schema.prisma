@@ -263,6 +263,8 @@ model Inspection {
   reports Report[]
   /// Repair estimate created from failed inspection items.
   quote   Quote?
+  /// Job scheduled after the customer accepted the repair quote.
+  scheduledForQuote Quote? @relation("QuoteScheduledJob")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -369,6 +371,10 @@ model Quote {
 
   /// Unguessable token for customer read-only quote access at /q/[token].
   shareToken String? @unique
+
+  /// Follow-up inspection visit created from this accepted quote.
+  scheduledInspectionId String?     @unique
+  scheduledInspection   Inspection? @relation("QuoteScheduledJob", fields: [scheduledInspectionId], references: [id], onDelete: SetNull)
 
   lineItems QuoteLineItem[]
 

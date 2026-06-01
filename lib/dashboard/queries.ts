@@ -154,6 +154,7 @@ const quoteListSelect = {
   sentAt: true,
   acceptedAt: true,
   declinedAt: true,
+  scheduledInspectionId: true,
   lineItems: {
     orderBy: { sortOrder: "asc" },
     select: {

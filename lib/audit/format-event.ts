@@ -47,6 +47,22 @@ export function formatAuditEventSummary(event: AuditEventForDisplay): string {
       if (at) return `Follow-up scheduled for ${formatIsoDate(at)}`;
       return "Follow-up scheduled after failed items";
     }
+    case "inspection.scheduled_from_quote": {
+      const at = metaString(meta, "scheduledAt");
+      const kind = metaString(meta, "visitKind");
+      const days = meta?.daysOut;
+      const label =
+        kind === "reinspection"
+          ? "Re-inspection"
+          : kind === "repair"
+            ? "Repair visit"
+            : "Job";
+      if (at && typeof days === "number") {
+        return `${label} in ${days} days (${formatIsoDate(at)})`;
+      }
+      if (at) return `${label} scheduled for ${formatIsoDate(at)}`;
+      return `${label} scheduled from accepted quote`;
+    }
     case "inspection.due_reminder_sent": {
       const type = metaString(meta, "inspectionTypeName");
       const due = metaString(meta, "dueAt");

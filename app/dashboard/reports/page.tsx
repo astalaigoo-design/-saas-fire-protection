@@ -4,6 +4,8 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { QuoteLineItemsEditor } from "@/components/quotes/quote-line-items-editor";
 import { QuoteSendPanel } from "@/components/quotes/quote-send-panel";
 import { QuoteShareLink } from "@/components/quotes/quote-share-link";
+import { ScheduleJobFromQuotePanel } from "@/components/quotes/schedule-job-from-quote-panel";
+import { QuoteStatus } from "@prisma/client";
 import { ReportShareLink } from "@/components/reports/report-share-link";
 import {
   markQuoteAccepted,
@@ -39,9 +41,8 @@ export default async function ReportsPage() {
   ]);
   const draftQuotes = quotes.filter((quote) => quote.status === "draft");
   const sentQuotes = quotes.filter((quote) => quote.status === "sent");
-  const closedQuotes = quotes.filter(
-    (quote) => quote.status === "accepted" || quote.status === "declined",
-  );
+  const acceptedQuotes = quotes.filter((quote) => quote.status === QuoteStatus.accepted);
+  const declinedQuotes = quotes.filter((quote) => quote.status === QuoteStatus.declined);
 
   return (
     <div className="space-y-6">
@@ -182,16 +183,16 @@ export default async function ReportsPage() {
 
       <section className="space-y-3">
         <h2 className="font-heading text-lg font-semibold text-foreground">
-          Closed quotes
+          Accepted quotes
         </h2>
-        {closedQuotes.length === 0 ? (
+        {acceptedQuotes.length === 0 ? (
           <EmptyState
-            title="No closed quotes"
-            description="Accepted and declined quotes will appear here."
+            title="No accepted quotes"
+            description="When a customer accepts a repair quote, schedule the repair or re-inspection here."
           />
         ) : (
           <ul className="space-y-3">
-            {closedQuotes.map((quote) => (
+            {acceptedQuotes.map((quote) => (
               <li key={quote.id}>
                 <Card>
                   <CardContent>
@@ -202,9 +203,51 @@ export default async function ReportsPage() {
                       {buildingLabel(quote.inspection.building)} ·{" "}
                       {quote.inspection.building.customer.name}
                     </p>
-                    <p className="mt-2 text-xs capitalize text-muted-foreground">
-                      {quote.status}
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Accepted
                       {quote.acceptedAt ? ` · ${formatDate(quote.acceptedAt)}` : ""}
+                      {" · "}
+                      {formatCurrency(quote.totalCents, quote.currency)}
+                    </p>
+                    <div className="mt-3">
+                      <QuoteShareLink quoteId={quote.id} shareToken={quote.shareToken} />
+                    </div>
+                    <ScheduleJobFromQuotePanel
+                      quoteId={quote.id}
+                      scheduledInspectionId={quote.scheduledInspectionId}
+                    />
+                  </CardContent>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="font-heading text-lg font-semibold text-foreground">
+          Declined quotes
+        </h2>
+        {declinedQuotes.length === 0 ? (
+          <EmptyState
+            title="No declined quotes"
+            description="Declined quotes are kept here for your records."
+          />
+        ) : (
+          <ul className="space-y-3">
+            {declinedQuotes.map((quote) => (
+              <li key={quote.id}>
+                <Card>
+                  <CardContent>
+                    <p className="font-medium text-foreground">
+                      {quote.title ?? `${quote.inspection.inspectionType.name} repair quote`}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {buildingLabel(quote.inspection.building)} ·{" "}
+                      {quote.inspection.building.customer.name}
+                    </p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Declined
                       {quote.declinedAt ? ` · ${formatDate(quote.declinedAt)}` : ""}
                     </p>
                     <div className="mt-3">
