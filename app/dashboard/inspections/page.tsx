@@ -35,11 +35,12 @@ export default async function InspectionsPage() {
             <li key={inspection.id}>
               <Link
                 href={
-                  inspection.status === "completed"
-                    ? `/inspect/${inspection.id}`
-                    : `/dashboard/jobs`
+                  inspection.status === "cancelled"
+                    ? `/dashboard/jobs`
+                    : `/inspect/${inspection.id}`
                 }
                 className="block rounded-xl transition-opacity hover:opacity-95"
+                data-testid={`inspection-link-${inspection.id}`}
               >
                 <Card>
                   <CardContent className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

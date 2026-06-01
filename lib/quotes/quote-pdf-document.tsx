@@ -1,5 +1,6 @@
 import {
   Document,
+  Image,
   Page,
   StyleSheet,
   Text,
@@ -16,10 +17,21 @@ const styles = StyleSheet.create({
     color: "#0f172a",
   },
   header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 20,
     borderBottomWidth: 2,
     borderBottomColor: "#f59e0b",
     paddingBottom: 12,
+  },
+  headerText: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  logo: {
+    width: 72,
+    height: 72,
+    objectFit: "contain",
   },
   companyName: {
     fontSize: 16,
@@ -113,15 +125,18 @@ export function QuotePdfDocument({ data }: QuotePdfDocumentProps) {
     <Document>
       <Page size="LETTER" style={styles.page}>
         <View style={styles.header}>
-          <Text style={styles.companyName}>{data.companyName}</Text>
-          <Text style={styles.docTitle}>{data.quoteTitle}</Text>
-          <Text style={styles.meta}>
-            {data.buildingLabel}
-            {"\n"}
-            {data.customerName}
-            {"\n"}
-            {data.inspectionTypeName} · Quote date {quoteDate}
-          </Text>
+          <View style={styles.headerText}>
+            <Text style={styles.companyName}>{data.companyName}</Text>
+            <Text style={styles.docTitle}>{data.quoteTitle}</Text>
+            <Text style={styles.meta}>
+              {data.buildingLabel}
+              {"\n"}
+              {data.customerName}
+              {"\n"}
+              {data.inspectionTypeName} · Quote date {quoteDate}
+            </Text>
+          </View>
+          {data.logoUrl ? <Image src={data.logoUrl} style={styles.logo} /> : null}
         </View>
 
         <Text style={styles.sectionTitle}>Repair items</Text>

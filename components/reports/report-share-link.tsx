@@ -18,6 +18,7 @@ export async function ReportShareLink({ reportId, shareToken }: ReportShareLinkP
         href={url}
         target="_blank"
         rel="noopener noreferrer"
+        data-testid="public-report-link"
         className="truncate text-xs text-primary hover:underline"
       >
         {url}

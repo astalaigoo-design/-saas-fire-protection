@@ -22,7 +22,7 @@ function SendQuoteButton() {
         "min-h-10 bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-60",
       )}
     >
-      {pending ? "Sending…" : "Send quote to customer"}
+      {pending ? "Sending…" : "Email report & quote"}
     </button>
   );
 }
@@ -37,7 +37,10 @@ export function QuoteSendPanel({ quoteId, customerEmail, totalLabel }: QuoteSend
         role="status"
         className="mt-3 space-y-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300"
       >
-        <p>Quote emailed to {state.sentTo} with PDF attached.</p>
+        <p>
+          Inspection report and quote emailed to {state.sentTo} (PDFs attached, with online
+          links).
+        </p>
         <p>
           Customer link:{" "}
           <a
@@ -58,7 +61,8 @@ export function QuoteSendPanel({ quoteId, customerEmail, totalLabel }: QuoteSend
       <div>
         <h3 className="text-sm font-semibold text-foreground">Review & send</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Preview the PDF, then email it to the customer ({totalLabel} total).
+          Sends the compliance inspection report and repair quote in one email ({totalLabel}{" "}
+          quote total).
         </p>
       </div>
 

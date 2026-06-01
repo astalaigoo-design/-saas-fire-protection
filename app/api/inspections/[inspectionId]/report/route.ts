@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDashboardSession } from "@/lib/dashboard/session";
+import { captureRouteError } from "@/lib/monitoring/capture";
 import { generateComplianceReport } from "@/lib/reports/generate-compliance-report";
 
 export const runtime = "nodejs";
@@ -37,7 +38,7 @@ export async function GET(_request: Request, context: RouteContext) {
       },
     });
   } catch (error) {
-    console.error("GET /api/inspections/report failed", error);
+    captureRouteError("GET /api/inspections/[inspectionId]/report", error);
     const message =
       error instanceof Error ? error.message : "Could not generate report.";
     const status = message.toLowerCase().includes("not found") ? 404 : 500;

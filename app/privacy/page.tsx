@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { APP_NAME } from "@/lib/branding";
+import { buildPublicPageMetadata } from "@/lib/seo/site-metadata";
 
 const lastUpdated = "May 25, 2026";
 
-export const metadata: Metadata = {
-  title: `Privacy Policy | ${APP_NAME}`,
+export const metadata: Metadata = buildPublicPageMetadata({
+  title: `Privacy Policy`,
   description: `Privacy Policy for ${APP_NAME}.`,
-};
+  path: "/privacy",
+});
 
 const sections = [
   {

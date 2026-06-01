@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { captureRouteError } from "@/lib/monitoring/capture";
 import { sendDueInspectionReminders } from "@/lib/scheduling/due-reminders";
 
 export const runtime = "nodejs";
@@ -23,7 +24,7 @@ export async function GET(request: Request) {
     const result = await sendDueInspectionReminders();
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
-    console.error("due-reminders cron failed", error);
+    captureRouteError("GET /api/cron/due-reminders", error);
     return NextResponse.json({ error: "Internal cron error" }, { status: 500 });
   }
 }

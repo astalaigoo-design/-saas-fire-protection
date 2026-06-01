@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { APP_NAME } from "@/lib/branding";
 import { TRIAL_DAYS } from "@/lib/billing/constants";
+import { buildPublicPageMetadata } from "@/lib/seo/site-metadata";
 
 const lastUpdated = "May 27, 2026";
 
-export const metadata: Metadata = {
-  title: `Refund Policy | ${APP_NAME}`,
+export const metadata: Metadata = buildPublicPageMetadata({
+  title: `Refund Policy`,
   description: `Refund Policy for ${APP_NAME}.`,
-};
+  path: "/refund",
+});
 
 const sections = [
   {

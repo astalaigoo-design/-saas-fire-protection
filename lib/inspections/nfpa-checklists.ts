@@ -113,13 +113,120 @@ const NFPA_ANNUAL_CHECKLIST: NfpaChecklistItem[] = [
   },
 ];
 
+const NFPA_SPRINKLER_CHECKLIST: NfpaChecklistItem[] = [
+  {
+    label: "Sprinkler heads free of obstruction, damage, and loading",
+    description:
+      "NFPA 25 (2023) §5.2.1 — Sprinklers shall be free of corrosion, foreign material, paint, and physical damage; maintain minimum clearance below deflectors per §5.2.1.1.1.",
+  },
+  {
+    label: "Sprinkler system gauges read normal",
+    description:
+      "NFPA 25 (2023) §5.2.4 — Gauges on wet, dry pipe, and preaction systems shall be inspected to verify normal water and air pressure.",
+  },
+  {
+    label: "Control valves in correct open or supervised position",
+    description:
+      "NFPA 25 (2023) §5.2.6 — Control valves shall be accessible, properly identified, sealed or locked, and in the correct position.",
+  },
+  {
+    label: "Waterflow and supervisory signal devices functional",
+    description:
+      "NFPA 25 (2023) §5.4.2 — Waterflow alarm and supervisory signal initiating devices shall be inspected and tested per Table 5.1.1.",
+  },
+  {
+    label: "Main drain test performed and water supply adequate",
+    description:
+      "NFPA 25 (2023) §5.3.2 — Main drain test at the system riser to verify water supply adequacy and compare to prior results.",
+  },
+  {
+    label: "Fire department connection accessible and undamaged",
+    description:
+      "NFPA 25 (2023) §5.2.5 — Fire department connections shall be inspected for caps, swivels, check valve operation, and accessibility.",
+  },
+  {
+    label: "Fire pump and controller indicators normal",
+    description:
+      "NFPA 25 (2023) §5.3.3 — Fire pump weekly/monthly/annual inspections per Table 5.1.1; controller power, pressure, and run indicators verified.",
+  },
+];
+
+const NFPA_ALARM_CHECKLIST: NfpaChecklistItem[] = [
+  {
+    label: "Fire alarm control unit shows normal status",
+    description:
+      "NFPA 72 (2022) §14.3.1 — Control unit trouble, supervisory, and alarm indicators shall show normal condition per Table 14.3.1.",
+  },
+  {
+    label: "Initiating devices inspected and free of obstruction",
+    description:
+      "NFPA 72 (2022) §14.4.4 — Smoke, heat, and manual initiating devices inspected for accessibility, damage, and proper location.",
+  },
+  {
+    label: "Notification appliances operational",
+    description:
+      "NFPA 72 (2022) §14.4.4 — Horns, strobes, and speakers inspected and functionally tested per the approved sequence.",
+  },
+  {
+    label: "Primary and secondary power supplies verified",
+    description:
+      "NFPA 72 (2022) §14.3.1 — AC power, batteries, and chargers inspected; battery date and voltage within manufacturer limits.",
+  },
+  {
+    label: "Supervisory and trouble signals tested",
+    description:
+      "NFPA 72 (2022) §14.3.1 — Supervisory conditions (valve tamper, low air, etc.) generate the correct supervisory signal at the FACP.",
+  },
+  {
+    label: "Annual sensitivity and function testing elements completed",
+    description:
+      "NFPA 72 (2022) §14.4.5 — Annual inspection and testing of initiating devices, notification appliances, and interfaced systems per Table 14.3.1.",
+  },
+];
+
+const NFPA_HOOD_CHECKLIST: NfpaChecklistItem[] = [
+  {
+    label: "Commercial cooking exhaust hood and ducts accessible for cleaning",
+    description:
+      "NFPA 96 (2021) §11.4 — Hood, grease removal devices, fans, and ducts inspected for grease accumulation and access panels in place.",
+  },
+  {
+    label: "Fixed fire-extinguishing system cylinders and agent in service",
+    description:
+      "NFPA 96 (2021) §11.6 — Extinguishing agent quantity, cylinder pressure, and tamper indicators verified for the cooking suppression system.",
+  },
+  {
+    label: "Fusible links and detection line intact and within replacement date",
+    description:
+      "NFPA 96 (2021) §11.6 — Fusible links or other detection means shall be replaced at intervals not exceeding manufacturer requirements.",
+  },
+  {
+    label: "Nozzles and distribution piping unobstructed and correctly aimed",
+    description:
+      "NFPA 96 (2021) §11.6 — Nozzles shall be free of grease buildup, caps in place where required, and aimed at the hazard per the system design.",
+  },
+  {
+    label: "Manual pull station and automatic actuation tested",
+    description:
+      "NFPA 96 (2021) §11.6 — Manual actuation device accessible and functional; automatic release interlocked with fuel and power shutoffs where required.",
+  },
+  {
+    label: "Fuel and power interlock shutdown operates with system discharge",
+    description:
+      "NFPA 96 (2021) §10.2.3 — Upon system operation, fuel and electrical power to cooking equipment shall shut down per the listed system design.",
+  },
+];
+
 const CHECKLIST_BY_CODE: Record<string, readonly NfpaChecklistItem[]> = {
   monthly: NFPA_MONTHLY_CHECKLIST,
   quarterly: NFPA_QUARTERLY_CHECKLIST,
   annual: NFPA_ANNUAL_CHECKLIST,
+  sprinkler: NFPA_SPRINKLER_CHECKLIST,
+  alarm: NFPA_ALARM_CHECKLIST,
+  hood: NFPA_HOOD_CHECKLIST,
 };
 
-/** Checklist items keyed to inspection type code (`annual`, `quarterly`, `monthly`). */
+/** Checklist items keyed to inspection type code (cadence or NFPA pack). */
 export function getNfpaChecklistForInspectionTypeCode(
   code: string,
 ): readonly NfpaChecklistItem[] {

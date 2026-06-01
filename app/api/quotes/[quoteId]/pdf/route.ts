@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDashboardSession } from "@/lib/dashboard/session";
+import { captureRouteError } from "@/lib/monitoring/capture";
 import { generateQuotePdf } from "@/lib/quotes/generate-quote-pdf";
 
 export const runtime = "nodejs";
@@ -33,7 +34,7 @@ export async function GET(_request: Request, context: RouteContext) {
       },
     });
   } catch (error) {
-    console.error("GET /api/quotes/pdf failed", error);
+    captureRouteError("GET /api/quotes/[quoteId]/pdf", error);
     const message = error instanceof Error ? error.message : "Could not generate quote PDF.";
     const status = message.toLowerCase().includes("not found") ? 404 : 500;
     return NextResponse.json({ error: message }, { status });

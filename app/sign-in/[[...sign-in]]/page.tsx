@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import { SignIn } from "@clerk/nextjs";
+import { APP_NAME } from "@/lib/branding";
+import { buildPublicPageMetadata } from "@/lib/seo/site-metadata";
+
+export const metadata: Metadata = buildPublicPageMetadata({
+  title: "Sign in",
+  description: `Sign in to ${APP_NAME}.`,
+  path: "/sign-in",
+});
 
 export default function SignInPage() {
   return (

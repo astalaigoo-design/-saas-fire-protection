@@ -17,3 +17,21 @@ export function sanitizeSignatureForPdf(signatureData: string | null): string | 
   if (signatureData.length > MAX_DATA_URL_LENGTH) return null;
   return signatureData;
 }
+
+const MAX_LOGO_DATA_URL_LENGTH = 500_000;
+
+/** Company logo from organization settings (data URL or HTTPS). */
+export function sanitizeCompanyLogoForPdf(
+  logoUrl: string | null | undefined,
+): string | null {
+  if (!logoUrl?.trim()) return null;
+  const url = logoUrl.trim();
+  if (url.startsWith("data:image/")) {
+    if (url.length > MAX_LOGO_DATA_URL_LENGTH) return null;
+    return url;
+  }
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  return null;
+}

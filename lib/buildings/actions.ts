@@ -12,6 +12,7 @@ import {
   updateBuildingSchema,
 } from "@/lib/buildings/schemas";
 import { getDashboardSession } from "@/lib/dashboard/session";
+import { captureServerActionError } from "@/lib/monitoring/capture";
 import { prisma } from "@/lib/prisma";
 
 export type BuildingActionResult = { ok: true } | { ok: false; error: string };
@@ -87,7 +88,7 @@ export async function createBuilding(
     redirect(`/dashboard/buildings/${building.id}`);
   } catch (error) {
     if (isRedirectError(error)) throw error;
-    console.error("createBuilding failed", error);
+    captureServerActionError("createBuilding", error);
     return { ok: false, error: "Could not create building. Please try again." };
   }
 }

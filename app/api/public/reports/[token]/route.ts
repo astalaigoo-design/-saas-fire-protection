@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { captureRouteError } from "@/lib/monitoring/capture";
 import { renderComplianceReportPdf } from "@/lib/reports/generate-compliance-report";
 import { getPublicReportMeta, getPublicReportPdfData } from "@/lib/reports/public-report";
 
@@ -42,7 +43,7 @@ export async function GET(_request: Request, context: RouteContext) {
       },
     });
   } catch (error) {
-    console.error("GET /api/public/reports failed", error);
+    captureRouteError("GET /api/public/reports/[token]", error);
     return NextResponse.json({ error: "Could not generate report." }, { status: 500 });
   }
 }

@@ -23,8 +23,11 @@ export type SendQuoteEmailInput = {
   lineItems: QuoteEmailLineItem[];
   replyTo?: string | null;
   quoteLink?: string | null;
-  pdfBuffer?: Buffer;
-  pdfFilename?: string;
+  reportLink?: string | null;
+  quotePdfBuffer?: Buffer;
+  quotePdfFilename?: string;
+  reportPdfBuffer?: Buffer;
+  reportPdfFilename?: string;
 };
 
 export type SendQuoteEmailResult =
@@ -60,7 +63,7 @@ function buildHtml(input: SendQuoteEmailInput): string {
 
   return `
     <p>Hello ${escapeHtml(input.customerName)},</p>
-    <p>Please find your repair quote for <strong>${escapeHtml(input.buildingLabel)}</strong> (${escapeHtml(input.inspectionTypeName)}).</p>
+    <p>Please find your fire inspection report and repair quote for <strong>${escapeHtml(input.buildingLabel)}</strong> (${escapeHtml(input.inspectionTypeName)}).</p>
     <p><strong>${escapeHtml(input.quoteTitle)}</strong></p>
     <table style="width:100%;border-collapse:collapse;margin:12px 0;">
       <thead>
@@ -77,12 +80,32 @@ function buildHtml(input: SendQuoteEmailInput): string {
     <p style="margin:0;">Tax: ${escapeHtml(formatCurrency(input.taxCents, input.currency))}</p>
     <p style="margin:0;">Discount: -${escapeHtml(formatCurrency(input.discountCents, input.currency))}</p>
     <p style="margin-top:8px;"><strong>Total: ${escapeHtml(formatCurrency(input.totalCents, input.currency))}</strong></p>
+    <ul style="margin:12px 0;padding-left:1.25rem;color:#0f172a;">
+      ${
+        input.reportPdfBuffer
+          ? "<li>Compliance inspection report (PDF attached)</li>"
+          : ""
+      }
+      <li>Repair quote (PDF attached)</li>
+    </ul>
     ${
-      input.quoteLink
-        ? `<p style="margin-top:12px;"><a href="${escapeHtml(input.quoteLink)}" style="color:#b45309;font-weight:600;">View quote online</a> (no login required).</p>`
+      input.reportLink || input.quoteLink
+        ? `<p style="margin-top:12px;">${
+            input.reportLink
+              ? `<a href="${escapeHtml(input.reportLink)}" style="color:#b45309;font-weight:600;">View inspection report online</a>`
+              : ""
+          }${
+            input.reportLink && input.quoteLink
+              ? ` &nbsp;·&nbsp; `
+              : ""
+          }${
+            input.quoteLink
+              ? `<a href="${escapeHtml(input.quoteLink)}" style="color:#b45309;font-weight:600;">View quote online</a>`
+              : ""
+          } (no login required).</p>`
         : ""
     }
-    <p style="color:#64748b;font-size:14px;">The full quote is attached as a PDF. Reply to this email with questions. Sent by ${escapeHtml(input.companyName)}.</p>
+    <p style="color:#64748b;font-size:14px;">Reply to this email with questions. Sent by ${escapeHtml(input.companyName)}.</p>
   `.trim();
 }
 
@@ -98,17 +121,32 @@ export async function sendQuoteEmail(
 
   const resend = new Resend(process.env.RESEND_API_KEY);
 
+  const attachments: { filename: string; content: Buffer }[] = [];
+  if (input.reportPdfBuffer && input.reportPdfFilename) {
+    attachments.push({
+      filename: input.reportPdfFilename,
+      content: input.reportPdfBuffer,
+    });
+  }
+  if (input.quotePdfBuffer && input.quotePdfFilename) {
+    attachments.push({
+      filename: input.quotePdfFilename,
+      content: input.quotePdfBuffer,
+    });
+  }
+
+  const subject = input.reportPdfBuffer
+    ? `Inspection report & repair quote — ${input.buildingLabel}`
+    : `Repair quote — ${input.buildingLabel}`;
+
   try {
     const { data, error } = await resend.emails.send({
       from,
       to: [input.to],
       replyTo: input.replyTo?.trim() || undefined,
-      subject: `Repair quote — ${input.buildingLabel}`,
+      subject,
       html: buildHtml(input),
-      attachments:
-        input.pdfBuffer && input.pdfFilename
-          ? [{ filename: input.pdfFilename, content: input.pdfBuffer }]
-          : undefined,
+      attachments: attachments.length > 0 ? attachments : undefined,
     });
 
     if (error) return { ok: false, error: error.message };

@@ -4,5 +4,6 @@ Disallow: /dashboard
 Disallow: /inspect
 Disallow: /api
 Disallow: /r/
+Disallow: /q/
 
 Sitemap: https://getflareflow.com/sitemap.xml

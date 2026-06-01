@@ -166,8 +166,8 @@ export function ScheduleInspectionForm({
               ))}
             </select>
             <p className="text-xs text-muted-foreground">
-              Checklist items are created from NFPA rules for the selected cadence (monthly,
-              quarterly, or annual).
+              Checklist items are created automatically from NFPA rules for the selected type
+              (cadence or system pack).
             </p>
           </div>
 
@@ -213,7 +213,8 @@ export function ScheduleInspectionForm({
               ))}
             </div>
             <p className="text-xs leading-5 text-muted-foreground">
-              Monthly, quarterly, and annual jobs auto-schedule the next visit when a technician
+              Failed inspections auto-schedule a follow-up in 14 days. Monthly, quarterly, and
+              annual jobs auto-schedule the next cadence visit when a technician
               submits the inspection. Email reminders go to your report email 7 days before due
               dates.
             </p>

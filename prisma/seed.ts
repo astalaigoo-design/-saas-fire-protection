@@ -3,14 +3,9 @@ import { DEMO_COMPANY_NAME } from "../lib/branding";
 import { syncBuildingComplianceStatus } from "../lib/buildings/sync-compliance";
 import { getWeekRange } from "../lib/dashboard/dates";
 import { buildInspectionChecklistItems } from "../lib/inspections/build-checklist";
+import { INSPECTION_TYPE_TEMPLATES } from "../lib/inspections/inspection-type-templates";
 
 const prisma = new PrismaClient();
-
-const INSPECTION_TYPES = [
-  { code: "annual", name: "Annual Inspection" },
-  { code: "quarterly", name: "Quarterly Inspection" },
-  { code: "monthly", name: "Monthly Inspection" },
-] as const;
 
 function checklistItemsForType(
   code: "annual" | "quarterly" | "monthly",
@@ -40,7 +35,7 @@ async function getOrCreateCompany() {
 }
 
 async function seedInspectionTypes(companyId: string) {
-  for (const type of INSPECTION_TYPES) {
+  for (const type of INSPECTION_TYPE_TEMPLATES) {
     await prisma.inspectionType.upsert({
       where: {
         companyId_code: { companyId, code: type.code },
@@ -53,7 +48,9 @@ async function seedInspectionTypes(companyId: string) {
       },
     });
   }
-  console.log(`Ensured inspection types: ${INSPECTION_TYPES.map((t) => t.code).join(", ")}`);
+  console.log(
+    `Ensured inspection types: ${INSPECTION_TYPE_TEMPLATES.map((t) => t.code).join(", ")}`,
+  );
 }
 
 async function seedClerkUsers(companyId: string) {

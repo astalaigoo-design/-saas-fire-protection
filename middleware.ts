@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { applyRateLimit } from "@/lib/rate-limit/apply";
 
 function clerkPublishableKeyHelp(): NextResponse {
   return new NextResponse(
@@ -49,9 +50,16 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhooks/clerk",
   "/api/webhooks/paddle",
   "/api/cron/due-reminders",
+  "/api/cron/trial-ending-reminders",
+  "/monitoring",
+  "/opengraph-image",
+  "/twitter-image",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
+  const rateLimited = await applyRateLimit(request);
+  if (rateLimited) return rateLimited;
+
   const pk = (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "").trim();
 
   if (!pk) {

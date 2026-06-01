@@ -5,7 +5,7 @@ import "./globals.css";
 import { OfflinePrecache } from "@/components/offline/offline-precache";
 import { ChunkErrorRecovery } from "@/components/pwa/chunk-error-recovery";
 import { ServiceWorkerRegistration } from "@/components/pwa/service-worker-registration";
-import { APP_DESCRIPTION, APP_NAME } from "@/lib/branding";
+import { buildRootMetadata } from "@/lib/seo/site-metadata";
 import { cn } from "@/lib/utils";
 
 const inter = Inter({
@@ -13,17 +13,7 @@ const inter = Inter({
   variable: "--font-sans",
 });
 
-export const metadata: Metadata = {
-  title: APP_NAME,
-  description: APP_DESCRIPTION,
-  manifest: "/manifest.webmanifest",
-  themeColor: "#020617",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: APP_NAME,
-  },
-};
+export const metadata: Metadata = buildRootMetadata();
 
 export default function RootLayout({
   children,

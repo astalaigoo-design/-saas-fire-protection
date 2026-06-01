@@ -1,5 +1,6 @@
 import { SubscriptionStatus } from "@prisma/client";
 import { z } from "zod";
+import { readCompanyIdFromPaddleCustomData } from "@/lib/billing/paddle-custom-data";
 import { prisma } from "@/lib/prisma";
 
 const paddleWebhookSchema = z.object({
@@ -36,13 +37,6 @@ function parseDate(value: string | null | undefined): Date | null {
   if (!value) return null;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function readCompanyId(customData: Record<string, unknown> | null | undefined): string | null {
-  const raw = customData?.company_id;
-  if (typeof raw === "string" && raw.trim().length > 0) return raw.trim();
-  if (typeof raw === "number") return String(raw);
-  return null;
 }
 
 function mapPaddleStatus(status: string | undefined): SubscriptionStatus {
@@ -95,7 +89,7 @@ export async function handlePaddleWebhook(payload: unknown): Promise<PaddleWebho
 
   const { event_type: eventType, data } = parsed.data;
   const subscriptionId = subscriptionIdForEvent(eventType, data);
-  const companyId = readCompanyId(data.custom_data);
+  const companyId = readCompanyIdFromPaddleCustomData(data.custom_data);
   const customerId = data.customer_id ?? null;
   const mappedStatus = mapPaddleStatus(data.status);
   const renewsAt =

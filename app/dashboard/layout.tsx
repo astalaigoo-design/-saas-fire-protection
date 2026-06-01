@@ -1,13 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
+import { DASHBOARD_ROBOTS_METADATA } from "@/lib/seo/site-metadata";
 import { BrandLogo } from "@/components/brand-logo";
+import { DashboardHeaderActions } from "@/components/dashboard/dashboard-header-actions";
 import { DashboardNav, DashboardNavMobile } from "@/components/dashboard/dashboard-nav";
 import { SubscriptionGate } from "@/components/dashboard/subscription-gate";
 import { TrialBanner } from "@/components/dashboard/trial-banner";
 import { getCompanyBillingSnapshot } from "@/lib/billing/queries";
 import { getDashboardNavItems } from "@/lib/dashboard/nav-items";
 import { getDashboardSession } from "@/lib/dashboard/session";
+
+export const metadata: Metadata = DASHBOARD_ROBOTS_METADATA;
 
 export default async function DashboardLayout({
   children,
@@ -45,7 +49,7 @@ export default async function DashboardLayout({
             >
               <BrandLogo logoClassName="size-9" />
             </Link>
-            <UserButton afterSignOutUrl="/" />
+            <DashboardHeaderActions role={session.role} />
           </div>
           <div className="px-4 pb-3">
             <DashboardNavMobile items={navItems} />
@@ -54,7 +58,7 @@ export default async function DashboardLayout({
 
         <header className="sticky top-0 z-40 hidden border-b border-border bg-card/80 backdrop-blur-md lg:block">
           <div className="flex items-center justify-end px-6 py-3">
-            <UserButton afterSignOutUrl="/" />
+            <DashboardHeaderActions role={session.role} />
           </div>
         </header>
 

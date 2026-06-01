@@ -6,10 +6,13 @@ import { z } from "zod";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { getDashboardSession } from "@/lib/dashboard/session";
-import { publicQuoteUrl } from "@/lib/app-url";
+import { publicQuoteUrl, publicReportUrl } from "@/lib/app-url";
 import { sendQuoteEmail } from "@/lib/email/send-quote-email";
+import { loadComplianceReportAttachment } from "@/lib/reports/compliance-report-attachment";
 import { generateQuotePdf } from "@/lib/quotes/generate-quote-pdf";
 import { ensureQuoteShareToken } from "@/lib/quotes/share-token";
+import { recalculateQuoteTotals } from "@/lib/quotes/totals";
+import { captureServerActionError } from "@/lib/monitoring/capture";
 import { prisma } from "@/lib/prisma";
 
 export type QuoteLineItemsActionResult = { ok: true } | { ok: false; error: string };
@@ -34,20 +37,6 @@ const payloadSchema = z.object({
 
 function toCents(value: number): number {
   return Math.round(value * 100);
-}
-
-function recalculateTotals(input: {
-  lineItems: Array<{ quantity: number; unitPriceCents: number }>;
-  taxRateBasisPoints: number;
-  discountCents: number;
-}) {
-  const subtotalCents = input.lineItems.reduce(
-    (sum, item) => sum + item.quantity * item.unitPriceCents,
-    0,
-  );
-  const taxCents = Math.round((subtotalCents * input.taxRateBasisPoints) / 10_000);
-  const totalCents = Math.max(0, subtotalCents + taxCents - input.discountCents);
-  return { subtotalCents, taxCents, totalCents };
 }
 
 export async function updateDraftQuoteLineItems(
@@ -115,7 +104,7 @@ export async function updateDraftQuoteLineItems(
   const taxRateBasisPoints = Math.round(parsed.data.taxRatePercent * 100);
   const discountCents = toCents(parsed.data.discountAmount);
 
-  const { subtotalCents, taxCents, totalCents } = recalculateTotals({
+  const { subtotalCents, taxCents, totalCents } = recalculateQuoteTotals({
     lineItems: normalizedItems,
     taxRateBasisPoints,
     discountCents,
@@ -189,6 +178,7 @@ export async function sendDraftQuote(
       },
       inspection: {
         select: {
+          id: true,
           inspectionType: { select: { name: true } },
           company: { select: { name: true, reportEmail: true } },
           building: {
@@ -229,11 +219,19 @@ export async function sendDraftQuote(
     pdfFilename = generated.filename;
     shareToken = await ensureQuoteShareToken(quote.id);
   } catch (error) {
-    console.error("sendDraftQuote: PDF generation failed", error);
+    captureServerActionError("sendDraftQuote", error);
     return { ok: false, error: "Could not generate the quote PDF." };
   }
 
   const publicUrl = publicQuoteUrl(shareToken);
+
+  const complianceReport = await loadComplianceReportAttachment(
+    session,
+    quote.inspection.id,
+  );
+  const reportLink = complianceReport
+    ? publicReportUrl(complianceReport.shareToken)
+    : null;
 
   const buildingLabel =
     quote.inspection.building.name?.trim() ||
@@ -254,8 +252,11 @@ export async function sendDraftQuote(
     lineItems: quote.lineItems,
     replyTo: quote.inspection.company.reportEmail,
     quoteLink: publicUrl,
-    pdfBuffer,
-    pdfFilename,
+    reportLink,
+    quotePdfBuffer: pdfBuffer,
+    quotePdfFilename: pdfFilename,
+    reportPdfBuffer: complianceReport?.buffer,
+    reportPdfFilename: complianceReport?.filename,
   });
 
   if (!emailResult.ok) {
@@ -263,6 +264,16 @@ export async function sendDraftQuote(
   }
 
   const now = new Date();
+  if (complianceReport) {
+    await prisma.report.update({
+      where: { id: complianceReport.reportId },
+      data: {
+        emailedTo: customerEmail,
+        emailedAt: now,
+        emailError: null,
+      },
+    });
+  }
   await prisma.quote.update({
     where: { id: quote.id },
     data: {

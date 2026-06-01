@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { Webhook } from "svix";
 import { z } from "zod";
+import { verifyClerkWebhookSignature } from "@/lib/clerk/verify-webhook-signature";
 import { dispatchClerkWebhookEvent } from "@/lib/clerk/webhook/handlers";
+import { captureError, captureRouteError } from "@/lib/monitoring/capture";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,8 +42,7 @@ export async function POST(request: Request) {
 
   let event: unknown;
   try {
-    const wh = new Webhook(secret);
-    event = wh.verify(payload, {
+    event = verifyClerkWebhookSignature(secret, payload, {
       "svix-id": svixId,
       "svix-timestamp": svixTimestamp,
       "svix-signature": svixSignature,
@@ -66,6 +66,11 @@ export async function POST(request: Request) {
     if (!result.ok) {
       const status = result.retryable ? 500 : 422;
       console.error("Clerk webhook handler failed:", type, result.error);
+      if (result.retryable) {
+        captureError(new Error(result.error), {
+          tags: { route: "POST /api/webhooks/clerk", eventType: type },
+        });
+      }
       return NextResponse.json(
         { error: result.retryable ? "Webhook processing failed" : "Webhook payload rejected" },
         { status },
@@ -74,7 +79,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ received: true, action: result.action });
   } catch (error) {
-    console.error("Clerk webhook: unhandled error", type, error);
+    captureRouteError("POST /api/webhooks/clerk", error, { eventType: type });
     return NextResponse.json({ error: "Internal webhook error" }, { status: 500 });
   }
 }

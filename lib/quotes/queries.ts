@@ -19,6 +19,7 @@ export type QuotePdfData = {
   totalCents: number;
   createdAt: Date;
   companyName: string;
+  logoUrl: string | null;
   customerName: string;
   buildingLabel: string;
   inspectionTypeName: string;
@@ -52,7 +53,7 @@ export async function getQuotePdfData(
       inspection: {
         select: {
           inspectionType: { select: { name: true } },
-          company: { select: { name: true } },
+          company: { select: { name: true, logoUrl: true } },
           building: {
             select: {
               name: true,
@@ -78,6 +79,7 @@ export async function getQuotePdfData(
     totalCents: quote.totalCents,
     createdAt: quote.createdAt,
     companyName: quote.inspection.company.name,
+    logoUrl: quote.inspection.company.logoUrl,
     customerName: quote.inspection.building.customer.name,
     buildingLabel: buildingLabel(quote.inspection.building),
     inspectionTypeName: quote.inspection.inspectionType.name,

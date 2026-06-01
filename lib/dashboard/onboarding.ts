@@ -84,7 +84,8 @@ export async function getOnboardingProgress(
     {
       id: "schedule",
       title: "Schedule an inspection",
-      description: "Pick monthly, quarterly, or annual — NFPA checklist items are created automatically.",
+      description:
+        "Pick a cadence or NFPA system pack — checklist items are created automatically.",
       href: "/dashboard/jobs/new",
       done: scheduledInspectionCount > 0,
     },

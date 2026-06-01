@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { captureRouteError } from "@/lib/monitoring/capture";
 import { generatePublicQuotePdf } from "@/lib/quotes/generate-quote-pdf";
 import { getPublicQuoteMeta } from "@/lib/quotes/public-quote";
 
@@ -33,7 +34,7 @@ export async function GET(_request: Request, context: RouteContext) {
       },
     });
   } catch (error) {
-    console.error("GET /api/public/quotes failed", error);
+    captureRouteError("GET /api/public/quotes/[token]", error);
     return NextResponse.json({ error: "Could not generate quote." }, { status: 500 });
   }
 }

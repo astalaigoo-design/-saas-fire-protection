@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { canManageOrgSettings } from "@/lib/auth/permissions";
 import { updateCompanyProfileSchema } from "@/lib/companies/schemas";
 import { getDashboardSession } from "@/lib/dashboard/session";
+import { captureServerActionError } from "@/lib/monitoring/capture";
 import { prisma } from "@/lib/prisma";
 
 export type UpdateCompanyProfileState =
@@ -54,7 +55,7 @@ export async function updateCompanyProfile(
     revalidatePath("/dashboard/settings");
     return { ok: true };
   } catch (error) {
-    console.error("updateCompanyProfile failed", error);
+    captureServerActionError("updateCompanyProfile", error);
     return { ok: false, error: "Could not save settings. Please try again." };
   }
 }

@@ -7,6 +7,10 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
@@ -22,7 +26,8 @@
     "migrate-shared-tenant-users": "tsx scripts/migrate-shared-tenant-users.ts",
     "seo:generate": "tsx scripts/generate-seo-static.ts",
     "db:list-shared-tenant": "node scripts/list-shared-tenant-users.mjs",
-    "sync-user-clerk-metadata": "tsx scripts/sync-user-clerk-metadata.ts"
+    "sync-user-clerk-metadata": "tsx scripts/sync-user-clerk-metadata.ts",
+    "db:backfill-share-tokens": "tsx scripts/backfill-report-share-tokens.ts --apply"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
@@ -33,7 +38,10 @@
     "@paddle/paddle-js": "^1.6.4",
     "@prisma/client": "^6.19.3",
     "@react-pdf/renderer": "^4.5.1",
+    "@sentry/nextjs": "^10.55.0",
     "@supabase/supabase-js": "^2.105.4",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",
@@ -49,6 +57,8 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@clerk/testing": "^1.14.8",
+    "@playwright/test": "^1.60.0",
     "@types/node": "^20.17.6",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
@@ -60,6 +70,7 @@
     "tailwindcss": "^3.4.15",
     "tailwindcss-animate": "^1.0.7",
     "tsx": "^4.22.0",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^3.2.6"
   }
 }

@@ -7,6 +7,7 @@ import { canManageJobs } from "@/lib/auth/permissions";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { buildInspectionChecklistItems } from "@/lib/inspections/build-checklist";
 import { syncBuildingComplianceStatus } from "@/lib/buildings/sync-compliance";
+import { captureServerActionError } from "@/lib/monitoring/capture";
 import { prisma } from "@/lib/prisma";
 import {
   combineDateAndTime,
@@ -146,7 +147,7 @@ export async function scheduleInspection(
       }
     });
   } catch (error) {
-    console.error("scheduleInspection failed", error);
+    captureServerActionError("scheduleInspection", error);
     return { ok: false, error: "Could not schedule inspection. Please try again." };
   }
 

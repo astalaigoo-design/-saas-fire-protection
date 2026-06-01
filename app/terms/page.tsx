@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { APP_NAME } from "@/lib/branding";
+import { buildPublicPageMetadata } from "@/lib/seo/site-metadata";
 
 const lastUpdated = "May 25, 2026";
 
-export const metadata: Metadata = {
-  title: `Terms of Service | ${APP_NAME}`,
+export const metadata: Metadata = buildPublicPageMetadata({
+  title: `Terms of Service`,
   description: `Terms of Service for ${APP_NAME}.`,
-};
+  path: "/terms",
+});
 
 const sections = [
   {

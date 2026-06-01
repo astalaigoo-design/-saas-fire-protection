@@ -5,8 +5,11 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDate } from "@/lib/dashboard/dates";
+import { AuditLogFeed } from "@/components/operations/audit-log-feed";
+import type { AuditLogPage } from "@/lib/audit/queries";
 import type { CommandCenterSnapshot } from "@/lib/operations/queries";
 import type { DueInspectionRow } from "@/lib/operations/due-inspections";
+import { OperationsExportButtons } from "@/components/operations/operations-export-buttons";
 import { DUE_REMINDER_DAYS } from "@/lib/scheduling/recurrence-policy";
 import { cn } from "@/lib/utils";
 
@@ -100,9 +103,11 @@ function DueInspectionList({ rows }: { rows: DueInspectionRow[] }) {
 
 type CommandCenterViewProps = {
   snapshot: CommandCenterSnapshot;
+  auditLog: AuditLogPage;
+  auditFilters: { action: string; entityType: string };
 };
 
-export function CommandCenterView({ snapshot }: CommandCenterViewProps) {
+export function CommandCenterView({ snapshot, auditLog, auditFilters }: CommandCenterViewProps) {
   const overdueTotal =
     snapshot.dueTotals.overdue + snapshot.dueTotals.neverInspected;
 
@@ -110,11 +115,17 @@ export function CommandCenterView({ snapshot }: CommandCenterViewProps) {
     <div className="space-y-8">
       <PageHeader
         title="Command center"
-        description={`Compliance workload at a glance. Recurring jobs auto-schedule on submit; due-date emails send ${DUE_REMINDER_DAYS} days ahead to your report email.`}
+        description={`Compliance workload at a glance. Failed jobs auto-schedule a follow-up; recurring cadence jobs auto-schedule on submit. Due-date emails send ${DUE_REMINDER_DAYS} days ahead to your report email.`}
         actions={
-          <Link href="/dashboard/jobs/new" className={cn(buttonVariants({ size: "lg" }), "min-h-11")}>
-            Schedule inspection
-          </Link>
+          <div className="flex flex-col items-stretch gap-3 sm:items-end">
+            <OperationsExportButtons />
+            <Link
+              href="/dashboard/jobs/new"
+              className={cn(buttonVariants({ size: "lg" }), "min-h-11")}
+            >
+              Schedule inspection
+            </Link>
+          </div>
         }
       />
 
@@ -283,6 +294,14 @@ export function CommandCenterView({ snapshot }: CommandCenterViewProps) {
           </section>
         </div>
       </div>
+
+      <AuditLogFeed
+        key={`${auditFilters.action}|${auditFilters.entityType}`}
+        initialEvents={auditLog.events}
+        initialNextCursor={auditLog.nextCursor}
+        initialAction={auditFilters.action}
+        initialEntityType={auditFilters.entityType}
+      />
     </div>
   );
 }

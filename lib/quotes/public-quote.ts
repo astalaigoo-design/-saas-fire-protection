@@ -34,7 +34,7 @@ const publicQuoteSelect = {
     select: {
       status: true,
       inspectionType: { select: { name: true } },
-      company: { select: { name: true, reportEmail: true } },
+      company: { select: { name: true, logoUrl: true, reportEmail: true } },
       building: {
         select: {
           name: true,
@@ -84,6 +84,7 @@ function mapToPdfData(
     totalCents: quote.totalCents,
     createdAt: quote.createdAt,
     companyName: quote.inspection.company.name,
+    logoUrl: quote.inspection.company.logoUrl,
     customerName: quote.inspection.building.customer.name,
     buildingLabel: buildingLabel(quote.inspection.building),
     inspectionTypeName: quote.inspection.inspectionType.name,

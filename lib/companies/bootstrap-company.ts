@@ -1,13 +1,13 @@
 import { SubscriptionStatus } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
 import { addTrialDays } from "@/lib/billing/access";
+import { DEFAULT_BOOTSTRAP_INSPECTION_TYPES } from "@/lib/inspections/inspection-type-templates";
 import { prisma } from "@/lib/prisma";
 
-export const DEFAULT_INSPECTION_TYPES = [
-  { code: "annual", name: "Annual Inspection" },
-  { code: "quarterly", name: "Quarterly Inspection" },
-  { code: "monthly", name: "Monthly Inspection" },
-] as const;
+/** @deprecated Use DEFAULT_BOOTSTRAP_INSPECTION_TYPES from inspection-type-templates. */
+export const DEFAULT_INSPECTION_TYPES = DEFAULT_BOOTSTRAP_INSPECTION_TYPES.map(
+  (template) => ({ code: template.code, name: template.name }),
+);
 
 export async function createCompanyWithDefaults(
   name: string,
@@ -30,7 +30,7 @@ export async function createCompanyWithDefaults(
   });
 
   await client.inspectionType.createMany({
-    data: DEFAULT_INSPECTION_TYPES.map((type) => ({
+    data: DEFAULT_BOOTSTRAP_INSPECTION_TYPES.map((type) => ({
       companyId: company.id,
       code: type.code,
       name: type.name,

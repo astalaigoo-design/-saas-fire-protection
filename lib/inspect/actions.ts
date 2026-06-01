@@ -25,9 +25,11 @@ import {
   type ReportEmailOutcome,
 } from "@/lib/reports/email-report-after-submit";
 import { createDraftQuoteFromInspection } from "@/lib/quotes/create-draft-quote-from-inspection";
+import { autoScheduleFollowUpInspection } from "@/lib/scheduling/auto-schedule-follow-up";
 import { autoScheduleNextInspection } from "@/lib/scheduling/auto-schedule-next";
 import { prisma } from "@/lib/prisma";
 import { writeAuditEvent } from "@/lib/audit/write-event";
+import { captureServerActionError } from "@/lib/monitoring/capture";
 
 export type InspectActionResult =
   | { ok: true; reportEmail?: ReportEmailOutcome }
@@ -173,7 +175,7 @@ export async function uploadInspectionPhoto(
     revalidatePath(`/inspect/${parsed.data.inspectionId}`);
     return { ok: true, photoId: photo.id, url: photo.url };
   } catch (error) {
-    console.error("uploadInspectionPhoto failed", error);
+    captureServerActionError("uploadInspectionPhoto", error);
     const message =
       error instanceof Error ? error.message : "Could not upload photo.";
     return { ok: false, error: message };
@@ -243,6 +245,10 @@ export async function submitInspection(
     return { ok: false, error: "Every failed item needs a note." };
   }
 
+  const hasFailedItems = loaded.inspection.items.some(
+    (item) => item.result === InspectionItemResult.fail,
+  );
+
   const now = new Date();
   await prisma.inspection.update({
     where: { id: parsed.data.inspectionId },
@@ -276,33 +282,56 @@ export async function submitInspection(
       completedAt: now,
     });
   } catch (error) {
-    console.error("autoScheduleNextInspection failed", error);
+    captureServerActionError("autoScheduleNextInspection", error);
   }
 
+  if (hasFailedItems) {
+    try {
+      await autoScheduleFollowUpInspection({
+        companyId: session.companyId,
+        actorUserId: session.appUserId,
+        inspectionId: parsed.data.inspectionId,
+        completedAt: now,
+      });
+    } catch (error) {
+      console.error("autoScheduleFollowUpInspection failed", error);
+    }
+  }
+
+  let draftQuoteCreated = false;
   try {
-    await createDraftQuoteFromInspection({
+    const draftQuote = await createDraftQuoteFromInspection({
       companyId: session.companyId,
       inspectionId: parsed.data.inspectionId,
     });
+    draftQuoteCreated = draftQuote != null;
   } catch (error) {
-    console.error("createDraftQuoteFromInspection failed", error);
+    captureServerActionError("createDraftQuoteFromInspection", error);
   }
 
   let reportEmail: ReportEmailOutcome = {
     status: "skipped",
     reason: "Report email was not sent.",
   };
-  try {
-    reportEmail = await emailComplianceReportAfterSubmit(
-      session,
-      parsed.data.inspectionId,
-    );
-  } catch (error) {
-    console.error("emailComplianceReportAfterSubmit failed", error);
+  if (draftQuoteCreated) {
     reportEmail = {
       status: "skipped",
-      reason: "Inspection was saved but the report could not be generated.",
+      reason:
+        "A repair quote was created. The inspection report and quote will be emailed together when you send the quote from Reports.",
     };
+  } else {
+    try {
+      reportEmail = await emailComplianceReportAfterSubmit(
+        session,
+        parsed.data.inspectionId,
+      );
+    } catch (error) {
+      captureServerActionError("emailComplianceReportAfterSubmit", error);
+      reportEmail = {
+        status: "skipped",
+        reason: "Inspection was saved but the report could not be generated.",
+      };
+    }
   }
 
   revalidatePath(`/inspect/${parsed.data.inspectionId}`);

@@ -7,6 +7,7 @@ import { canManageCustomers } from "@/lib/auth/permissions";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { createCustomerSchema } from "@/lib/customers/schemas";
 import { getDashboardSession } from "@/lib/dashboard/session";
+import { captureServerActionError } from "@/lib/monitoring/capture";
 import { prisma } from "@/lib/prisma";
 
 export type CreateCustomerFormState =
@@ -64,7 +65,7 @@ export async function createCustomer(
     redirect(`/dashboard/customers/${customer.id}`);
   } catch (error) {
     if (isRedirectError(error)) throw error;
-    console.error("createCustomer failed", error);
+    captureServerActionError("createCustomer", error);
     return { ok: false, error: "Could not create customer. Please try again." };
   }
 }

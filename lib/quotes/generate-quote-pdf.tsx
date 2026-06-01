@@ -3,10 +3,18 @@ import type { DashboardSession } from "@/lib/dashboard/session";
 import { getPublicQuotePdfData } from "@/lib/quotes/public-quote";
 import { QuotePdfDocument } from "@/lib/quotes/quote-pdf-document";
 import { getQuotePdfData, type QuotePdfData } from "@/lib/quotes/queries";
+import { sanitizeCompanyLogoForPdf } from "@/lib/reports/pdf-images";
+
+function prepareQuotePdfData(data: QuotePdfData): QuotePdfData {
+  return {
+    ...data,
+    logoUrl: sanitizeCompanyLogoForPdf(data.logoUrl),
+  };
+}
 
 export async function renderQuotePdf(data: Awaited<ReturnType<typeof getQuotePdfData>>): Promise<Buffer> {
   if (!data) throw new Error("Quote not found.");
-  const buffer = await renderToBuffer(<QuotePdfDocument data={data} />);
+  const buffer = await renderToBuffer(<QuotePdfDocument data={prepareQuotePdfData(data)} />);
   return Buffer.from(buffer);
 }
 

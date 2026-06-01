@@ -1,6 +1,7 @@
-import crypto from "node:crypto";
 import { NextResponse } from "next/server";
+import { captureRouteError } from "@/lib/monitoring/capture";
 import { handlePaddleWebhook } from "@/lib/billing/paddle-webhook";
+import { verifyPaddleWebhookSignature } from "@/lib/billing/paddle-signature";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,43 +9,6 @@ export const dynamic = "force-dynamic";
 function getWebhookSecret(): string | null {
   const secret = process.env.PADDLE_WEBHOOK_SECRET?.trim();
   return secret || null;
-}
-
-function parsePaddleSignature(signatureHeader: string | null): {
-  timestamp: string;
-  signature: string;
-} | null {
-  if (!signatureHeader) return null;
-
-  const parts = Object.fromEntries(
-    signatureHeader.split(";").map((part) => {
-      const [key, value] = part.split("=");
-      return [key, value];
-    }),
-  );
-
-  const timestamp = parts.ts;
-  const signature = parts.h1;
-  if (!timestamp || !signature) return null;
-
-  return { timestamp, signature };
-}
-
-function verifySignature(rawBody: string, signatureHeader: string | null, secret: string): boolean {
-  const parsed = parsePaddleSignature(signatureHeader);
-  if (!parsed) return false;
-
-  const signedPayload = `${parsed.timestamp}:${rawBody}`;
-  const digest = Buffer.from(
-    crypto.createHmac("sha256", secret).update(signedPayload).digest("hex"),
-    "utf8",
-  );
-  const signature = Buffer.from(parsed.signature, "utf8");
-
-  if (digest.length === 0 || signature.length === 0) return false;
-  if (digest.length !== signature.length) return false;
-
-  return crypto.timingSafeEqual(digest, signature);
 }
 
 export async function POST(request: Request) {
@@ -57,7 +21,7 @@ export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get("Paddle-Signature");
 
-  if (!verifySignature(rawBody, signature, secret)) {
+  if (!verifyPaddleWebhookSignature(rawBody, signature, secret)) {
     console.error("Paddle webhook: signature verification failed");
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
@@ -78,7 +42,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ received: true, action: result.action });
   } catch (error) {
-    console.error("Paddle webhook: unhandled error", error);
+    captureRouteError("POST /api/webhooks/paddle", error);
     return NextResponse.json({ error: "Internal webhook error" }, { status: 500 });
   }
 }

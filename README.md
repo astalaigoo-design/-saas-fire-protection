@@ -43,6 +43,7 @@ Copy `.env.example` to `.env` and set:
 | `SUPABASE_SERVICE_ROLE_KEY` | For photos | Server-side storage uploads |
 | `RESEND_API_KEY` | For auto-email | Post-submit PDF to customer |
 | `REPORT_EMAIL_FROM` | For auto-email | Verified sender in Resend |
+| `CRON_SECRET` | Production cron | Secures `GET /api/cron/due-reminders` (Vercel sends `Authorization: Bearer …` on schedule) |
 
 Clerk user **public metadata** should include:
 
@@ -61,6 +62,7 @@ Set `CLERK_BOOTSTRAP_COMPANY_NAME` to customize the initial company name.
 3. **Environment variables:** Add all required vars from the table above for **Production** and **Preview**. Missing `DATABASE_URL`, `DIRECT_URL`, or Clerk keys will cause the build to fail and you will see *".next was not found"*.
 4. **Clerk webhook URL:** `https://<your-domain>/api/webhooks/clerk` with `CLERK_WEBHOOK_SIGNING_SECRET`.
 5. After deploy, run `npx prisma migrate deploy` against production (or apply migrations in CI) — the Vercel build does not migrate the database.
+6. **Cron reminders:** Set `CRON_SECRET` (random string) in Production. Vercel Cron runs daily at 13:00 UTC (`vercel.json` → `/api/cron/due-reminders`). Requires `RESEND_API_KEY` and `REPORT_EMAIL_FROM` for emails to send.
 
 If the build log shows `prisma generate` or `next build` errors, fix those first; the missing `.next` message is a symptom, not the root cause.
 
@@ -74,6 +76,16 @@ If the build log shows `prisma generate` or `next build` errors, fix those first
 Step-by-step guide for one real client (owner login → customer → building → inspection → reports):
 
 **[docs/PILOT.md](docs/PILOT.md)**
+
+## Tests
+
+```bash
+npm test              # unit tests (Vitest)
+npm run test:e2e      # Playwright: sign-up → inspect → public report
+npm run test:e2e:ui   # Playwright UI mode
+```
+
+E2E requires Clerk **test** keys, `DATABASE_URL`, and uses `+clerk_test` emails (OTP `424242`). See `.env.example`.
 
 ## Troubleshooting
 
@@ -122,5 +134,24 @@ DIRECT_URL="postgresql://postgres.YOUR_REF:YOUR_PASSWORD@aws-1-us-east-1.pooler.
 | `npm run dev` | Development server |
 | `npm run build` | Production build |
 | `npm run db:seed` | Seed demo data |
+| `npm run db:backfill-share-tokens` | Assign `shareToken` on reports (and quotes with `--quotes`) missing public links |
+
+## Rate limits
+
+Middleware enforces limits before route handlers run:
+
+| Route | Default | Key |
+|-------|---------|-----|
+| `/api/public/reports/*`, `/api/public/quotes/*` | 30 / min | Client IP |
+| `/api/webhooks/clerk` | 300 / min | Global (Svix signature still required) |
+| `/api/webhooks/paddle` | 300 / min | Global (Paddle signature still required) |
+
+Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` on Vercel so limits apply across all serverless instances (otherwise each instance has its own in-memory bucket). Override limits with `RATE_LIMIT_*` env vars (see `.env.example`).
+
+## Monitoring (Sentry)
+
+Set `SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_DSN` (see `.env.example`). Uncaught errors in API routes, Server Actions, and the React tree are reported automatically when a DSN is configured. Handled failures in critical paths also call `captureRouteError` / `captureServerActionError`.
+
+On Vercel you can alternatively link **Monitoring** in the project dashboard; Sentry integration is recommended for Server Action and webhook visibility.
 | `npm run db:studio` | Prisma Studio |
 | `npm run lint` | ESLint |

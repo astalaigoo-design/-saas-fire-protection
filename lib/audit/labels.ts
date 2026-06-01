@@ -1,0 +1,67 @@
+/** Known audit actions — extend as new events are instrumented. */
+export const AUDIT_ACTIONS = [
+  "inspection.submitted",
+  "inspection.auto_scheduled",
+  "inspection.follow_up_scheduled",
+  "inspection.due_reminder_sent",
+  "building.created",
+  "customer.created",
+  "quote.sent",
+  "billing.trial_reminder_sent",
+] as const;
+
+export type AuditAction = (typeof AUDIT_ACTIONS)[number];
+
+export const AUDIT_ENTITY_TYPES = [
+  "inspection",
+  "building",
+  "customer",
+  "quote",
+  "company",
+] as const;
+
+export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];
+
+const ACTION_LABELS: Record<string, string> = {
+  "inspection.submitted": "Inspection submitted",
+  "inspection.auto_scheduled": "Recurring job auto-scheduled",
+  "inspection.follow_up_scheduled": "Follow-up job scheduled",
+  "inspection.due_reminder_sent": "Due-date reminder sent",
+  "building.created": "Building created",
+  "customer.created": "Customer created",
+  "quote.sent": "Repair quote sent",
+  "billing.trial_reminder_sent": "Trial ending reminder sent",
+};
+
+const ENTITY_LABELS: Record<string, string> = {
+  inspection: "Inspection",
+  building: "Building",
+  customer: "Customer",
+  quote: "Quote",
+  company: "Company",
+};
+
+export function auditActionLabel(action: string): string {
+  return ACTION_LABELS[action] ?? action.replace(/\./g, " · ");
+}
+
+export function auditEntityTypeLabel(entityType: string | null): string {
+  if (!entityType) return "—";
+  return ENTITY_LABELS[entityType] ?? entityType;
+}
+
+export const AUDIT_ACTION_FILTER_OPTIONS = [
+  { value: "", label: "All actions" },
+  ...AUDIT_ACTIONS.map((action) => ({
+    value: action,
+    label: ACTION_LABELS[action] ?? action,
+  })),
+];
+
+export const AUDIT_ENTITY_FILTER_OPTIONS = [
+  { value: "", label: "All types" },
+  ...AUDIT_ENTITY_TYPES.map((entityType) => ({
+    value: entityType,
+    label: ENTITY_LABELS[entityType] ?? entityType,
+  })),
+];
