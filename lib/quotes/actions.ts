@@ -4,6 +4,7 @@ import { QuoteStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
+import { assertActiveCompanyAccess } from "@/lib/billing/guards";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { publicQuoteUrl, publicReportUrl } from "@/lib/app-url";
@@ -146,6 +147,9 @@ export async function sendDraftQuote(
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
   ensureCanManageJobs(session.role);
+
+  const billing = await assertActiveCompanyAccess(session);
+  if (!billing.ok) return { ok: false, error: billing.error };
 
   const quoteId = formData.get("quoteId");
   if (typeof quoteId !== "string" || !quoteId.trim()) {
