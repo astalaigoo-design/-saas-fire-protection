@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { QuoteStatus } from "@prisma/client";
+import { PublicCompanyHeader } from "@/components/public/public-company-header";
 import { PublicQuoteResponsePanel } from "@/components/quotes/public-quote-response-panel";
+import { phoneTelHref } from "@/lib/companies/public-branding";
 import { formatDate } from "@/lib/dashboard/dates";
 import { getPublicQuoteMeta } from "@/lib/quotes/public-quote";
 
@@ -116,22 +118,47 @@ export default async function PublicQuotePage({ params }: PublicQuotePageProps) 
 
         {meta.status === QuoteStatus.sent ? (
           <p className="text-center text-xs leading-5 text-slate-500">
-            Questions? Email{" "}
-            {meta.companyEmail ? (
-              <a href={`mailto:${meta.companyEmail}`} className="text-amber-500/80 hover:text-amber-400">
-                {meta.companyName}
+            Questions?{" "}
+            {meta.branding.reportPhone ? (
+              <>
+                Call{" "}
+                <a
+                  href={phoneTelHref(meta.branding.reportPhone)}
+                  className="text-amber-500/80 hover:text-amber-400"
+                >
+                  {meta.branding.reportPhone}
+                </a>
+                {meta.branding.reportEmail ? " or email " : null}
+              </>
+            ) : null}
+            {meta.branding.reportEmail ? (
+              <a
+                href={`mailto:${meta.branding.reportEmail}`}
+                className="text-amber-500/80 hover:text-amber-400"
+              >
+                {meta.branding.reportEmail}
               </a>
-            ) : (
+            ) : !meta.branding.reportPhone ? (
               meta.companyName
-            )}
+            ) : null}
             .
           </p>
         ) : (
           <p className="text-center text-xs leading-5 text-slate-500">
             This quote is closed. Contact{" "}
-            {meta.companyEmail ? (
-              <a href={`mailto:${meta.companyEmail}`} className="text-amber-500/80 hover:text-amber-400">
-                {meta.companyName}
+            {meta.branding.reportPhone ? (
+              <a
+                href={phoneTelHref(meta.branding.reportPhone)}
+                className="text-amber-500/80 hover:text-amber-400"
+              >
+                {meta.branding.reportPhone}
+              </a>
+            ) : meta.branding.reportEmail ? (
+              <a
+                href={`mailto:${meta.branding.reportEmail}`}
+                className="text-amber-500/80 hover:text-amber-400"
+              >
+                {meta.branding.reportEmail}
               </a>
             ) : (
               meta.companyName

@@ -1,4 +1,8 @@
 import { InspectionStatus, ReportStatus } from "@prisma/client";
+import {
+  resolvePublicCompanyBranding,
+  type PublicCompanyBranding,
+} from "@/lib/companies/public-branding";
 import type { ComplianceReportData } from "@/lib/reports/queries";
 import { getComplianceReportDataForInspection } from "@/lib/reports/queries";
 import { prisma } from "@/lib/prisma";
@@ -11,6 +15,7 @@ export type PublicReportMeta = {
   buildingLabel: string;
   customerName: string;
   companyName: string;
+  branding: PublicCompanyBranding;
   inspectionTypeName: string;
   completedAt: Date;
   overallPass: boolean;
@@ -33,7 +38,9 @@ export async function getPublicReportMeta(
           id: true,
           completedAt: true,
           inspectionType: { select: { name: true } },
-          company: { select: { name: true } },
+          company: {
+            select: { name: true, logoUrl: true, reportPhone: true, reportEmail: true },
+          },
           building: {
             select: {
               name: true,
@@ -68,6 +75,7 @@ export async function getPublicReportMeta(
     buildingLabel,
     customerName: building.customer.name,
     companyName: report.inspection.company.name,
+    branding: resolvePublicCompanyBranding(report.inspection.company),
     inspectionTypeName: report.inspection.inspectionType.name,
     completedAt: report.inspection.completedAt,
     overallPass,

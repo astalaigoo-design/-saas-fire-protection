@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PublicCompanyHeader } from "@/components/public/public-company-header";
+import { phoneTelHref } from "@/lib/companies/public-branding";
 import { formatDate } from "@/lib/dashboard/dates";
 import { getPublicReportMeta } from "@/lib/reports/public-report";
 
@@ -16,6 +18,8 @@ export default async function PublicReportPage({ params }: PublicReportPageProps
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="mx-auto flex w-full max-w-lg flex-col gap-6 px-4 py-16 sm:py-24">
+        <PublicCompanyHeader branding={meta.branding} />
+
         <div className="space-y-2 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400">
             Fire inspection report
@@ -49,7 +53,24 @@ export default async function PublicReportPage({ params }: PublicReportPageProps
 
         <p className="text-center text-xs leading-5 text-slate-500">
           This link is read-only. For questions about repairs or scheduling, contact{" "}
-          {meta.companyName} directly.
+          {meta.branding.reportPhone ? (
+            <a
+              href={phoneTelHref(meta.branding.reportPhone)}
+              className="text-amber-500/80 hover:text-amber-400"
+            >
+              {meta.branding.reportPhone}
+            </a>
+          ) : meta.branding.reportEmail ? (
+            <a
+              href={`mailto:${meta.branding.reportEmail}`}
+              className="text-amber-500/80 hover:text-amber-400"
+            >
+              {meta.companyName}
+            </a>
+          ) : (
+            meta.companyName
+          )}
+          .
         </p>
 
         <p className="text-center text-xs text-slate-600">

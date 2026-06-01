@@ -1,4 +1,8 @@
 import { InspectionStatus, QuoteStatus } from "@prisma/client";
+import {
+  resolvePublicCompanyBranding,
+  type PublicCompanyBranding,
+} from "@/lib/companies/public-branding";
 import { buildingLabel } from "@/lib/customers/format";
 import type { QuotePdfData } from "@/lib/quotes/queries";
 import { prisma } from "@/lib/prisma";
@@ -34,7 +38,9 @@ const publicQuoteSelect = {
     select: {
       status: true,
       inspectionType: { select: { name: true } },
-      company: { select: { name: true, logoUrl: true, reportEmail: true } },
+      company: {
+        select: { name: true, logoUrl: true, reportEmail: true, reportPhone: true },
+      },
       building: {
         select: {
           name: true,
@@ -122,6 +128,7 @@ export async function getPublicQuoteMeta(
     buildingLabel: buildingLabel(quote.inspection.building),
     customerName: quote.inspection.building.customer.name,
     companyName: quote.inspection.company.name,
+    branding: resolvePublicCompanyBranding(quote.inspection.company),
     companyEmail: quote.inspection.company.reportEmail,
     inspectionTypeName: quote.inspection.inspectionType.name,
     sentAt: quote.sentAt,
