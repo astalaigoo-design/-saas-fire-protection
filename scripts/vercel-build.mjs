@@ -5,6 +5,7 @@ function run(command) {
 }
 
 run("npx prisma generate");
+run("npx tsx scripts/generate-seo-static.ts");
 
 try {
   run("npx prisma migrate deploy");

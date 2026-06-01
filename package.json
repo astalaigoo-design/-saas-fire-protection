@@ -20,6 +20,7 @@
     "fix-user": "tsx scripts/fix-user.ts",
     "create-company": "tsx scripts/create-company.ts",
     "migrate-shared-tenant-users": "tsx scripts/migrate-shared-tenant-users.ts",
+    "seo:generate": "tsx scripts/generate-seo-static.ts",
     "db:list-shared-tenant": "node scripts/list-shared-tenant-users.mjs",
     "sync-user-clerk-metadata": "tsx scripts/sync-user-clerk-metadata.ts"
   },
