@@ -43,7 +43,7 @@ Copy `.env.example` to `.env` and set:
 | `SUPABASE_SERVICE_ROLE_KEY` | For photos | Server-side storage uploads |
 | `RESEND_API_KEY` | For auto-email | Post-submit PDF to customer |
 | `REPORT_EMAIL_FROM` | For auto-email | Verified sender in Resend |
-| `CRON_SECRET` | Production cron | Secures `GET /api/cron/due-reminders` (Vercel sends `Authorization: Bearer …` on schedule) |
+| `CRON_SECRET` | Production cron | Secures cron routes (Vercel sends `Authorization: Bearer …` on schedule): `GET /api/cron/due-reminders`, `GET /api/cron/trial-ending-reminders` |
 
 Clerk user **public metadata** should include:
 
@@ -62,7 +62,10 @@ Set `CLERK_BOOTSTRAP_COMPANY_NAME` to customize the initial company name.
 3. **Environment variables:** Add all required vars from the table above for **Production** and **Preview**. Missing `DATABASE_URL`, `DIRECT_URL`, or Clerk keys will cause the build to fail and you will see *".next was not found"*.
 4. **Clerk webhook URL:** `https://<your-domain>/api/webhooks/clerk` with `CLERK_WEBHOOK_SIGNING_SECRET`.
 5. After deploy, run `npx prisma migrate deploy` against production (or apply migrations in CI) — the Vercel build does not migrate the database.
-6. **Cron reminders:** Set `CRON_SECRET` (random string) in Production. Vercel Cron runs daily at 13:00 UTC (`vercel.json` → `/api/cron/due-reminders`). Requires `RESEND_API_KEY` and `REPORT_EMAIL_FROM` for emails to send.
+6. **Cron jobs:** Set `CRON_SECRET` (random string) in Production. `vercel.json` schedules both routes (middleware lists them as public so Clerk does not block Vercel’s cron requests):
+   - **13:00 UTC** — `GET /api/cron/due-reminders` (inspections due in 7 days)
+   - **13:15 UTC** — `GET /api/cron/trial-ending-reminders` (trial ending in 7 and 1 days; emails company owners)
+   Requires `RESEND_API_KEY` and `REPORT_EMAIL_FROM`. Test manually: `npx vercel crons run /api/cron/trial-ending-reminders --prod` (or `due-reminders`).
 
 If the build log shows `prisma generate` or `next build` errors, fix those first; the missing `.next` message is a symptom, not the root cause.
 
