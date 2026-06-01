@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { CompanyBillingSnapshot } from "@/lib/billing/queries";
+import { PaddleInlineCheckout } from "@/components/billing/paddle-inline-checkout";
 import { TRIAL_DAYS } from "@/lib/billing/constants";
+import { isPaddleInlineCheckoutReady } from "@/lib/billing/paddle-env";
 import { SubscriptionStatus } from "@prisma/client";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -8,6 +10,7 @@ import { cn } from "@/lib/utils";
 type BillingPanelProps = {
   billing: CompanyBillingSnapshot;
   isOwner: boolean;
+  customerEmail: string | null;
 };
 
 function statusLabel(status: SubscriptionStatus): string {
@@ -27,7 +30,12 @@ function statusLabel(status: SubscriptionStatus): string {
   }
 }
 
-export function BillingPanel({ billing, isOwner }: BillingPanelProps) {
+export function BillingPanel({ billing, isOwner, customerEmail }: BillingPanelProps) {
+  const inlineCheckoutReady = isPaddleInlineCheckoutReady();
+  const showCheckout =
+    isOwner &&
+    billing.subscriptionStatus !== SubscriptionStatus.active &&
+    (inlineCheckoutReady || billing.checkoutUrl);
   const renewsLabel = billing.subscriptionRenewsAt
     ? billing.subscriptionRenewsAt.toLocaleDateString(undefined, {
         month: "long",
@@ -75,14 +83,21 @@ export function BillingPanel({ billing, isOwner }: BillingPanelProps) {
         ) : null}
       </section>
 
-      {isOwner ? (
-        <section className="space-y-3 rounded-xl border border-border p-5">
-          <h3 className="text-sm font-medium text-foreground">Subscribe with Paddle</h3>
-          <p className="text-sm text-muted-foreground">
-            New companies get a {TRIAL_DAYS}-day free trial. After checkout, your subscription
-            activates automatically via webhook.
-          </p>
-          {billing.checkoutUrl ? (
+      {showCheckout ? (
+        <section className="space-y-4 rounded-xl border border-border p-5">
+          <div>
+            <h3 className="text-sm font-medium text-foreground">Subscribe with Paddle</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              New companies get a {TRIAL_DAYS}-day free trial. After payment, your subscription
+              activates automatically via webhook.
+            </p>
+          </div>
+          {inlineCheckoutReady ? (
+            <PaddleInlineCheckout
+              companyId={billing.companyId}
+              customerEmail={customerEmail}
+            />
+          ) : billing.checkoutUrl ? (
             <a
               href={billing.checkoutUrl}
               target="_blank"
@@ -93,10 +108,16 @@ export function BillingPanel({ billing, isOwner }: BillingPanelProps) {
             </a>
           ) : (
             <p role="alert" className="text-sm text-destructive">
-              Checkout URL is not configured. Set NEXT_PUBLIC_PADDLE_CHECKOUT_URL in your
-              environment.
+              Set NEXT_PUBLIC_PADDLE_CLIENT_TOKEN and NEXT_PUBLIC_PADDLE_PRICE_ID, or a hosted
+              NEXT_PUBLIC_PADDLE_CHECKOUT_URL.
             </p>
           )}
+        </section>
+      ) : null}
+
+      {isOwner && billing.subscriptionStatus === SubscriptionStatus.active ? (
+        <section className="space-y-3 rounded-xl border border-border p-5">
+          <h3 className="text-sm font-medium text-foreground">Manage subscription</h3>
           {billing.customerPortalUrl ? (
             <Link
               href={billing.customerPortalUrl}
@@ -104,15 +125,30 @@ export function BillingPanel({ billing, isOwner }: BillingPanelProps) {
               rel="noopener noreferrer"
               className={cn(buttonVariants({ variant: "outline" }), "min-h-11 inline-flex")}
             >
-              Manage subscription
+              Open customer portal
             </Link>
-          ) : null}
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Contact support to change or cancel your plan.
+            </p>
+          )}
         </section>
-      ) : (
+      ) : isOwner && billing.customerPortalUrl && !showCheckout ? (
+        <section className="space-y-3 rounded-xl border border-border p-5">
+          <Link
+            href={billing.customerPortalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(buttonVariants({ variant: "outline" }), "min-h-11 inline-flex")}
+          >
+            Manage subscription
+          </Link>
+        </section>
+      ) : !isOwner ? (
         <p className="text-sm text-muted-foreground">
           Only the company owner can manage billing and subscriptions.
         </p>
-      )}
+      ) : null}
     </div>
   );
 }

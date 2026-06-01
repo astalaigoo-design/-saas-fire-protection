@@ -19,3 +19,14 @@ export function getPaddleEnvironment(): "production" | "sandbox" | null {
   if (token.startsWith("test_")) return "sandbox";
   return null;
 }
+
+/** Paddle price ID (pri_...) for the default subscription plan. */
+export function getPaddlePriceId(): string | null {
+  const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID?.trim();
+  return priceId || null;
+}
+
+/** Client token + price ID — enough to open Paddle.js inline checkout. */
+export function isPaddleInlineCheckoutReady(): boolean {
+  return Boolean(getPaddleClientToken() && getPaddlePriceId() && getPaddleEnvironment());
+}

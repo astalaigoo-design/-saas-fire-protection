@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { BillingPanel } from "@/components/dashboard/billing-panel";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { buttonVariants } from "@/components/ui/button";
+import { getCompanyBillingSnapshot } from "@/lib/billing/queries";
+import { isPaddleInlineCheckoutReady } from "@/lib/billing/paddle-env";
 import { TRIAL_DAYS } from "@/lib/billing/constants";
-import { getPaddleEnvironment, isPaddleClientConfigured } from "@/lib/billing/paddle-env";
 import { PILOT_PRICING, PILOT_SUPPORT_EMAIL } from "@/lib/branding";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { cn } from "@/lib/utils";
@@ -12,18 +14,31 @@ export default async function BillingPage() {
   const session = await getDashboardSession();
   if (!session) redirect("/sign-in");
 
+  const billing = await getCompanyBillingSnapshot(session, session.email);
+  const isOwner = session.role === "owner";
+  const paddleCheckoutReady = isPaddleInlineCheckoutReady();
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Billing"
-        description="Early access — full access without checkout. Pilot rates below."
+        description={
+          paddleCheckoutReady
+            ? "Subscribe below or review pilot rates for early contractors."
+            : "Early access — pilot rates below. Inline checkout activates when Paddle price ID is set."
+        }
       />
+
+      {billing ? (
+        <BillingPanel billing={billing} isOwner={isOwner} customerEmail={session.email} />
+      ) : null}
 
       <section className="rounded-xl border border-primary/30 bg-primary/5 p-6 shadow-sm">
         <h2 className="text-base font-semibold text-foreground">Pilot program</h2>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          Paid billing is not enabled in the app yet. Current workspaces use the product at no
-          charge while we onboard the first fire protection contractors.
+          {paddleCheckoutReady
+            ? "Founder pricing is available at checkout. Design partners may still qualify for reduced rates — contact us before subscribing."
+            : "Paid billing in the app is limited while we onboard the first fire protection contractors. Lock founder pricing by email."}
         </p>
       </section>
 
