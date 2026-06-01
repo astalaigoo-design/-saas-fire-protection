@@ -70,6 +70,21 @@ export function formatAuditEventSummary(event: AuditEventForDisplay): string {
       const to = metaString(meta, "sentTo");
       return to ? `Quote emailed to ${to}` : "Repair quote sent to customer";
     }
+    case "quote.accepted": {
+      const building = metaString(meta, "buildingLabel");
+      return building ? `Customer accepted quote · ${building}` : "Customer accepted quote";
+    }
+    case "quote.declined": {
+      const building = metaString(meta, "buildingLabel");
+      return building ? `Customer declined quote · ${building}` : "Customer declined quote";
+    }
+    case "quote.changes_requested": {
+      const building = metaString(meta, "buildingLabel");
+      const preview = metaString(meta, "messagePreview");
+      if (building && preview) return `Change request · ${building}: ${preview}`;
+      if (building) return `Customer requested changes · ${building}`;
+      return "Customer requested quote changes";
+    }
     case "billing.trial_reminder_sent": {
       const days = meta?.daysBeforeEnd;
       const to = metaString(meta, "sentTo");

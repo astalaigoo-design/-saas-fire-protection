@@ -7,6 +7,9 @@ export const AUDIT_ACTIONS = [
   "building.created",
   "customer.created",
   "quote.sent",
+  "quote.accepted",
+  "quote.declined",
+  "quote.changes_requested",
   "billing.trial_reminder_sent",
 ] as const;
 
@@ -30,6 +33,9 @@ const ACTION_LABELS: Record<string, string> = {
   "building.created": "Building created",
   "customer.created": "Customer created",
   "quote.sent": "Repair quote sent",
+  "quote.accepted": "Quote accepted",
+  "quote.declined": "Quote declined",
+  "quote.changes_requested": "Customer requested quote changes",
   "billing.trial_reminder_sent": "Trial ending reminder sent",
 };
 

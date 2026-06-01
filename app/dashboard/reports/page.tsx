@@ -9,6 +9,7 @@ import {
   markQuoteAccepted,
   markQuoteDeclined,
 } from "@/lib/quotes/actions";
+import { extractLatestCustomerQuoteNote } from "@/lib/quotes/customer-response-notes";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
@@ -123,7 +124,9 @@ export default async function ReportsPage() {
           />
         ) : (
           <ul className="space-y-3">
-            {sentQuotes.map((quote) => (
+            {sentQuotes.map((quote) => {
+              const customerChangeRequest = extractLatestCustomerQuoteNote(quote.notes);
+              return (
               <li key={quote.id}>
                 <Card>
                   <CardContent>
@@ -142,6 +145,12 @@ export default async function ReportsPage() {
                     <div className="mt-3">
                       <QuoteShareLink quoteId={quote.id} shareToken={quote.shareToken} />
                     </div>
+                    {customerChangeRequest ? (
+                      <p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-950 dark:text-amber-100">
+                        <span className="font-medium">Customer requested changes: </span>
+                        {customerChangeRequest}
+                      </p>
+                    ) : null}
                     <div className="mt-3 flex flex-wrap gap-2">
                       <form action={markQuoteAccepted}>
                         <input type="hidden" name="quoteId" value={quote.id} />
@@ -165,7 +174,8 @@ export default async function ReportsPage() {
                   </CardContent>
                 </Card>
               </li>
-            ))}
+            );
+            })}
           </ul>
         )}
       </section>

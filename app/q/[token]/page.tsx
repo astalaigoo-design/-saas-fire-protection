@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { QuoteStatus } from "@prisma/client";
+import { PublicQuoteResponsePanel } from "@/components/quotes/public-quote-response-panel";
 import { formatDate } from "@/lib/dashboard/dates";
 import { getPublicQuoteMeta } from "@/lib/quotes/public-quote";
 
@@ -109,19 +110,35 @@ export default async function PublicQuotePage({ params }: PublicQuotePageProps) 
           >
             View quote PDF
           </a>
+
+          <PublicQuoteResponsePanel shareToken={meta.shareToken} status={meta.status} />
         </div>
 
-        <p className="text-center text-xs leading-5 text-slate-500">
-          This link is read-only. To accept, decline, or ask questions, contact{" "}
-          {meta.companyEmail ? (
-            <a href={`mailto:${meta.companyEmail}`} className="text-amber-500/80 hover:text-amber-400">
-              {meta.companyName}
-            </a>
-          ) : (
-            meta.companyName
-          )}{" "}
-          directly.
-        </p>
+        {meta.status === QuoteStatus.sent ? (
+          <p className="text-center text-xs leading-5 text-slate-500">
+            Questions? Email{" "}
+            {meta.companyEmail ? (
+              <a href={`mailto:${meta.companyEmail}`} className="text-amber-500/80 hover:text-amber-400">
+                {meta.companyName}
+              </a>
+            ) : (
+              meta.companyName
+            )}
+            .
+          </p>
+        ) : (
+          <p className="text-center text-xs leading-5 text-slate-500">
+            This quote is closed. Contact{" "}
+            {meta.companyEmail ? (
+              <a href={`mailto:${meta.companyEmail}`} className="text-amber-500/80 hover:text-amber-400">
+                {meta.companyName}
+              </a>
+            ) : (
+              meta.companyName
+            )}{" "}
+            if you need anything else.
+          </p>
+        )}
 
         <p className="text-center text-xs text-slate-600">
           Powered by{" "}
