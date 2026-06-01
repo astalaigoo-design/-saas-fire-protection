@@ -36,6 +36,8 @@ function clerkPublishableKeyMissing(): NextResponse {
 
 const isPublicRoute = createRouteMatcher([
   "/",
+  "/robots.txt",
+  "/sitemap.xml",
   "/terms",
   "/privacy",
   "/refund",
