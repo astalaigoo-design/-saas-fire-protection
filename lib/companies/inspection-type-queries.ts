@@ -24,6 +24,8 @@ export async function getInspectionTypePacksData(
   });
   const enabledByCode = new Map(enabledTypes.map((row) => [row.code, row.id]));
 
+  const packOrder = NFPA_PACK_TEMPLATES.map((template) => template.code);
+
   const packs: InspectionTypePackRow[] = NFPA_PACK_TEMPLATES.map((template) => {
     const inspectionTypeId = enabledByCode.get(template.code) ?? null;
     return {
@@ -31,7 +33,9 @@ export async function getInspectionTypePacksData(
       enabled: inspectionTypeId !== null,
       inspectionTypeId,
     };
-  });
+  }).sort(
+    (left, right) => packOrder.indexOf(left.code) - packOrder.indexOf(right.code),
+  );
 
   return { packs };
 }

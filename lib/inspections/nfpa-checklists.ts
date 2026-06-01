@@ -113,6 +113,72 @@ const NFPA_ANNUAL_CHECKLIST: NfpaChecklistItem[] = [
   },
 ];
 
+const NFPA_WET_CHECKLIST: NfpaChecklistItem[] = [
+  {
+    label: "Wet system riser gauges read normal",
+    description:
+      "NFPA 25 (2023) §5.2.4 — Gauges on wet pipe systems shall be inspected to verify normal water pressure at each riser.",
+  },
+  {
+    label: "Alarm valves and waterflow devices functional",
+    description:
+      "NFPA 25 (2023) §5.4.2 — Waterflow alarm and alarm valve switches shall be inspected and tested per Table 5.1.1.",
+  },
+  {
+    label: "Sprinkler heads free of obstruction, damage, and loading",
+    description:
+      "NFPA 25 (2023) §5.2.1 — Sprinklers shall be free of corrosion, foreign material, paint, and physical damage.",
+  },
+  {
+    label: "Control valves in correct open or supervised position",
+    description:
+      "NFPA 25 (2023) §5.2.6 — Control valves shall be accessible, identified, and in the correct position.",
+  },
+  {
+    label: "Main drain test performed and water supply adequate",
+    description:
+      "NFPA 25 (2023) §5.3.2 — Main drain test at the system riser to verify water supply adequacy.",
+  },
+  {
+    label: "Fire department connection accessible and undamaged",
+    description:
+      "NFPA 25 (2023) §5.2.5 — Fire department connections inspected for caps, swivels, and check valve operation.",
+  },
+];
+
+const NFPA_DRY_CHECKLIST: NfpaChecklistItem[] = [
+  {
+    label: "Dry pipe and preaction gauges read normal",
+    description:
+      "NFPA 25 (2023) §5.2.4 — Gauges on dry pipe and preaction systems shall be inspected monthly for normal air and water pressure.",
+  },
+  {
+    label: "Dry pipe valve and quick-opening device accessible",
+    description:
+      "NFPA 25 (2023) §5.2.2 — Dry pipe valve interior and quick-opening device inspected per the required frequency.",
+  },
+  {
+    label: "Low point drains and auxiliary drains clear",
+    description:
+      "NFPA 25 (2023) §5.2.3 — Auxiliary drains shall be operated to remove water that could freeze and break fittings.",
+  },
+  {
+    label: "Trip test and low-air supervisory signals verified",
+    description:
+      "NFPA 25 (2023) §5.3.1 — Full-flow trip tests and low-air supervisory signals verified per Table 5.1.1.",
+  },
+  {
+    label: "Sprinkler heads free of obstruction, damage, and loading",
+    description:
+      "NFPA 25 (2023) §5.2.1 — Sprinklers shall be free of corrosion, foreign material, paint, and physical damage.",
+  },
+  {
+    label: "Control valves in correct open or supervised position",
+    description:
+      "NFPA 25 (2023) §5.2.6 — Control valves shall be accessible, identified, and in the correct position.",
+  },
+];
+
 const NFPA_SPRINKLER_CHECKLIST: NfpaChecklistItem[] = [
   {
     label: "Sprinkler heads free of obstruction, damage, and loading",
@@ -221,9 +287,12 @@ const CHECKLIST_BY_CODE: Record<string, readonly NfpaChecklistItem[]> = {
   monthly: NFPA_MONTHLY_CHECKLIST,
   quarterly: NFPA_QUARTERLY_CHECKLIST,
   annual: NFPA_ANNUAL_CHECKLIST,
+  wet: NFPA_WET_CHECKLIST,
+  dry: NFPA_DRY_CHECKLIST,
   sprinkler: NFPA_SPRINKLER_CHECKLIST,
   alarm: NFPA_ALARM_CHECKLIST,
   hood: NFPA_HOOD_CHECKLIST,
+  kitchen: NFPA_HOOD_CHECKLIST,
 };
 
 /** Checklist items keyed to inspection type code (cadence or NFPA pack). */

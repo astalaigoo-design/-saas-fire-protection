@@ -61,7 +61,11 @@ function PackEnableForm({
 
 export function InspectionTypePacksSection({ packs }: InspectionTypePacksSectionProps) {
   return (
-    <section className="max-w-2xl space-y-4" aria-labelledby="nfpa-packs-heading">
+    <section
+      id="inspection-type-packs"
+      className="max-w-2xl space-y-4 scroll-mt-6"
+      aria-labelledby="nfpa-packs-heading"
+    >
       <div>
         <h2
           id="nfpa-packs-heading"
@@ -70,9 +74,9 @@ export function InspectionTypePacksSection({ packs }: InspectionTypePacksSection
           NFPA checklist packs
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Add focused inspection types for sprinkler (NFPA 25), fire alarm (NFPA 72), or
-          kitchen hood suppression (NFPA 96). Each pack creates citation-backed checklist
-          items when you schedule a job.
+          Add system-specific inspection types beyond monthly, quarterly, and annual cadence —
+          wet pipe, dry pipe, sprinkler, fire alarm, and commercial kitchen (NFPA 25 / 72 /
+          96). Each pack creates citation-backed checklist items when you schedule a job.
         </p>
       </div>
 

@@ -28,8 +28,10 @@ export default async function OrgSettingsPage() {
     <div className="space-y-10">
       <PageHeader
         title="Organization"
-        description="Your business name, logo, and contact details on compliance PDF reports. Report email also receives inspection due-date reminders 7 days ahead."
+        description="Company profile for PDF reports, NFPA checklist packs for scheduling, and team access."
       />
+
+      <InspectionTypePacksSection packs={inspectionTypePacks.packs} />
 
       <section className="max-w-lg rounded-xl border border-border bg-card p-5 shadow-sm">
         <h2 className="font-heading text-base font-semibold text-foreground">
@@ -47,7 +49,6 @@ export default async function OrgSettingsPage() {
       </section>
 
       <CompanySettingsForm company={company} />
-      <InspectionTypePacksSection packs={inspectionTypePacks.packs} />
       <TeamInviteSection members={team.members} pendingInvites={team.pendingInvites} />
     </div>
   );

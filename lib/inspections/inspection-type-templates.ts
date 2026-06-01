@@ -6,9 +6,12 @@ export const INSPECTION_TYPE_TEMPLATE_CODES = [
   "monthly",
   "quarterly",
   "annual",
+  "wet",
+  "dry",
   "sprinkler",
   "alarm",
   "hood",
+  "kitchen",
 ] as const;
 
 export type InspectionTypeTemplateCode =
@@ -47,9 +50,23 @@ export const INSPECTION_TYPE_TEMPLATES: readonly InspectionTypeTemplate[] = [
     defaultEnabled: true,
   },
   {
+    code: "wet",
+    name: "Wet pipe sprinkler",
+    description: "NFPA 25 wet pipe systems — risers, alarm valves, waterflow, and main drain tests.",
+    category: "nfpa_pack",
+    defaultEnabled: false,
+  },
+  {
+    code: "dry",
+    name: "Dry pipe sprinkler",
+    description: "NFPA 25 dry pipe and preaction systems — air pressure, dry valves, and trip tests.",
+    category: "nfpa_pack",
+    defaultEnabled: false,
+  },
+  {
     code: "sprinkler",
-    name: "Sprinkler system",
-    description: "NFPA 25 sprinkler inspection pack — heads, valves, gauges, and water supply.",
+    name: "Sprinkler system (general)",
+    description: "NFPA 25 combined sprinkler visit — heads, valves, gauges, FDC, and fire pump checks.",
     category: "nfpa_pack",
     defaultEnabled: false,
   },
@@ -64,6 +81,13 @@ export const INSPECTION_TYPE_TEMPLATES: readonly InspectionTypeTemplate[] = [
     code: "hood",
     name: "Kitchen hood suppression",
     description: "NFPA 96 commercial cooking hood and fixed extinguishing system pack.",
+    category: "nfpa_pack",
+    defaultEnabled: false,
+  },
+  {
+    code: "kitchen",
+    name: "Commercial kitchen",
+    description: "NFPA 96 kitchen exhaust and cooking suppression — same focused hood checklist.",
     category: "nfpa_pack",
     defaultEnabled: false,
   },

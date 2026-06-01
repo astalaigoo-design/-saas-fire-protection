@@ -17,7 +17,9 @@ import { getOnboardingProgress } from "@/lib/dashboard/onboarding";
 import { buildSetupPipeline } from "@/lib/dashboard/setup-pipeline";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { isSharedTenantCompany } from "@/lib/companies/shared-tenant";
-import { canManageCustomers } from "@/lib/auth/permissions";
+import { canManageCustomers, isOwner } from "@/lib/auth/permissions";
+import { getInspectionTypePacksData } from "@/lib/companies/inspection-type-queries";
+import { InspectionTypePacksPromo } from "@/components/dashboard/inspection-type-packs-promo";
 import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
 import { SetupPipelineEmptyState } from "@/components/dashboard/setup-pipeline-empty-state";
 
@@ -25,13 +27,18 @@ export default async function DashboardPage() {
   const session = await getDashboardSession();
   if (!session) redirect("/sign-in");
 
+  if (session.role === "technician") {
+    redirect("/dashboard/my-jobs");
+  }
+
   const showOnboarding = canManageCustomers(session.role);
 
-  const [stats, upcoming, completed, onboarding] = await Promise.all([
+  const [stats, upcoming, completed, onboarding, inspectionTypePacks] = await Promise.all([
     getDashboardStats(session),
     getUpcomingInspectionsThisWeek(session),
     getRecentCompletedInspections(session),
     showOnboarding ? getOnboardingProgress(session) : Promise.resolve(null),
+    isOwner(session.role) ? getInspectionTypePacksData(session) : Promise.resolve(null),
   ]);
 
   const workspaceName = isSharedTenantCompany({
@@ -65,6 +72,8 @@ export default async function DashboardPage() {
       />
 
       {onboarding ? <OnboardingChecklist progress={onboarding} /> : null}
+
+      {inspectionTypePacks ? <InspectionTypePacksPromo data={inspectionTypePacks} /> : null}
 
       <section aria-labelledby="stats-heading">
         <h2 id="stats-heading" className="sr-only">
