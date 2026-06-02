@@ -187,6 +187,11 @@ After submit:
 
 ---
 
+## Related docs
+
+- **Every deploy:** [PRODUCTION-SMOKE-TEST.md](./PRODUCTION-SMOKE-TEST.md) — 5–10 minute production pass
+- **New tenant:** [PILOT-ONBOARDING.md](./PILOT-ONBOARDING.md)
+
 ## Related commands
 
 ```bash

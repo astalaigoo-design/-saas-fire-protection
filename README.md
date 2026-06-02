@@ -70,6 +70,8 @@ Set `CLERK_BOOTSTRAP_COMPANY_NAME` to customize the initial company name.
 
 If the build log shows `prisma generate` or `next build` errors, fix those first; the missing `.next` message is a symptom, not the root cause.
 
+**After each production deploy:** run the checklist in [docs/PRODUCTION-SMOKE-TEST.md](docs/PRODUCTION-SMOKE-TEST.md) (~5–10 min).
+
 ## Roles
 
 - **Owner / Admin:** Dashboard, customers, buildings, calendar, inspections list, reports, settings (owner).

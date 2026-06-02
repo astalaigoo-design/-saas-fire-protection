@@ -102,4 +102,6 @@ npm run pilot:onboard -- --verify
 
 Continue with the field checklist: [PILOT.md](./PILOT.md) (customer → building → schedule → inspect).
 
+After each production deploy, run [PRODUCTION-SMOKE-TEST.md](./PRODUCTION-SMOKE-TEST.md).
+
 Owner nav should include **Organization**, **Billing** (read-only for admins), and full job/customer access.
