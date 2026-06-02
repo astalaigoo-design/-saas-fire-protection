@@ -35,16 +35,31 @@ export function canViewAssignedJobs(role: AppRole | null): boolean {
   return role === "owner" || role === "admin" || role === "technician";
 }
 
-/** Organization / billing / destructive settings — owner only. */
+/** Organization / destructive settings — owner only. */
 export function canManageOrgSettings(role: AppRole | null): boolean {
   return role === "owner";
+}
+
+/** View subscription status and trial — owner or admin (read-only for admin). */
+export function canViewBilling(role: AppRole | null): boolean {
+  return isOwner(role) || isAdmin(role);
+}
+
+/** Subscribe, checkout, and customer portal — owner only. */
+export function canManageBilling(role: AppRole | null): boolean {
+  return isOwner(role);
 }
 
 export function permissionSummary(role: AppRole | null): string[] {
   if (!role) return ["No role in public metadata — assign `role` in Clerk."];
   const lines: string[] = [];
   if (canManageOrgSettings(role)) {
-    lines.push("Organization & billing settings");
+    lines.push("Organization settings");
+  }
+  if (canManageBilling(role)) {
+    lines.push("Billing & subscriptions (manage)");
+  } else if (canViewBilling(role)) {
+    lines.push("Billing (view only)");
   }
   if (canManageJobs(role)) lines.push("Create / edit / assign jobs");
   else if (canViewAssignedJobs(role)) {

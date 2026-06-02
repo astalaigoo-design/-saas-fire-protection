@@ -2,7 +2,7 @@ import type { CompanyBillingSnapshot } from "@/lib/billing/queries";
 import { SubscriptionStatus } from "@prisma/client";
 import Link from "next/link";
 import type { AppRole } from "@/lib/auth/roles";
-import { isOwner } from "@/lib/auth/permissions";
+import { canManageBilling, canViewBilling } from "@/lib/auth/permissions";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +38,7 @@ export function TrialBanner({ billing, role }: TrialBannerProps) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p>{billing.message}</p>
         <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-          {owner && billing.checkoutUrl && (showTrial || showExpired) ? (
+          {canManage && billing.checkoutUrl && (showTrial || showExpired) ? (
             <a
               href={billing.checkoutUrl}
               target="_blank"
@@ -48,18 +48,23 @@ export function TrialBanner({ billing, role }: TrialBannerProps) {
               {showExpired ? "Subscribe now" : "Subscribe before trial ends"}
             </a>
           ) : null}
-          {owner ? (
+          {canView ? (
             <Link
               href="/dashboard/billing"
               className={cn(
                 buttonVariants({
-                  variant: owner && billing.checkoutUrl && (showTrial || showExpired) ? "outline" : "default",
+                  variant:
+                    canManage && billing.checkoutUrl && (showTrial || showExpired)
+                      ? "outline"
+                      : "default",
                   size: "sm",
                 }),
                 "min-h-10",
               )}
             >
-              {showPastDue || showExpired ? "Billing & subscribe" : "View billing"}
+              {canManage && (showPastDue || showExpired)
+                ? "Billing & subscribe"
+                : "View billing"}
             </Link>
           ) : showExpired || showPastDue ? (
             <span className="text-xs text-muted-foreground sm:self-center">

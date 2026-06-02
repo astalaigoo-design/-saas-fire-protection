@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { canManageBilling, canViewBilling } from "@/lib/auth/permissions";
 import type { AppRole } from "@/lib/auth/roles";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,8 @@ type SubscriptionGateProps = {
 export function SubscriptionGate({ billing, role, children }: SubscriptionGateProps) {
   const pathname = usePathname();
   const onBillingPage = pathname.startsWith("/dashboard/billing");
+  const canManage = canManageBilling(role);
+  const canView = canViewBilling(role);
 
   if (billing.hasAccess || onBillingPage) {
     return <>{children}</>;
@@ -34,10 +37,10 @@ export function SubscriptionGate({ billing, role, children }: SubscriptionGatePr
       <div className="absolute inset-0 flex items-start justify-center bg-background/70 px-4 py-16 backdrop-blur-sm">
         <section className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-lg">
           <h2 className="font-heading text-xl font-semibold text-foreground">
-            {role === "owner" ? "Subscribe to continue" : "Account access paused"}
+            {canManage ? "Subscribe to continue" : "Account access paused"}
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">{billing.message}</p>
-          {role === "owner" ? (
+          {canManage ? (
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               {billing.checkoutUrl ? (
                 <a
@@ -59,6 +62,13 @@ export function SubscriptionGate({ billing, role, children }: SubscriptionGatePr
                 {billing.checkoutUrl ? "Billing details" : "Open billing"}
               </Link>
             </div>
+          ) : canView ? (
+            <Link
+              href="/dashboard/billing"
+              className={cn(buttonVariants(), "mt-6 min-h-11 inline-flex")}
+            >
+              View billing
+            </Link>
           ) : (
             <p className="mt-4 text-sm text-muted-foreground">
               Ask your company owner to subscribe or renew billing.

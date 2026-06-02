@@ -6,6 +6,7 @@ import { PublicQuoteResponsePanel } from "@/components/quotes/public-quote-respo
 import { phoneTelHref } from "@/lib/companies/public-branding";
 import { formatDate } from "@/lib/dashboard/dates";
 import { getPublicQuoteMeta } from "@/lib/quotes/public-quote";
+import { cn } from "@/lib/utils";
 
 type PublicQuotePageProps = {
   params: { token: string };
@@ -55,7 +56,18 @@ export default async function PublicQuotePage({ params }: PublicQuotePageProps) 
             From {meta.companyName}
             {meta.sentAt ? ` · sent ${formatDate(meta.sentAt)}` : ""}
           </p>
-          <p className="mt-3 text-center text-sm text-amber-300">{statusLabel(meta.status)}</p>
+          <p
+            className={cn(
+              "mt-3 text-center text-sm font-medium",
+              meta.status === QuoteStatus.accepted
+                ? "text-emerald-400"
+                : meta.status === QuoteStatus.declined
+                  ? "text-slate-400"
+                  : "text-amber-300",
+            )}
+          >
+            {statusLabel(meta.status)}
+          </p>
 
           <div className="mt-5 overflow-x-auto rounded-xl border border-slate-800">
             <table className="w-full min-w-[320px] text-left text-sm">

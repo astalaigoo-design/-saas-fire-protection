@@ -89,7 +89,7 @@ export async function respondToPublicQuote(
       metadata: { source: "public_link", buildingLabel: building },
     });
     await notifyCompany(quote, "accepted", { buildingLabel: building, quoteTitle });
-    revalidateDashboard();
+    revalidateAfterQuoteResponse(quote.shareToken);
     return {
       ok: true,
       status: QuoteStatus.accepted,
@@ -115,7 +115,7 @@ export async function respondToPublicQuote(
       metadata: { source: "public_link", buildingLabel: building },
     });
     await notifyCompany(quote, "declined", { buildingLabel: building, quoteTitle });
-    revalidateDashboard();
+    revalidateAfterQuoteResponse(quote.shareToken);
     return {
       ok: true,
       status: QuoteStatus.declined,
@@ -147,7 +147,7 @@ export async function respondToPublicQuote(
     quoteTitle,
     customerMessage: input.message,
   });
-  revalidateDashboard();
+  revalidateAfterQuoteResponse(quote.shareToken);
   return {
     ok: true,
     status: QuoteStatus.sent,
@@ -155,7 +155,8 @@ export async function respondToPublicQuote(
   };
 }
 
-function revalidateDashboard(): void {
+function revalidateAfterQuoteResponse(shareToken: string): void {
+  revalidatePath(`/q/${shareToken}`);
   revalidatePath("/dashboard/reports");
   revalidatePath("/dashboard/operations");
 }

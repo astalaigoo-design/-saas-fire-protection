@@ -2,6 +2,7 @@ import {
   canManageCustomers,
   canManageJobs,
   canManageOrgSettings,
+  canViewBilling,
 } from "@/lib/auth/permissions";
 import type { AppRole } from "@/lib/auth/roles";
 import type { DashboardNavItem } from "@/components/dashboard/dashboard-nav";
@@ -38,11 +39,12 @@ export function getDashboardNavItems(role: AppRole): DashboardNavItem[] {
     );
   }
 
+  if (canViewBilling(role)) {
+    items.push({ href: "/dashboard/billing", label: "Billing", icon: "credit-card" });
+  }
+
   if (canManageOrgSettings(role)) {
-    items.push(
-      { href: "/dashboard/billing", label: "Billing", icon: "credit-card" },
-      { href: "/dashboard/settings", label: "Organization", icon: "settings" },
-    );
+    items.push({ href: "/dashboard/settings", label: "Organization", icon: "settings" });
   }
 
   return items;

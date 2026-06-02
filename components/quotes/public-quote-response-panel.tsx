@@ -27,16 +27,35 @@ export function PublicQuoteResponsePanel({
   const [changeMessage, setChangeMessage] = useState("");
   const isSubmitting = state.phase === "submitting";
 
-  if (status !== QuoteStatus.sent) {
-    return null;
-  }
-
   if (state.phase === "done") {
     return (
-      <div className="mt-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-        {state.message}
-      </div>
+      <ResponseBanner
+        tone={state.status === QuoteStatus.declined ? "muted" : "success"}
+        message={state.message}
+      />
     );
+  }
+
+  if (status === QuoteStatus.accepted) {
+    return (
+      <ResponseBanner
+        tone="success"
+        message="You accepted this quote. The contractor has been notified."
+      />
+    );
+  }
+
+  if (status === QuoteStatus.declined) {
+    return (
+      <ResponseBanner
+        tone="muted"
+        message="You declined this quote. The contractor has been notified."
+      />
+    );
+  }
+
+  if (status !== QuoteStatus.sent) {
+    return null;
   }
 
   async function submit(action: "accept" | "decline" | "request_changes") {
@@ -178,6 +197,27 @@ export function PublicQuoteResponsePanel({
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function ResponseBanner({
+  message,
+  tone,
+}: {
+  message: string;
+  tone: "success" | "muted";
+}) {
+  return (
+    <div
+      className={cn(
+        "mt-5 rounded-xl border px-4 py-3 text-sm",
+        tone === "success"
+          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
+          : "border-slate-700 bg-slate-800/80 text-slate-300",
+      )}
+    >
+      {message}
     </div>
   );
 }

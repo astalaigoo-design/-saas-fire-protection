@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 type BillingPanelProps = {
   billing: CompanyBillingSnapshot;
-  isOwner: boolean;
+  canManageBilling: boolean;
   customerEmail: string | null;
 };
 
@@ -30,12 +30,12 @@ function statusLabel(status: SubscriptionStatus): string {
   }
 }
 
-export function BillingPanel({ billing, isOwner, customerEmail }: BillingPanelProps) {
+export function BillingPanel({ billing, canManageBilling, customerEmail }: BillingPanelProps) {
   const inlineCheckoutReady = isPaddleInlineCheckoutReady();
   const showCheckout =
     PAID_CHECKOUT_ENABLED &&
     !billing.designPartner &&
-    isOwner &&
+    canManageBilling &&
     billing.subscriptionStatus !== SubscriptionStatus.active &&
     (inlineCheckoutReady || billing.checkoutUrl);
   const renewsLabel = billing.subscriptionRenewsAt
@@ -126,7 +126,7 @@ export function BillingPanel({ billing, isOwner, customerEmail }: BillingPanelPr
         </section>
       ) : null}
 
-      {isOwner && billing.subscriptionStatus === SubscriptionStatus.active ? (
+      {canManageBilling && billing.subscriptionStatus === SubscriptionStatus.active ? (
         <section className="space-y-3 rounded-xl border border-border p-5">
           <h3 className="text-sm font-medium text-foreground">Manage subscription</h3>
           {billing.customerPortalUrl ? (
@@ -144,7 +144,7 @@ export function BillingPanel({ billing, isOwner, customerEmail }: BillingPanelPr
             </p>
           )}
         </section>
-      ) : isOwner && billing.customerPortalUrl && !showCheckout ? (
+      ) : canManageBilling && billing.customerPortalUrl && !showCheckout ? (
         <section className="space-y-3 rounded-xl border border-border p-5">
           <Link
             href={billing.customerPortalUrl}
@@ -155,7 +155,7 @@ export function BillingPanel({ billing, isOwner, customerEmail }: BillingPanelPr
             Manage subscription
           </Link>
         </section>
-      ) : !isOwner ? (
+      ) : !canManageBilling ? (
         <p className="text-sm text-muted-foreground">
           Only the company owner can manage billing and subscriptions.
         </p>
