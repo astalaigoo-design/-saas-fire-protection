@@ -19,7 +19,7 @@ Use this guide to onboard **one fire inspection company** (your tenant) with **o
 
 Complete these once per environment:
 
-- [ ] `npx prisma migrate deploy` on production (quotes/reports need current schema).
+- [ ] Production DB baselined: `npm run db:baseline-migrations -- --verify --yes` (once), then deploys run `migrate deploy` automatically.
 - [ ] Vercel env: `DATABASE_URL`, `DIRECT_URL`, Clerk keys, Supabase storage keys.
 - [ ] Clerk: `getflareflow.com` added under **Domains**; webhook → `https://getflareflow.com/api/webhooks/clerk` with `CLERK_WEBHOOK_SIGNING_SECRET` in Vercel.
 - [ ] Resend: `getflareflow.com` verified; `RESEND_API_KEY` + `REPORT_EMAIL_FROM` on Vercel (for post-submit email and **Send quote**).
@@ -176,7 +176,7 @@ After submit:
 |-------|----------------|
 | 404 on `/dashboard` when signed out | Expected — sign in at `/sign-in`. |
 | No Customers / Buildings nav | Role is `technician`; set `owner` or `admin` in Clerk metadata. |
-| “Repair quotes temporarily unavailable” | Run `npx prisma migrate deploy` on production. |
+| “Repair quotes temporarily unavailable” | Run `npm run db:migrate:status`; baseline or `npm run db:migrate:deploy` on production. |
 | Send quote does nothing | `RESEND_API_KEY`, `REPORT_EMAIL_FROM`, verified domain; customer email set. |
 | Photos fail to upload | `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, bucket `inspection-photos`. |
 | User not in database | Clerk webhook URL + `CLERK_WEBHOOK_SIGNING_SECRET`; check Vercel function logs. |

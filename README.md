@@ -61,7 +61,7 @@ Set `CLERK_BOOTSTRAP_COMPANY_NAME` to customize the initial company name.
 2. **Build command:** `npm run build` (runs `prisma generate && next build` — see `vercel.json`). CLI settings (migrations, seed) live in `prisma.config.ts` (Prisma 7–ready; replaces deprecated `package.json#prisma`).
 3. **Environment variables:** Add all required vars from the table above for **Production** and **Preview**. Missing `DATABASE_URL`, `DIRECT_URL`, or Clerk keys will cause the build to fail and you will see *".next was not found"*. `DIRECT_URL` is used by Prisma Migrate via `prisma.config.ts`; the app runtime uses `DATABASE_URL` (pooler) in `lib/prisma.ts`.
 4. **Clerk webhook URL:** `https://<your-domain>/api/webhooks/clerk` with `CLERK_WEBHOOK_SIGNING_SECRET`.
-5. After deploy, run `npx prisma migrate deploy` against production (or apply migrations in CI) — the Vercel build does not migrate the database.
+5. **One-time:** baseline production if the DB was created with `db push` (see [Prisma migration baseline](#prisma-migration-baseline-production)). After that, Vercel builds run `prisma migrate deploy` automatically via `scripts/vercel-build.mjs`.
 6. **Cron jobs:** Set `CRON_SECRET` (random string) in Production. `vercel.json` schedules both routes (middleware lists them as public so Clerk does not block Vercel’s cron requests):
    - **13:00 UTC** — `GET /api/cron/due-reminders` (inspections due in 7 days)
    - **13:15 UTC** — `GET /api/cron/trial-ending-reminders` (trial ending in 7 and 1 days; emails company owners)
@@ -93,26 +93,41 @@ E2E requires Clerk **test** keys, `DATABASE_URL`, and uses `+clerk_test` emails 
 
 ## Troubleshooting
 
-### `prisma migrate deploy` fails (column already exists / P3009)
+### Prisma migration baseline (production)
 
-The database was likely updated with `prisma db push` earlier. On a **fresh empty** database, `migrate deploy` should succeed. For an existing dev DB either:
+If production was first updated with `prisma db push`, `migrate deploy` fails with **P3005** (database schema is not empty) or migrations try to re-create existing tables.
 
-- Reset the Supabase database and run `migrate deploy` once, or
-- Mark migrations as applied: `npx prisma migrate resolve --applied <migration_folder_name>`
+**One-time baseline** (run locally with production `DIRECT_URL` in `.env` — not the pooler URL):
 
-### Durable idempotency (offline replay)
+```bash
+npm run db:migrate:status
+npm run db:baseline-migrations -- --verify --yes
+```
 
-Offline sync uses `x-idempotency-key` on write endpoints. In production/serverless this must be **durable**, so the app stores responses in the `idempotency_keys` table.
+This marks existing migrations as applied with `prisma migrate resolve --applied` (no SQL re-run), then runs `migrate deploy`. **Future deploys** apply only new migration folders via Vercel build.
 
-If your database is **not baselined** with Prisma migrations yet (you may see `P3005 The database schema is not empty`), you can still ensure the table exists with:
+| Command | Purpose |
+|---------|---------|
+| `npm run db:migrate:status` | Show applied vs pending migrations |
+| `npm run db:baseline-migrations -- --dry-run` | Preview what would be resolved |
+| `npm run db:baseline-migrations -- --verify --yes` | Diff-check, baseline, deploy |
+| `npm run db:migrate:deploy` | Apply pending migrations (same as Vercel build) |
+
+**Fresh empty database:** skip baseline; run `npm run db:migrate:deploy` only.
+
+### `prisma migrate deploy` fails (P3009 / column already exists)
+
+A migration partially applied or conflicts with manual SQL. Run `npm run db:migrate:status`, then either:
+
+- `npx prisma migrate resolve --applied <migration_folder>` if the SQL already ran, or
+- `npx prisma migrate resolve --rolled-back <migration_folder>` and fix drift before redeploying
+
+### Emergency SQL (only if migrate deploy is blocked)
+
+Idempotent fallbacks (prefer fixing baseline instead):
 
 ```bash
 npm run db:ensure-idempotency
-```
-
-Public quote links at `/q/[token]` require the `quotes.shareToken` column. If migrate deploy is not baselined, ensure it exists with:
-
-```bash
 npm run db:ensure-quote-share-token
 ```
 
