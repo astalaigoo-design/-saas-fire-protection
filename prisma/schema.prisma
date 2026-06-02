@@ -3,6 +3,7 @@ generator client {
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
+// Connection URLs: required on Prisma 6; in Prisma 7 they move to prisma.config.ts only.
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")

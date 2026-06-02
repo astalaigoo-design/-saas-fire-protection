@@ -28,8 +28,13 @@ export default withSentryConfig(nextConfig, {
   tunnelRoute: "/monitoring",
 
   hideSourceMaps: true,
-  disableLogger: true,
   widenClientFileUpload: true,
+
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
 
   // Do not fail production builds when Sentry upload is not configured yet.
   sourcemaps: {

@@ -58,8 +58,8 @@ Set `CLERK_BOOTSTRAP_COMPANY_NAME` to customize the initial company name.
 ## Deploy on Vercel
 
 1. **Framework preset:** Next.js (leave **Output Directory** empty — do not set a custom path; Vercel uses `.next` automatically).
-2. **Build command:** `npm run build` (runs `prisma generate && next build` — see `vercel.json`).
-3. **Environment variables:** Add all required vars from the table above for **Production** and **Preview**. Missing `DATABASE_URL`, `DIRECT_URL`, or Clerk keys will cause the build to fail and you will see *".next was not found"*.
+2. **Build command:** `npm run build` (runs `prisma generate && next build` — see `vercel.json`). CLI settings (migrations, seed) live in `prisma.config.ts` (Prisma 7–ready; replaces deprecated `package.json#prisma`).
+3. **Environment variables:** Add all required vars from the table above for **Production** and **Preview**. Missing `DATABASE_URL`, `DIRECT_URL`, or Clerk keys will cause the build to fail and you will see *".next was not found"*. `DIRECT_URL` is used by Prisma Migrate via `prisma.config.ts`; the app runtime uses `DATABASE_URL` (pooler) in `lib/prisma.ts`.
 4. **Clerk webhook URL:** `https://<your-domain>/api/webhooks/clerk` with `CLERK_WEBHOOK_SIGNING_SECRET`.
 5. After deploy, run `npx prisma migrate deploy` against production (or apply migrations in CI) — the Vercel build does not migrate the database.
 6. **Cron jobs:** Set `CRON_SECRET` (random string) in Production. `vercel.json` schedules both routes (middleware lists them as public so Clerk does not block Vercel’s cron requests):
@@ -121,7 +121,7 @@ Your **`DATABASE_URL` is wrong or still a placeholder**. Prisma is trying to con
 4. Replace `[YOUR-PASSWORD]` with your real DB password. If the password contains `@`, `#`, or `%`, [URL-encode](https://developer.mozilla.org/en-US/docs/Glossary/Percent-encoding) it.
 5. User must look like `postgres.abcdefghijklmnop` (project ref), not just `postgres`.
 6. On **Vercel**, paste both URLs into **Environment Variables** for Production and Preview, then redeploy.
-7. Verify locally: `npm run db:test`
+7. Verify locally: `npm run db:check` (alias: `npm run db:test`)
 
 Example shape (use your host and ref from the dashboard):
 
@@ -136,6 +136,7 @@ DIRECT_URL="postgresql://postgres.YOUR_REF:YOUR_PASSWORD@aws-1-us-east-1.pooler.
 |---------|-------------|
 | `npm run dev` | Development server |
 | `npm run build` | Production build |
+| `npm run db:check` | Test `DATABASE_URL` / `DIRECT_URL` against Supabase |
 | `npm run db:seed` | Seed demo data |
 | `npm run db:backfill-share-tokens` | Assign `shareToken` on reports (and quotes with `--quotes`) missing public links |
 
