@@ -7,7 +7,7 @@ import {
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { canViewAllJobs } from "@/lib/auth/permissions";
-import { assertActiveCompanyAccess } from "@/lib/billing/guards";
+import { requireActiveCompanyBilling } from "@/lib/billing/guards";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { isInspectionLocked } from "@/lib/inspect/queries";
 import { getPendingItemIdsInSection } from "@/lib/inspect/checklist-sections";
@@ -75,19 +75,13 @@ async function loadEditableInspection(
   return { ok: true, inspection };
 }
 
-async function requireActiveBilling(
-  session: NonNullable<Awaited<ReturnType<typeof getDashboardSession>>>,
-): Promise<{ ok: true } | { ok: false; error: string }> {
-  return assertActiveCompanyAccess(session);
-}
-
 export async function startInspection(
   inspectionId: string,
 ): Promise<InspectActionResult> {
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
 
-  const billing = await requireActiveBilling(session);
+  const billing = await requireActiveCompanyBilling(session);
   if (!billing.ok) return { ok: false, error: billing.error };
 
   const loaded = await loadEditableInspection(inspectionId, session);
@@ -111,7 +105,7 @@ export async function updateChecklistItem(
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
 
-  const billing = await requireActiveBilling(session);
+  const billing = await requireActiveCompanyBilling(session);
   if (!billing.ok) return { ok: false, error: billing.error };
 
   const parsed = updateChecklistItemSchema.safeParse(input);
@@ -157,7 +151,7 @@ export async function bulkMarkChecklistSectionNa(
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
 
-  const billing = await requireActiveBilling(session);
+  const billing = await requireActiveCompanyBilling(session);
   if (!billing.ok) return { ok: false, error: billing.error };
 
   const parsed = bulkMarkSectionNaSchema.safeParse(input);
@@ -211,7 +205,7 @@ export async function uploadInspectionPhoto(
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
 
-  const billing = await requireActiveBilling(session);
+  const billing = await requireActiveCompanyBilling(session);
   if (!billing.ok) return { ok: false, error: billing.error };
 
   const parsed = uploadPhotoSchema.safeParse(input);
@@ -265,7 +259,7 @@ export async function deleteInspectionPhoto(
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
 
-  const billing = await requireActiveBilling(session);
+  const billing = await requireActiveCompanyBilling(session);
   if (!billing.ok) return { ok: false, error: billing.error };
 
   const loaded = await loadEditableInspection(inspectionId, session);
@@ -297,7 +291,7 @@ export async function submitInspection(
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
 
-  const billing = await requireActiveBilling(session);
+  const billing = await requireActiveCompanyBilling(session);
   if (!billing.ok) return { ok: false, error: billing.error };
 
   const parsed = submitInspectionSchema.safeParse(input);

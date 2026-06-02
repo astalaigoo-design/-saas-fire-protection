@@ -4,6 +4,7 @@ import { type RecurrenceInterval } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { canManageJobs } from "@/lib/auth/permissions";
+import { requireActiveCompanyBilling } from "@/lib/billing/guards";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { buildInspectionChecklistItems } from "@/lib/inspections/build-checklist";
 import { syncBuildingComplianceStatus } from "@/lib/buildings/sync-compliance";
@@ -84,6 +85,9 @@ export async function scheduleInspection(
   if (!canManageJobs(session.role)) {
     return { ok: false, error: "You do not have permission to schedule inspections." };
   }
+
+  const billing = await requireActiveCompanyBilling(session);
+  if (!billing.ok) return { ok: false, error: billing.error };
 
   const parsed = scheduleInspectionSchema.safeParse(formDataToObject(formData));
   if (!parsed.success) {

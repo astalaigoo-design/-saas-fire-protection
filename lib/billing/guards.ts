@@ -25,9 +25,11 @@ export async function hasActiveCompanyAccess(
   return access?.hasAccess ?? false;
 }
 
+export type ActiveBillingResult = { ok: true } | { ok: false; error: string };
+
 export async function assertActiveCompanyAccess(
   session: DashboardSession,
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<ActiveBillingResult> {
   const access = await resolveSessionCompanyAccess(session);
   if (!access) {
     return { ok: false, error: "Company not found." };
@@ -36,4 +38,11 @@ export async function assertActiveCompanyAccess(
     return { ok: false, error: access.message };
   }
   return { ok: true };
+}
+
+/** Use at the start of dashboard write actions (same as inspect `requireActiveBilling`). */
+export async function requireActiveCompanyBilling(
+  session: DashboardSession,
+): Promise<ActiveBillingResult> {
+  return assertActiveCompanyAccess(session);
 }

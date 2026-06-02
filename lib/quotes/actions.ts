@@ -4,7 +4,7 @@ import { QuoteStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
-import { assertActiveCompanyAccess } from "@/lib/billing/guards";
+import { requireActiveCompanyBilling } from "@/lib/billing/guards";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { publicQuoteUrl, publicReportUrl } from "@/lib/app-url";
@@ -47,6 +47,9 @@ export async function updateDraftQuoteLineItems(
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
   ensureCanManageJobs(session.role);
+
+  const billing = await requireActiveCompanyBilling(session);
+  if (!billing.ok) return { ok: false, error: billing.error };
 
   const lineItemsJson = formData.get("lineItemsJson");
   let parsedJson: unknown = [];
@@ -148,7 +151,7 @@ export async function sendDraftQuote(
   if (!session) return { ok: false, error: "You must be signed in." };
   ensureCanManageJobs(session.role);
 
-  const billing = await assertActiveCompanyAccess(session);
+  const billing = await requireActiveCompanyBilling(session);
   if (!billing.ok) return { ok: false, error: billing.error };
 
   const quoteId = formData.get("quoteId");
@@ -315,6 +318,9 @@ async function transitionQuoteStatus(
   const session = await getDashboardSession();
   if (!session) return;
   ensureCanManageJobs(session.role);
+
+  const billing = await requireActiveCompanyBilling(session);
+  if (!billing.ok) return;
 
   const quote = await prisma.quote.findFirst({
     where: { id: quoteId, companyId: session.companyId, status: QuoteStatus.sent },
