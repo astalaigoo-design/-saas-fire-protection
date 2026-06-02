@@ -104,7 +104,7 @@ Skip unless that area shipped in this deploy.
 |------|-------------|
 | Clerk webhook | New test sign-up gets `role` + `companyId` (or bootstrap company) |
 | Resend | Send quote or submit inspection email on test row |
-| Paddle | Billing page checkout / portal button (owner only) |
+| Paddle | Billing page checkout; after subscribe, **Update payment method** / **Cancel subscription** (needs `PADDLE_API_KEY`) |
 | Supabase photos | Upload one photo on a test inspection item |
 | Crons | Vercel → Cron jobs show 3 paths; yesterday’s runs not all failed |
 

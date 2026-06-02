@@ -1,6 +1,5 @@
-import Link from "next/link";
-import type { CompanyBillingSnapshot } from "@/lib/billing/queries";
-import { PaddleInlineCheckout } from "@/components/billing/paddle-inline-checkout";
+import type { CompanyBillingSnapshot } from "@/lib/billing/queries";import { PaddleInlineCheckout } from "@/components/billing/paddle-inline-checkout";
+import { PaddlePortalButtons } from "@/components/billing/paddle-portal-buttons";
 import { PAID_CHECKOUT_ENABLED, TRIAL_DAYS } from "@/lib/billing/constants";
 import { isPaddleInlineCheckoutReady } from "@/lib/billing/paddle-env";
 import { SubscriptionStatus } from "@prisma/client";
@@ -45,6 +44,16 @@ export function BillingPanel({ billing, canManageBilling, customerEmail }: Billi
         year: "numeric",
       })
     : null;
+
+  const showPortal =
+    canManageBilling &&
+    !billing.designPartner &&
+    (billing.paddlePortalApiConfigured ||
+      billing.customerPortalUrl ||
+      Boolean(billing.paddleCustomerId && billing.paddleSubscriptionId));
+  const showCancelAndUpdate =
+    billing.subscriptionStatus === SubscriptionStatus.active ||
+    billing.subscriptionStatus === SubscriptionStatus.past_due;
 
   return (
     <div className="max-w-lg space-y-6">
@@ -126,34 +135,18 @@ export function BillingPanel({ billing, canManageBilling, customerEmail }: Billi
         </section>
       ) : null}
 
-      {canManageBilling && billing.subscriptionStatus === SubscriptionStatus.active ? (
+      {showPortal ? (
         <section className="space-y-3 rounded-xl border border-border p-5">
           <h3 className="text-sm font-medium text-foreground">Manage subscription</h3>
-          {billing.customerPortalUrl ? (
-            <Link
-              href={billing.customerPortalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(buttonVariants({ variant: "outline" }), "min-h-11 inline-flex")}
-            >
-              Open customer portal
-            </Link>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Contact support to change or cancel your plan.
-            </p>
-          )}
-        </section>
-      ) : canManageBilling && billing.customerPortalUrl && !showCheckout ? (
-        <section className="space-y-3 rounded-xl border border-border p-5">
-          <Link
-            href={billing.customerPortalUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(buttonVariants({ variant: "outline" }), "min-h-11 inline-flex")}
-          >
-            Manage subscription
-          </Link>
+          <PaddlePortalButtons
+            canManage={canManageBilling}
+            hasLinkedSubscription={Boolean(
+              billing.paddleCustomerId && billing.paddleSubscriptionId,
+            )}
+            portalApiConfigured={billing.paddlePortalApiConfigured}
+            fallbackPortalUrl={billing.customerPortalUrl}
+            showCancelAndUpdate={showCancelAndUpdate}
+          />
         </section>
       ) : !canManageBilling ? (
         <p className="text-sm text-muted-foreground">

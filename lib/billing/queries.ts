@@ -1,5 +1,6 @@
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { resolveCompanyAccess, type CompanyAccess } from "@/lib/billing/access";
+import { isPaddlePortalApiConfigured } from "@/lib/billing/paddle-api";
 import { shouldShowPaidCheckout } from "@/lib/billing/design-partner";
 import { prisma } from "@/lib/prisma";
 
@@ -8,7 +9,11 @@ export type CompanyBillingSnapshot = CompanyAccess & {
   companyName: string;
   designPartner: boolean;
   checkoutUrl: string | null;
+  /** Static portal homepage fallback (NEXT_PUBLIC_PADDLE_CUSTOMER_PORTAL_URL). */
   customerPortalUrl: string | null;
+  paddleCustomerId: string | null;
+  paddleSubscriptionId: string | null;
+  paddlePortalApiConfigured: boolean;
 };
 
 export async function getCompanyBillingSnapshot(
@@ -24,6 +29,8 @@ export async function getCompanyBillingSnapshot(
       trialEndsAt: true,
       subscriptionRenewsAt: true,
       designPartner: true,
+      paddleCustomerId: true,
+      paddleSubscriptionId: true,
     },
   });
 
@@ -38,6 +45,9 @@ export async function getCompanyBillingSnapshot(
     designPartner: company.designPartner,
     checkoutUrl: showCheckout ? buildPaddleCheckoutUrl(company.id, email) : null,
     customerPortalUrl: showCheckout ? getPaddleCustomerPortalUrl() : null,
+    paddleCustomerId: company.paddleCustomerId,
+    paddleSubscriptionId: company.paddleSubscriptionId,
+    paddlePortalApiConfigured: isPaddlePortalApiConfigured(),
     ...access,
   };
 }
