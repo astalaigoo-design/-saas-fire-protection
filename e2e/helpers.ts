@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { setupClerkTestingToken } from "@clerk/testing/playwright";
+import { QuoteStatus } from "@prisma/client";
 
 const E2E_PASSWORD = process.env.E2E_CLERK_PASSWORD ?? "E2eTestPassword!9";
 
@@ -45,6 +46,34 @@ export async function clerkSignUp(page: Page, email: string): Promise<void> {
   await page.waitForURL(/\/dashboard/, { timeout: 60_000 });
 }
 
+export async function scrollChecklistToIndex(page: Page, index: number): Promise<void> {
+  const scroll = page.getByLabel("Inspection checklist").locator("div.snap-x").first();
+  await scroll.evaluate((element, targetIndex) => {
+    const card = element.firstElementChild as HTMLElement | null;
+    if (!card) return;
+    const gap = 12;
+    element.scrollLeft = targetIndex * (card.offsetWidth + gap);
+  }, index);
+  await page.waitForTimeout(300);
+}
+
+export async function failFirstChecklistItemWithNote(page: Page, note: string): Promise<void> {
+  await page.getByRole("button", { name: "Fail" }).first().click();
+  const textarea = page.getByPlaceholder("Describe the deficiency…").first();
+  await textarea.fill(note);
+  await Promise.all([
+    page.waitForResponse(
+      (resp) => resp.url().includes("/checklist") && resp.ok(),
+      { timeout: 15_000 },
+    ),
+    textarea.blur(),
+  ]).catch(async () => {
+    await textarea.blur();
+    await page.waitForTimeout(400);
+  });
+  await scrollChecklistToIndex(page, 1);
+}
+
 export async function passAllChecklistItems(page: Page): Promise<void> {
   const progress = page.getByLabel("Inspection checklist").getByText(/\d+\/\d+ done/);
   await progress.waitFor();
@@ -83,4 +112,71 @@ export async function drawSignature(page: Page): Promise<void> {
   await page.mouse.down();
   await page.mouse.move(endX, endY, { steps: 12 });
   await page.mouse.up();
+}
+
+/** Marks a draft quote as sent when outbound email is not configured in the test env. */
+export async function markDraftQuoteSentForE2e(
+  quoteId: string,
+  sentTo: string,
+): Promise<string> {
+  const { ensureQuoteShareToken } = await import("@/lib/quotes/share-token");
+  const { prisma } = await import("@/lib/prisma");
+
+  const shareToken = await ensureQuoteShareToken(quoteId);
+  const now = new Date();
+  await prisma.quote.update({
+    where: { id: quoteId },
+    data: {
+      status: QuoteStatus.sent,
+      sentTo,
+      sentAt: now,
+      statusChangedAt: now,
+    },
+  });
+  return shareToken;
+}
+
+export function publicQuotePathFromToken(shareToken: string): string {
+  return `/q/${shareToken}`;
+}
+
+export async function openScheduleFormForBuilding(
+  page: Page,
+  buildingId: string,
+): Promise<void> {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    await page.goto(`/dashboard/buildings/${buildingId}`);
+    await page.getByRole("link", { name: "Schedule inspection" }).click();
+    await page.waitForURL(/\/dashboard\/jobs\/new/);
+
+    const typeSelect = page.locator("#inspection-type-id");
+    if ((await typeSelect.count()) > 0) {
+      await typeSelect.waitFor({ state: "visible", timeout: 15_000 });
+      return;
+    }
+
+    await page.waitForTimeout(1500);
+  }
+
+  throw new Error("Schedule form did not load — no buildings or inspection types for this company.");
+}
+
+export async function scheduleInspectionFromForm(page: Page): Promise<void> {
+  const typeSelect = page.locator("#inspection-type-id");
+  const options = typeSelect.locator("option:not([disabled])");
+  const optionCount = await options.count();
+  if (optionCount === 0) {
+    throw new Error("No inspection types available to schedule.");
+  }
+  await typeSelect.selectOption({ index: 1 });
+  await page.getByRole("button", { name: "Schedule inspection" }).click();
+  await page.waitForURL(/\/dashboard\/jobs\?.*scheduled=1/, { timeout: 60_000 });
+}
+
+export async function openFirstScheduledInspection(page: Page): Promise<void> {
+  await page.goto("/dashboard/inspections");
+  const inspectionLink = page.locator('a[data-testid^="inspection-link-"]').first();
+  await inspectionLink.waitFor({ timeout: 60_000 });
+  await inspectionLink.click();
+  await page.waitForURL(/\/inspect\//);
 }

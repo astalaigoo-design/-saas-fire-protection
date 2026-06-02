@@ -16,6 +16,7 @@ export async function QuoteShareLink({ quoteId, shareToken }: QuoteShareLinkProp
       <CopyReportLinkButton url={url} />
       <a
         href={url}
+        data-testid="public-quote-link"
         target="_blank"
         rel="noopener noreferrer"
         className="truncate text-xs text-primary hover:underline"

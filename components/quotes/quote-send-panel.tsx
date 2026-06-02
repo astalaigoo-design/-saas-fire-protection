@@ -45,6 +45,7 @@ export function QuoteSendPanel({ quoteId, customerEmail, totalLabel }: QuoteSend
           Customer link:{" "}
           <a
             href={state.publicUrl}
+            data-testid="public-quote-link"
             target="_blank"
             rel="noopener noreferrer"
             className="font-medium underline"
