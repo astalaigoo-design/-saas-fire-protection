@@ -53,6 +53,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhooks/paddle",
   "/api/cron/due-reminders",
   "/api/cron/trial-ending-reminders",
+  "/api/cron/cleanup-idempotency",
   "/monitoring",
   "/opengraph-image",
   "/twitter-image",

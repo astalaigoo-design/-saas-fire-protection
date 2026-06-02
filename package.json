@@ -21,6 +21,7 @@
     "db:check-demo": "node scripts/check-demo-data.mjs",
     "db:cleanup-smoke": "node scripts/cleanup-smoke-demo-data.mjs --apply",
     "db:test": "node scripts/test-supabase-connection.mjs",
+    "db:ensure-idempotency": "prisma db execute --file scripts/db/ensure-idempotency.sql --schema prisma/schema.prisma",
     "storage:ensure-bucket": "node scripts/ensure-inspection-photos-bucket.mjs",
     "fix-user": "tsx scripts/fix-user.ts",
     "create-company": "tsx scripts/create-company.ts",

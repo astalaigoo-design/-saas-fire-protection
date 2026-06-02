@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import {
-  getCachedIdempotentResponse,
   getIdempotencyCacheKey,
+  lookupIdempotentResponse,
+  requestJsonHash,
   setCachedIdempotentResponse,
 } from "@/lib/api/idempotency";
 import { startInspection } from "@/lib/inspect/actions";
@@ -15,15 +16,35 @@ export async function POST(request: Request, { params }: StartRouteProps) {
   const cacheKey = idempotencyKey
     ? getIdempotencyCacheKey(`inspect-start:${params.inspectionId}`, idempotencyKey)
     : null;
+  const requestHash = cacheKey ? await requestJsonHash(request) : null;
   if (cacheKey) {
-    const cached = getCachedIdempotentResponse(cacheKey);
-    if (cached) return NextResponse.json(cached.body, { status: cached.status });
+    const lookup = await lookupIdempotentResponse({
+      cacheKey,
+      requestHash,
+      method: "POST",
+      path: new URL(request.url).pathname,
+    });
+    if (lookup.kind === "hit") {
+      return NextResponse.json(lookup.response.body, { status: lookup.response.status });
+    }
+    if (lookup.kind === "conflict") {
+      return NextResponse.json(
+        { ok: false, error: "Idempotency key reuse with different request payload." },
+        { status: 409 },
+      );
+    }
   }
 
   const result = await startInspection(params.inspectionId);
   const status = result.ok ? 200 : 400;
   if (cacheKey) {
-    setCachedIdempotentResponse(cacheKey, { status, body: result });
+    await setCachedIdempotentResponse({
+      cacheKey,
+      requestHash,
+      method: "POST",
+      path: new URL(request.url).pathname,
+      response: { status, body: result },
+    });
   }
   return NextResponse.json(result, { status });
 }

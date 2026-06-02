@@ -429,3 +429,26 @@ model AuditEvent {
   @@index([actorUserId, createdAt])
   @@map("audit_events")
 }
+
+/// Durable idempotency cache for serverless/offline replays.
+model IdempotencyKey {
+  id String @id @default(cuid())
+
+  /// Globally unique key derived from route + client idempotency key.
+  cacheKey String @unique
+
+  method String?
+  path   String?
+
+  /// Optional fingerprint of request body (to detect key reuse with different payload).
+  requestHash String?
+
+  status Int
+  body   Json
+
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([expiresAt])
+  @@map("idempotency_keys")
+}

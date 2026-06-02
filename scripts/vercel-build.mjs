@@ -17,4 +17,12 @@ try {
   console.warn(error);
 }
 
+try {
+  run("npx prisma db execute --file scripts/db/ensure-idempotency.sql --schema prisma/schema.prisma");
+  console.log("Idempotency table ensured.");
+} catch (error) {
+  console.warn("Could not ensure idempotency table — continuing build.");
+  console.warn(error);
+}
+
 run("npx next build");

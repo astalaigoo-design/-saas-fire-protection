@@ -65,6 +65,7 @@ Set `CLERK_BOOTSTRAP_COMPANY_NAME` to customize the initial company name.
 6. **Cron jobs:** Set `CRON_SECRET` (random string) in Production. `vercel.json` schedules both routes (middleware lists them as public so Clerk does not block Vercel’s cron requests):
    - **13:00 UTC** — `GET /api/cron/due-reminders` (inspections due in 7 days)
    - **13:15 UTC** — `GET /api/cron/trial-ending-reminders` (trial ending in 7 and 1 days; emails company owners)
+   - **13:30 UTC** — `GET /api/cron/cleanup-idempotency` (delete expired idempotency rows)
    Requires `RESEND_API_KEY` and `REPORT_EMAIL_FROM`. Test manually: `npx vercel crons run /api/cron/trial-ending-reminders --prod` (or `due-reminders`).
 
 If the build log shows `prisma generate` or `next build` errors, fix those first; the missing `.next` message is a symptom, not the root cause.
@@ -98,6 +99,16 @@ The database was likely updated with `prisma db push` earlier. On a **fresh empt
 
 - Reset the Supabase database and run `migrate deploy` once, or
 - Mark migrations as applied: `npx prisma migrate resolve --applied <migration_folder_name>`
+
+### Durable idempotency (offline replay)
+
+Offline sync uses `x-idempotency-key` on write endpoints. In production/serverless this must be **durable**, so the app stores responses in the `idempotency_keys` table.
+
+If your database is **not baselined** with Prisma migrations yet (you may see `P3005 The database schema is not empty`), you can still ensure the table exists with:
+
+```bash
+npm run db:ensure-idempotency
+```
 
 ### EPERM on `prisma generate` (Windows)
 
