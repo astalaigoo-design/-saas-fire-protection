@@ -124,18 +124,11 @@ function main() {
   console.log(statusOutput || "(no output)");
   console.log("--- end status ---\n");
 
-  // Only baseline migrations that existed before this run — never auto-resolve migrations
-  // added after baseline scripts (those should run via migrate deploy).
-  const baselineCutoff = process.env.PRISMA_BASELINE_UNTIL?.trim();
-  const migrationsToConsider = baselineCutoff
-    ? allMigrations.filter((name) => name <= baselineCutoff)
-    : allMigrations.filter((name) => name !== allMigrations.at(-1));
-
   const toResolve =
     pending.length > 0
-      ? pending.filter((name) => migrationsToConsider.includes(name))
+      ? pending
       : statusOutput.includes("P3005") || statusOutput.includes("not empty")
-        ? migrationsToConsider
+        ? allMigrations
         : [];
 
   if (toResolve.length === 0) {
