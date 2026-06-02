@@ -17,6 +17,8 @@ Use this guide to onboard **one fire inspection company** (your tenant) with **o
 
 ## Before you start (ops)
 
+**New tenant (one command):** see [PILOT-ONBOARDING.md](./PILOT-ONBOARDING.md) — `npm run pilot:onboard` creates the company, sets design partner, links or invites the owner, and verifies Clerk metadata.
+
 Complete these once per environment:
 
 - [ ] Production DB baselined: `npm run db:baseline-migrations -- --verify --yes` (once), then deploys run `migrate deploy` automatically.
@@ -65,8 +67,10 @@ To find `companyId`: `npm run db:studio` → `Company` table → copy `id` for y
 **Create a separate real company + link owner:**
 
 ```bash
-npm run create-company -- "Your Fire Inspection LLC" <clerk_user_id> owner
+npm run pilot:onboard -- "Your Fire Inspection LLC" --design-partner --clerk-user <clerk_user_id> --verify
 ```
+
+Or step-by-step: `npm run create-company -- "Your Fire Inspection LLC" <clerk_user_id> owner`
 
 ---
 
