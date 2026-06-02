@@ -28,8 +28,10 @@ export default async function OrgSettingsPage() {
     <div className="space-y-10">
       <PageHeader
         title="Organization"
-        description="Company profile for PDF reports, NFPA checklist packs for scheduling, and team access."
+        description="Invite your team, configure company details for PDFs, and choose NFPA inspection packs."
       />
+
+      <TeamInviteSection members={team.members} pendingInvites={team.pendingInvites} />
 
       <InspectionTypePacksSection packs={inspectionTypePacks.packs} />
 
@@ -49,7 +51,6 @@ export default async function OrgSettingsPage() {
       </section>
 
       <CompanySettingsForm company={company} />
-      <TeamInviteSection members={team.members} pendingInvites={team.pendingInvites} />
     </div>
   );
 }

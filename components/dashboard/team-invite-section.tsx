@@ -45,7 +45,11 @@ export function TeamInviteSection({ members, pendingInvites }: TeamInviteSection
   );
 
   return (
-    <section className="max-w-lg space-y-6" aria-labelledby="team-heading">
+    <section
+      id="team"
+      className="max-w-lg space-y-6 rounded-xl border border-border bg-card p-5 shadow-sm"
+      aria-labelledby="team-heading"
+    >
       <div>
         <h2 id="team-heading" className="font-heading text-lg font-semibold text-foreground">
           Team
