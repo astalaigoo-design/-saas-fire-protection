@@ -25,4 +25,14 @@ try {
   console.warn(error);
 }
 
+try {
+  run(
+    "npx prisma db execute --file scripts/db/ensure-quote-share-token.sql --schema prisma/schema.prisma",
+  );
+  console.log("Quote shareToken column ensured.");
+} catch (error) {
+  console.warn("Could not ensure quote shareToken column — continuing build.");
+  console.warn(error);
+}
+
 run("npx next build");

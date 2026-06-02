@@ -110,6 +110,12 @@ If your database is **not baselined** with Prisma migrations yet (you may see `P
 npm run db:ensure-idempotency
 ```
 
+Public quote links at `/q/[token]` require the `quotes.shareToken` column. If migrate deploy is not baselined, ensure it exists with:
+
+```bash
+npm run db:ensure-quote-share-token
+```
+
 ### EPERM on `prisma generate` (Windows)
 
 Stop `npm run dev` and any Node processes, then run `npx prisma generate` again.

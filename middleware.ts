@@ -46,6 +46,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/account-setup",
+  // Public customer links (no Clerk sign-in)
   "/r/(.*)",
   "/q/(.*)",
   "/api/public/reports/(.*)",
