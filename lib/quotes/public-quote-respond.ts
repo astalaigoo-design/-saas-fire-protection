@@ -5,6 +5,10 @@ import { writeAuditEvent } from "@/lib/audit/write-event";
 import { buildingLabel } from "@/lib/customers/format";
 import { sendQuoteCustomerResponseEmail } from "@/lib/email/send-quote-customer-response-email";
 import {
+  tryScheduleReinspectionAfterQuoteAccept,
+  type QuoteAcceptScheduleOutcome,
+} from "@/lib/quotes/accept-quote-schedule";
+import {
   appendCustomerQuoteNote,
   formatCustomerQuoteNote,
 } from "@/lib/quotes/customer-response-notes";
@@ -88,8 +92,20 @@ export async function respondToPublicQuote(
       entityId: quote.id,
       metadata: { source: "public_link", buildingLabel: building },
     });
-    await notifyCompany(quote, "accepted", { buildingLabel: building, quoteTitle });
+    const schedule = await tryScheduleReinspectionAfterQuoteAccept({
+      companyId: quote.companyId,
+      quoteId: quote.id,
+      actorUserId: null,
+    });
+    await notifyCompany(quote, "accepted", {
+      buildingLabel: building,
+      quoteTitle,
+      schedule,
+    });
     revalidateAfterQuoteResponse(quote.shareToken);
+    if (schedule.scheduled) {
+      revalidatePath("/dashboard/jobs");
+    }
     return {
       ok: true,
       status: QuoteStatus.accepted,
@@ -169,7 +185,12 @@ async function notifyCompany(
     };
   },
   response: "accepted" | "declined" | "request_changes",
-  details: { buildingLabel: string; quoteTitle: string; customerMessage?: string },
+  details: {
+    buildingLabel: string;
+    quoteTitle: string;
+    customerMessage?: string;
+    schedule?: QuoteAcceptScheduleOutcome;
+  },
 ): Promise<void> {
   const to = quote.inspection.company.reportEmail?.trim();
   if (!to) return;
@@ -183,5 +204,7 @@ async function notifyCompany(
     response,
     customerMessage: details.customerMessage,
     replyTo: quote.inspection.building.customer.email,
+    quoteId: response === "accepted" ? quote.id : undefined,
+    schedule: details.schedule,
   });
 }

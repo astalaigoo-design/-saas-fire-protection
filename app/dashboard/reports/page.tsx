@@ -23,6 +23,14 @@ import {
 } from "@/lib/dashboard/queries";
 import { getDashboardSession } from "@/lib/dashboard/session";
 
+function safeDecodeParam(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 function formatCurrency(cents: number, currency: string): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -30,10 +38,17 @@ function formatCurrency(cents: number, currency: string): string {
   }).format(cents / 100);
 }
 
-export default async function ReportsPage() {
+type ReportsPageProps = {
+  searchParams?: { quote?: string; error?: string };
+};
+
+export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const session = await getDashboardSession();
   if (!session) redirect("/sign-in");
   ensureCanManageJobs(session.role);
+
+  const scheduleError = searchParams?.error?.trim();
+  const highlightQuoteId = searchParams?.quote?.trim();
 
   const [{ quotes, schemaReady }, reports] = await Promise.all([
     listCompanyQuotesSafe(session.companyId),
@@ -46,6 +61,19 @@ export default async function ReportsPage() {
 
   return (
     <div className="space-y-6">
+      {scheduleError ? (
+        <p
+          role="alert"
+          className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+        >
+          Could not schedule follow-up:{" "}
+          {scheduleError === "permission"
+            ? "You do not have permission to schedule jobs."
+            : scheduleError === "billing"
+              ? "Active billing is required to schedule jobs."
+              : safeDecodeParam(scheduleError)}
+        </p>
+      ) : null}
       <PageHeader
         title="Reports"
         description="Compliance reports and draft repair quotes from completed inspections."
@@ -193,7 +221,10 @@ export default async function ReportsPage() {
         ) : (
           <ul className="space-y-3">
             {acceptedQuotes.map((quote) => (
-              <li key={quote.id}>
+              <li
+                key={quote.id}
+                id={highlightQuoteId === quote.id ? "accepted-quote" : undefined}
+              >
                 <Card>
                   <CardContent>
                     <p className="font-medium text-foreground">

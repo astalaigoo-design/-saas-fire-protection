@@ -170,7 +170,7 @@ After submit:
 - [ ] One customer + one building exist (real names, real customer email).
 - [ ] One inspection scheduled and completed with signature.
 - [ ] Compliance PDF downloads from **Reports**.
-- [ ] (Optional) Failed item → draft quote → save pricing → send email.
+- [ ] (Optional) Failed item → draft quote → save pricing → send email → customer accepts on `/q/…` → re-inspection auto-schedules (or **Schedule re-inspection** in Reports / acceptance email).
 
 ---
 

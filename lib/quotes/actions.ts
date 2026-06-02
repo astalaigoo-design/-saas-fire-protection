@@ -11,6 +11,7 @@ import { publicQuoteUrl, publicReportUrl } from "@/lib/app-url";
 import { sendQuoteEmail } from "@/lib/email/send-quote-email";
 import { loadComplianceReportAttachment } from "@/lib/reports/compliance-report-attachment";
 import { generateQuotePdf } from "@/lib/quotes/generate-quote-pdf";
+import { tryScheduleReinspectionAfterQuoteAccept } from "@/lib/quotes/accept-quote-schedule";
 import { ensureQuoteShareToken } from "@/lib/quotes/share-token";
 import { recalculateQuoteTotals } from "@/lib/quotes/totals";
 import { captureServerActionError } from "@/lib/monitoring/capture";
@@ -346,6 +347,16 @@ async function transitionQuoteStatus(
             statusChangedAt: now,
           },
   });
+
+  if (next === "accepted") {
+    await tryScheduleReinspectionAfterQuoteAccept({
+      companyId: session.companyId,
+      quoteId: quote.id,
+      actorUserId: session.appUserId,
+    });
+    revalidatePath("/dashboard/jobs");
+  }
+
   revalidatePath("/dashboard/reports");
 }
 
