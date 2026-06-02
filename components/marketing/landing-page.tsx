@@ -1,33 +1,17 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
-import { productShowcase } from "@/components/marketing/product-previews";
+import {
+  HowItWorksSection,
+  howItWorksJsonLd,
+} from "@/components/marketing/how-it-works-section";
+import {
+  productShowcase,
+  ProductShowcaseImage,
+} from "@/components/marketing/product-previews";
 import { buttonVariants } from "@/components/ui/button";
 import { TRIAL_DAYS } from "@/lib/billing/constants";
 import { APP_POSITIONING, APP_TAGLINE, PILOT_PRICING, PILOT_SUPPORT_EMAIL } from "@/lib/branding";
 import { cn } from "@/lib/utils";
-
-const workflowSteps = [
-  {
-    step: "1",
-    title: "Schedule",
-    body: "Monthly, quarterly, or annual jobs with NFPA checklist items created automatically.",
-  },
-  {
-    step: "2",
-    title: "Inspect",
-    body: "Technicians complete the checklist on mobile — offline when the signal drops.",
-  },
-  {
-    step: "3",
-    title: "Report",
-    body: "Compliance PDF with citations, photos, and signature — emailed on submit.",
-  },
-  {
-    step: "4",
-    title: "Quote",
-    body: "Failed items become draft repair quotes ready for owner review and send.",
-  },
-] as const;
 
 const nfpaHighlights = [
   "Checklists cite exact NFPA standard, edition, and section",
@@ -37,8 +21,14 @@ const nfpaHighlights = [
 ] as const;
 
 export function LandingPage() {
+  const howToSchema = howItWorksJsonLd();
+
   return (
     <main className="min-h-screen bg-background text-foreground">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
+      />
       <header className="border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <BrandLogo logoClassName="size-9" textClassName="text-lg" />
@@ -91,8 +81,10 @@ export function LandingPage() {
             </div>
           </div>
 
-          <div className="hidden justify-center lg:flex">
-            {productShowcase[0]?.preview}
+          <div className="hidden max-w-[280px] justify-center lg:flex">
+            {productShowcase[0] ? (
+              <ProductShowcaseImage item={productShowcase[0]} priority />
+            ) : null}
           </div>
         </div>
       </section>
@@ -114,8 +106,11 @@ export function LandingPage() {
                 key={item.title}
                 className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-sm"
               >
-                <div className="mb-5 flex min-h-[220px] items-center justify-center rounded-xl bg-muted/30 p-4">
-                  {item.preview}
+                <div className="mb-5 overflow-hidden rounded-xl bg-muted/20 p-2">
+                  <ProductShowcaseImage
+                    item={item}
+                    priority={item.imageSrc === productShowcase[0]?.imageSrc}
+                  />
                 </div>
                 <h3 className="font-heading text-lg font-semibold text-foreground">{item.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.description}</p>
@@ -125,25 +120,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
-        <h2 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
-          One connected workflow
-        </h2>
-        <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {workflowSteps.map((item) => (
-            <li
-              key={item.step}
-              className="rounded-xl border border-border bg-card p-5 shadow-sm"
-            >
-              <span className="inline-flex size-8 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary">
-                {item.step}
-              </span>
-              <h3 className="mt-3 font-heading text-base font-semibold">{item.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.body}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
+      <HowItWorksSection />
 
       <section className="border-y border-border/60 bg-muted/20 py-14 sm:py-16">
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
@@ -283,6 +260,9 @@ export function LandingPage() {
             </a>
           </p>
           <nav aria-label="Site links" className="flex flex-wrap gap-x-4 gap-y-2">
+            <Link href="#how-it-works" className="text-primary hover:underline">
+              How it works
+            </Link>
             <Link href="/nfpa-25-inspection-software" className="text-primary hover:underline">
               NFPA 25 inspection software
             </Link>

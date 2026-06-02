@@ -5,7 +5,7 @@ import { buildPublicPageMetadata } from "@/lib/seo/site-metadata";
 
 export const metadata: Metadata = buildPublicPageMetadata({
   title: `${APP_NAME} — ${APP_TAGLINE}`,
-  description: APP_DESCRIPTION,
+  description: `${APP_DESCRIPTION} Schedule NFPA inspections, complete mobile checklists offline, email compliance PDFs, and send repair quotes customers accept online.`,
   path: "/",
 });
 

@@ -3,13 +3,21 @@ import { setupClerkTestingToken } from "@clerk/testing/playwright";
 
 const E2E_PASSWORD = process.env.E2E_CLERK_PASSWORD ?? "E2eTestPassword!9";
 
+function e2eBaseUrl(): string {
+  return (process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "");
+}
+
+function e2eUrl(path: string): string {
+  return `${e2eBaseUrl()}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 export function uniqueRunId(): string {
   return `${Date.now()}`;
 }
 
 export async function clerkSignUp(page: Page, email: string): Promise<void> {
   await setupClerkTestingToken({ page });
-  await page.goto("/sign-up");
+  await page.goto(e2eUrl("/sign-up"));
   await page.waitForSelector(".cl-signUp-root", { state: "attached" });
 
   const firstNameInput = page.locator('input[name=firstName]');
@@ -31,11 +39,9 @@ export async function clerkSignUp(page: Page, email: string): Promise<void> {
 
   await page.getByRole("button", { name: "Continue", exact: true }).click();
 
-  await page.waitForResponse(
-    (resp) => resp.url().includes("prepare_verification") && resp.status() === 200,
-  );
-
-  await page.getByRole("textbox", { name: "Enter verification code" }).pressSequentially("424242");
+  const verificationCode = page.getByRole("textbox", { name: "Enter verification code" });
+  await verificationCode.waitFor({ timeout: 60_000 });
+  await verificationCode.pressSequentially("424242");
   await page.waitForURL(/\/dashboard/, { timeout: 60_000 });
 }
 

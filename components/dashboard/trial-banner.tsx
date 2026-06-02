@@ -20,7 +20,8 @@ export function TrialBanner({ billing, role }: TrialBannerProps) {
     billing.daysLeftInTrial != null;
   const showPastDue = billing.subscriptionStatus === SubscriptionStatus.past_due;
   const showExpired = !billing.hasAccess;
-  const owner = isOwner(role);
+  const canManage = canManageBilling(role);
+  const canView = canViewBilling(role);
 
   if (!showTrial && !showPastDue && !showExpired) return null;
 
