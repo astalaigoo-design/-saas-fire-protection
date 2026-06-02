@@ -37,6 +37,8 @@ export default async function PublicQuotePage({ params }: PublicQuotePageProps) 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="mx-auto flex w-full max-w-lg flex-col gap-6 px-4 py-16 sm:py-24">
+        <PublicCompanyHeader branding={meta.branding} />
+
         <div className="space-y-2 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400">
             Repair quote

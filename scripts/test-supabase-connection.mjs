@@ -1,5 +1,5 @@
 /**
- * Verifies Supabase credentials from .env (run: npm run db:test).
+ * Verifies Supabase/Postgres credentials from .env (run: npm run db:test or npm run db:check).
  * 28P01 / Prisma P1000 → wrong database password; reset in Supabase Dashboard.
  */
 import fs from "node:fs";
@@ -27,36 +27,54 @@ function loadEnvFile(filePath) {
   return vars;
 }
 
-function parsePoolerUser(connectionString) {
-  const m = connectionString.match(/\/\/([^:]+):/);
-  return m?.[1] ?? null;
-}
-
-function parseConnectionTarget(connectionString) {
+/**
+ * @param {string} connectionString
+ */
+function parsePostgresConfig(connectionString, label) {
+  let parsed;
   try {
-    const parsed = new URL(connectionString);
-    return {
-      host: parsed.hostname,
-      port: parsed.port ? Number(parsed.port) : 5432,
-      database: parsed.pathname?.replace(/^\//, "") || "postgres",
-    };
+    parsed = new URL(connectionString);
   } catch {
-    return null;
+    throw new Error(`${label} is not a valid URL. URL-encode special characters in the password.`);
   }
-}
 
-async function trySessionPooler(user, password) {
-  const client = new pg.Client({
-    host: "aws-1-us-east-1.pooler.supabase.com",
-    port: 5432,
+  if (parsed.protocol !== "postgresql:" && parsed.protocol !== "postgres:") {
+    throw new Error(`${label} must use postgresql://`);
+  }
+
+  const user = decodeURIComponent(parsed.username);
+  const password = decodeURIComponent(parsed.password);
+
+  if (!user || !password) {
+    throw new Error(`${label} is missing username or password.`);
+  }
+
+  return {
+    label,
+    host: parsed.hostname,
+    port: parsed.port ? Number(parsed.port) : 5432,
     user,
     password,
-    database: "postgres",
+    database: parsed.pathname.replace(/^\//, "") || "postgres",
+  };
+}
+
+/**
+ * @param {ReturnType<typeof parsePostgresConfig>} config
+ */
+async function tryConnect(config) {
+  const client = new pg.Client({
+    host: config.host,
+    port: config.port,
+    user: config.user,
+    password: config.password,
+    database: config.database,
     ssl: { rejectUnauthorized: false },
   });
+
   try {
     await client.connect();
-    await client.query("SELECT 1");
+    await client.query("SELECT 1 AS ok");
     await client.end();
     return { ok: true };
   } catch (err) {
@@ -69,55 +87,86 @@ async function trySessionPooler(user, password) {
   }
 }
 
+function printAuthHelp(projectRef) {
+  console.log(
+    [
+      "This is the same as Prisma P1000 — the database password is wrong for this project.",
+      "",
+      "Fix:",
+      `  1. Supabase Dashboard → project ${projectRef ?? "(your project ref)"}`,
+      "  2. Project Settings → Database → Reset database password",
+      "  3. Copy fresh URIs from Connect → ORMs into BOTH DATABASE_URL and DIRECT_URL in .env",
+      "  4. npm run db:check   then   npx prisma migrate deploy",
+    ].join("\n"),
+  );
+}
+
 const env = loadEnvFile(path.join(process.cwd(), ".env"));
-const directUrl = env.DIRECT_URL;
+const directUrl = env.DIRECT_URL?.trim();
+const databaseUrl = env.DATABASE_URL?.trim();
 
-if (!directUrl) {
-  console.error("Missing DIRECT_URL in .env");
+if (!directUrl && !databaseUrl) {
+  console.error("Missing DATABASE_URL and DIRECT_URL in .env");
+  console.error("Copy both from Supabase → Project Settings → Database → Connect → ORMs.");
   process.exit(1);
 }
 
-const user = parsePoolerUser(directUrl);
-const passwordMatch = directUrl.match(/postgres\.[^:]+:([^@]+)@/);
-const password = passwordMatch?.[1] ?? "";
-const projectRef = user?.startsWith("postgres.") ? user.replace("postgres.", "") : null;
-const target = parseConnectionTarget(directUrl);
+/** Prefer session pooler (5432) for a direct SQL login test; fall back to DATABASE_URL. */
+const primaryUrl = directUrl || databaseUrl;
+const secondaryUrl = directUrl && databaseUrl && databaseUrl !== directUrl ? databaseUrl : null;
 
-if (!user || !password) {
-  console.error("Could not parse user/password from DIRECT_URL");
+let config;
+try {
+  config = parsePostgresConfig(primaryUrl, directUrl ? "DIRECT_URL" : "DATABASE_URL");
+} catch (err) {
+  console.error(err.message);
   process.exit(1);
 }
+
+const projectRef = config.user.startsWith("postgres.")
+  ? config.user.replace("postgres.", "")
+  : null;
 
 console.log(
-  `Testing Session pooler (user: ${user}${target ? `, host: ${target.host}:${target.port}` : ""}) …\n`,
+  `Testing ${config.label} (${config.user} @ ${config.host}:${config.port}/${config.database}) …\n`,
 );
 
-const result = await trySessionPooler(user, password);
+let result = await tryConnect(config);
+
+if (!result.ok && secondaryUrl) {
+  let secondaryConfig;
+  try {
+    secondaryConfig = parsePostgresConfig(secondaryUrl, "DATABASE_URL");
+    console.log(
+      `Primary failed; trying DATABASE_URL @ ${secondaryConfig.host}:${secondaryConfig.port} …\n`,
+    );
+    result = await tryConnect(secondaryConfig);
+    if (result.ok) config = secondaryConfig;
+  } catch {
+    /* keep primary error */
+  }
+}
 
 if (result.ok) {
-  console.log("✓ Database login works. Run: npx prisma db push");
+  console.log("✓ Database login works.");
+  if (!directUrl) {
+    console.log(
+      "  Tip: add DIRECT_URL (session pooler, port 5432) for migrations — see .env.example.",
+    );
+  }
+  console.log("\nNext: npx prisma migrate deploy   (or npx prisma db push on a fresh dev DB)");
   process.exit(0);
 }
 
 console.log(`✗ ${result.code ?? "ERROR"}: ${result.message}\n`);
 
 if (result.code === "28P01") {
-  console.log(
-    [
-      "This is the same as Prisma P1000 — the database password is wrong for this project.",
-      "",
-      "Fix:",
-      `  1. Supabase Dashboard → project ${projectRef ?? "(your project)"}`,
-      "  2. Project Settings → Database → Reset database password",
-      "  3. Copy the new password into BOTH DATABASE_URL and DIRECT_URL in .env",
-      "  4. npm run db:test   then   npx prisma db push",
-    ].join("\n"),
-  );
+  printAuthHelp(projectRef);
+} else if (result.code === "ENOTFOUND" || result.code === "EAI_AGAIN") {
+  console.log("Hostname could not be resolved — check the pooler host matches your Supabase region.");
 } else {
   console.log(
-    `Check project is not paused and pooler host matches your dashboard${
-      target ? ` (${target.host}:${target.port}/${target.database})` : ""
-    }.`,
+    `Check the project is not paused and ${config.host}:${config.port} matches Supabase Connect → ORMs.`,
   );
 }
 

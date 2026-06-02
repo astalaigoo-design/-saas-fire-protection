@@ -66,6 +66,7 @@ export type PublicQuoteMeta = {
   buildingLabel: string;
   customerName: string;
   companyName: string;
+  branding: PublicCompanyBranding;
   companyEmail: string | null;
   inspectionTypeName: string;
   sentAt: Date | null;

@@ -38,7 +38,7 @@ export function MyJobsClient({ serverJobs, promotedJobId }: MyJobsClientProps) {
   useEffect(() => {
     if (serverJobs.length > 0) {
       saveJobCatalog(serverJobs);
-      setJobs(sortTechnicianJobs(serverJobs));
+      setJobs(sortTechnicianJobs(serverJobs.map(jobForSort)));
     }
   }, [serverJobs]);
 
