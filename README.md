@@ -25,6 +25,7 @@ Open [http://localhost:3000](http://localhost:3000).
 npm run db:seed                      # demo customer, building, inspections
 npm run storage:ensure-bucket        # Supabase bucket for inspection photos
 npm run fix-user -- user_xxx owner   # link your Clerk user (see .env.example)
+npm run marketing:screenshots        # refresh public/marketing/*.png from /marketing-screenshot/*
 ```
 
 > **WARNING:** This script is for **DEVELOPMENT ONLY**. It links a Clerk user to a seeded database record by matching email. Never run this in production. In production, the Clerk webhook handles user creation automatically.

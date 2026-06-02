@@ -8,30 +8,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
+import { marketingScreenshotAssets } from "../lib/marketing/screenshot-assets";
 
 const OUT_DIR = path.join(process.cwd(), "public", "marketing");
 const BASE_URL = (process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000").replace(
   /\/$/,
   "",
 );
-
-const shots = [
-  {
-    path: "/marketing-screenshot/field-inspection",
-    file: "field-inspection.png",
-    viewport: { width: 390, height: 844 },
-  },
-  {
-    path: "/marketing-screenshot/compliance-report",
-    file: "compliance-report.png",
-    viewport: { width: 420, height: 844 },
-  },
-  {
-    path: "/marketing-screenshot/command-center",
-    file: "command-center.png",
-    viewport: { width: 1280, height: 900 },
-  },
-] as const;
 
 async function main() {
   fs.mkdirSync(OUT_DIR, { recursive: true });
@@ -40,15 +23,16 @@ async function main() {
   const page = await browser.newPage();
   page.setDefaultTimeout(60_000);
 
-  for (const shot of shots) {
-    await page.setViewportSize(shot.viewport);
-    await page.goto(`${BASE_URL}${shot.path}`, { waitUntil: "networkidle" });
+  for (const asset of marketingScreenshotAssets) {
+    const file = path.basename(asset.imagePath);
+    await page.setViewportSize(asset.captureViewport);
+    await page.goto(`${BASE_URL}${asset.previewPath}`, { waitUntil: "networkidle" });
     await page.waitForTimeout(500);
     await page.screenshot({
-      path: path.join(OUT_DIR, shot.file),
+      path: path.join(OUT_DIR, file),
       fullPage: false,
     });
-    console.log(`Wrote public/marketing/${shot.file}`);
+    console.log(`Captured ${asset.previewPath} → public/marketing/${file}`);
   }
 
   await browser.close();
