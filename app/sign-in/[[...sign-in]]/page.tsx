@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
-import { SignIn } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
+import { SignInPanel } from "@/components/auth/sign-in-panel";
 import { APP_NAME } from "@/lib/branding";
 import { buildPublicPageMetadata } from "@/lib/seo/site-metadata";
+import { getDashboardSession } from "@/lib/dashboard/session";
 
 export const metadata: Metadata = buildPublicPageMetadata({
   title: "Sign in",
@@ -9,14 +12,13 @@ export const metadata: Metadata = buildPublicPageMetadata({
   path: "/sign-in",
 });
 
-export default function SignInPage() {
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-950 p-6">
-      <SignIn
-        appearance={{ variables: { colorPrimary: "#f59e0b" } }}
-        forceRedirectUrl="/dashboard"
-        fallbackRedirectUrl="/dashboard"
-      />
-    </main>
-  );
+export default async function SignInPage() {
+  const { userId } = await auth();
+  if (userId) {
+    const session = await getDashboardSession();
+    if (session) redirect("/dashboard");
+    redirect("/account-setup");
+  }
+
+  return <SignInPanel />;
 }

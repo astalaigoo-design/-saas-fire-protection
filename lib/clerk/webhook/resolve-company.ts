@@ -50,9 +50,10 @@ export async function resolveCompanyIdForClerkUser(
         return { companyId: company.id };
       }
     } else {
-      return {
-        error: `Company not found for companyId in metadata: ${companyIdFromMetadata}`,
-      };
+      console.warn(
+        "Clerk provisioning: ignoring unknown companyId in metadata; creating private company instead:",
+        companyIdFromMetadata,
+      );
     }
   }
 

@@ -1,0 +1,15 @@
+"use client";
+
+import { SignIn } from "@clerk/nextjs";
+
+export function SignInPanel() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-slate-950 p-6">
+      <SignIn
+        appearance={{ variables: { colorPrimary: "#f59e0b" } }}
+        forceRedirectUrl="/dashboard"
+        fallbackRedirectUrl="/dashboard"
+      />
+    </main>
+  );
+}

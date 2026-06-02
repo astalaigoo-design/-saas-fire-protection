@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 import { DASHBOARD_ROBOTS_METADATA } from "@/lib/seo/site-metadata";
 import { BrandLogo } from "@/components/brand-logo";
 import { DashboardHeaderActions } from "@/components/dashboard/dashboard-header-actions";
@@ -20,7 +21,11 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const session = await getDashboardSession();
-  if (!session) redirect("/sign-in");
+  if (!session) {
+    const { userId } = await auth();
+    if (userId) redirect("/account-setup");
+    redirect("/sign-in");
+  }
 
   const [navItems, billing] = await Promise.all([
     Promise.resolve(getDashboardNavItems(session.role)),

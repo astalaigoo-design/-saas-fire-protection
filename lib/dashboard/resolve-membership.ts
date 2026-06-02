@@ -133,18 +133,23 @@ export async function ensureUserMembership(
   const memberships = await listActiveMemberships(input.clerkUserId, input.email);
   let chosen = pickActiveMembership(memberships, input.companyIdFromMetadata);
 
-  // Stale Clerk default metadata (shared demo companyId) must not block brand-new sign-ups
-  // with zero memberships — fall through to private company provisioning below.
+  // Stale Clerk metadata (e.g. old companyId) must not block migration off shared demo
+  // or provisioning a private workspace when the user has no membership for that company.
   if (!chosen && input.companyIdFromMetadata && memberships.length > 0) {
-    const metaCompany = await prisma.company.findUnique({
-      where: { id: input.companyIdFromMetadata },
-      select: { id: true, name: true },
-    });
-    if (metaCompany && !isSharedTenantCompany(metaCompany)) {
-      return {
-        ok: false,
-        error: `No active membership for company ${input.companyIdFromMetadata}.`,
-      };
+    const hasMembershipForMeta = memberships.some(
+      (m) => m.companyId === input.companyIdFromMetadata,
+    );
+    if (hasMembershipForMeta) {
+      const metaCompany = await prisma.company.findUnique({
+        where: { id: input.companyIdFromMetadata },
+        select: { id: true, name: true },
+      });
+      if (metaCompany && !isSharedTenantCompany(metaCompany)) {
+        return {
+          ok: false,
+          error: `No active membership for company ${input.companyIdFromMetadata}.`,
+        };
+      }
     }
   }
 

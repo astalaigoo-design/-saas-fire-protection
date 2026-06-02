@@ -45,6 +45,7 @@ const isPublicRoute = createRouteMatcher([
   "/refunds",
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/account-setup",
   "/r/(.*)",
   "/q/(.*)",
   "/api/public/reports/(.*)",
