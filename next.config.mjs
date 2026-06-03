@@ -27,7 +27,6 @@ export default withSentryConfig(nextConfig, {
   // Tunnel browser events through the app (ad-blocker friendly).
   tunnelRoute: "/monitoring",
 
-  hideSourceMaps: true,
   widenClientFileUpload: true,
 
   webpack: {
@@ -39,5 +38,6 @@ export default withSentryConfig(nextConfig, {
   // Do not fail production builds when Sentry upload is not configured yet.
   sourcemaps: {
     disable: !sentryAuthToken,
+    deleteSourcemapsAfterUpload: true,
   },
 });
