@@ -1,5 +1,6 @@
 import { InspectionItemResult, InspectionStatus } from "@prisma/client";
 import type { CommandCenterSnapshot } from "@/lib/operations/queries";
+import type { AutomationVisibility } from "@/lib/operations/automation-visibility";
 import type { InspectionFormData } from "@/lib/inspect/queries";
 
 export const marketingInspectionPreview: InspectionFormData = {
@@ -126,6 +127,35 @@ export const marketingCommandCenterPreview: CommandCenterSnapshot = {
     pendingQuotes: 1,
     reportsSentThisMonth: 3,
   },
+};
+
+export const marketingAutomationPreview: AutomationVisibility = {
+  dueRemindersSentCount: 12,
+  trialRemindersSentCount: 0,
+  lastDueRemindersRunAt: new Date("2026-06-02T13:00:00.000Z"),
+  lastDueRemindersRunSent: 2,
+  lastTrialRemindersRunAt: null,
+  lastTrialRemindersRunSent: null,
+  lastDueReminderSentAt: new Date("2026-05-28T13:00:00.000Z"),
+  recentDueReminders: [
+    {
+      id: "rem-1",
+      createdAt: new Date("2026-05-28T13:00:00.000Z"),
+      buildingLabel: "Riverside Medical — Building A",
+      inspectionTypeName: "Annual fire sprinkler",
+      dueAt: "2026-06-04T00:00:00.000Z",
+      sentTo: "service@bayareafire.example",
+    },
+    {
+      id: "rem-2",
+      createdAt: new Date("2026-05-21T13:00:00.000Z"),
+      buildingLabel: "Harborview Office Park",
+      inspectionTypeName: "Monthly fire sprinkler",
+      dueAt: "2026-05-28T00:00:00.000Z",
+      sentTo: "service@bayareafire.example",
+    },
+  ],
+  leadDays: 7,
 };
 
 export const marketingPublicReportPreview = {

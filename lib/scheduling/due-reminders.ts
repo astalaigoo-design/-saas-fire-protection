@@ -107,10 +107,25 @@ export async function sendDueInspectionReminders(
 
   for (const company of companies) {
     result.companiesProcessed += 1;
+    let companyRemindersSent = 0;
+    let companyRemindersSkipped = 0;
 
     const recipients = await getReminderRecipients(company.id);
     if (recipients.length === 0) {
       result.skipped += 1;
+      await writeAuditEvent({
+        companyId: company.id,
+        actorUserId: null,
+        action: "automation.due_reminders_run",
+        entityType: "company",
+        entityId: company.id,
+        metadata: {
+          remindersSent: 0,
+          remindersSkipped: 0,
+          noRecipients: true,
+          leadDays: DUE_REMINDER_DAYS,
+        },
+      });
       continue;
     }
 
@@ -165,6 +180,7 @@ export async function sendDueInspectionReminders(
       });
       if (alreadySent) {
         result.skipped += 1;
+        companyRemindersSkipped += 1;
         continue;
       }
 
@@ -193,12 +209,29 @@ export async function sendDueInspectionReminders(
           dueKey,
           dueAt: row.dueAt.toISOString(),
           inspectionTypeCode: row.inspectionTypeCode,
+          inspectionTypeName: row.inspectionTypeName,
+          buildingLabel: row.buildingLabel,
+          sentTo: recipients[0] ?? null,
           recipients,
         },
       });
 
       result.remindersSent += 1;
+      companyRemindersSent += 1;
     }
+
+    await writeAuditEvent({
+      companyId: company.id,
+      actorUserId: null,
+      action: "automation.due_reminders_run",
+      entityType: "company",
+      entityId: company.id,
+      metadata: {
+        remindersSent: companyRemindersSent,
+        remindersSkipped: companyRemindersSkipped,
+        leadDays: DUE_REMINDER_DAYS,
+      },
+    });
   }
 
   return result;

@@ -127,9 +127,18 @@ export async function sendTrialEndingReminders(
 
   for (const company of companies) {
     result.companiesProcessed += 1;
+    let companyRemindersSent = 0;
 
     if (!company.trialEndsAt) {
       result.skipped += 1;
+      await writeAuditEvent({
+        companyId: company.id,
+        actorUserId: null,
+        action: "automation.trial_reminders_run",
+        entityType: "company",
+        entityId: company.id,
+        metadata: { remindersSent: 0, skipped: true, reason: "no_trial_end" },
+      });
       continue;
     }
 
@@ -146,6 +155,14 @@ export async function sendTrialEndingReminders(
 
     if (daysBefore === null) {
       result.skipped += 1;
+      await writeAuditEvent({
+        companyId: company.id,
+        actorUserId: null,
+        action: "automation.trial_reminders_run",
+        entityType: "company",
+        entityId: company.id,
+        metadata: { remindersSent: 0, skipped: true, reason: "not_due_today" },
+      });
       continue;
     }
 
@@ -156,6 +173,19 @@ export async function sendTrialEndingReminders(
     });
     if (alreadySent) {
       result.skipped += 1;
+      await writeAuditEvent({
+        companyId: company.id,
+        actorUserId: null,
+        action: "automation.trial_reminders_run",
+        entityType: "company",
+        entityId: company.id,
+        metadata: {
+          remindersSent: 0,
+          skipped: true,
+          reason: "already_sent",
+          daysBefore,
+        },
+      });
       continue;
     }
 
@@ -163,6 +193,19 @@ export async function sendTrialEndingReminders(
     if (recipients.length === 0) {
       result.skipped += 1;
       result.errors.push(`${company.name}: no owner email on file.`);
+      await writeAuditEvent({
+        companyId: company.id,
+        actorUserId: null,
+        action: "automation.trial_reminders_run",
+        entityType: "company",
+        entityId: company.id,
+        metadata: {
+          remindersSent: 0,
+          skipped: true,
+          reason: "no_recipients",
+          daysBefore,
+        },
+      });
       continue;
     }
 
@@ -188,14 +231,29 @@ export async function sendTrialEndingReminders(
       entityId: company.id,
       metadata: {
         daysBefore,
+        daysBeforeEnd: daysBefore,
         trialEndKey: endKey,
         trialEndsAt: company.trialEndsAt.toISOString(),
+        sentTo: recipients[0] ?? null,
         recipients,
         messageIds: sendResult.messageIds,
       },
     });
 
     result.remindersSent += 1;
+    companyRemindersSent += 1;
+
+    await writeAuditEvent({
+      companyId: company.id,
+      actorUserId: null,
+      action: "automation.trial_reminders_run",
+      entityType: "company",
+      entityId: company.id,
+      metadata: {
+        remindersSent: companyRemindersSent,
+        daysBefore,
+      },
+    });
   }
 
   return result;

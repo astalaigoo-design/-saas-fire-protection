@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { CommandCenterView } from "@/components/operations/command-center-view";
-import { marketingCommandCenterPreview } from "@/lib/marketing/preview-data";
+import { marketingCommandCenterPreview, marketingAutomationPreview } from "@/lib/marketing/preview-data";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -20,6 +20,7 @@ export default function MarketingCommandCenterPage() {
           snapshot={marketingCommandCenterPreview}
           auditLog={emptyAuditLog}
           auditFilters={{ action: "", entityType: "" }}
+          automation={marketingAutomationPreview}
         />
       </div>
     </main>

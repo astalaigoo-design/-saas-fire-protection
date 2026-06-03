@@ -5,8 +5,10 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDate } from "@/lib/dashboard/dates";
+import { AutomationPanel } from "@/components/operations/automation-panel";
 import { AuditLogFeed } from "@/components/operations/audit-log-feed";
 import type { AuditLogPage } from "@/lib/audit/queries";
+import type { AutomationVisibility } from "@/lib/operations/automation-visibility";
 import type { CommandCenterSnapshot } from "@/lib/operations/queries";
 import type { DueInspectionRow } from "@/lib/operations/due-inspections";
 import { OperationsExportButtons } from "@/components/operations/operations-export-buttons";
@@ -105,9 +107,15 @@ type CommandCenterViewProps = {
   snapshot: CommandCenterSnapshot;
   auditLog: AuditLogPage;
   auditFilters: { action: string; entityType: string };
+  automation: AutomationVisibility;
 };
 
-export function CommandCenterView({ snapshot, auditLog, auditFilters }: CommandCenterViewProps) {
+export function CommandCenterView({
+  snapshot,
+  auditLog,
+  auditFilters,
+  automation,
+}: CommandCenterViewProps) {
   const overdueTotal =
     snapshot.dueTotals.overdue + snapshot.dueTotals.neverInspected;
 
@@ -294,6 +302,8 @@ export function CommandCenterView({ snapshot, auditLog, auditFilters }: CommandC
           </section>
         </div>
       </div>
+
+      <AutomationPanel automation={automation} />
 
       <AuditLogFeed
         key={`${auditFilters.action}|${auditFilters.entityType}`}

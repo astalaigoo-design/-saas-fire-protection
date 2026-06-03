@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { CommandCenterView } from "@/components/operations/command-center-view";
 import { listAuditEvents } from "@/lib/audit/queries";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
+import { getAutomationVisibility } from "@/lib/operations/automation-visibility";
 import { getCommandCenterSnapshot } from "@/lib/operations/queries";
 import { getDashboardSession } from "@/lib/dashboard/session";
 
@@ -22,13 +23,14 @@ export default async function CommandCenterPage({ searchParams }: CommandCenterP
   const actionFilter = firstQueryValue(searchParams.action);
   const entityFilter = firstQueryValue(searchParams.entity);
 
-  const [snapshot, auditLog] = await Promise.all([
+  const [snapshot, auditLog, automation] = await Promise.all([
     getCommandCenterSnapshot(session),
     listAuditEvents(session, {
       action: actionFilter || undefined,
       entityType: entityFilter || undefined,
       limit: 40,
     }),
+    getAutomationVisibility(session.companyId),
   ]);
 
   return (
@@ -36,6 +38,7 @@ export default async function CommandCenterPage({ searchParams }: CommandCenterP
       snapshot={snapshot}
       auditLog={auditLog}
       auditFilters={{ action: actionFilter, entityType: entityFilter }}
+      automation={automation}
     />
   );
 }

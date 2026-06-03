@@ -66,13 +66,34 @@ export function formatAuditEventSummary(event: AuditEventForDisplay): string {
     case "inspection.due_reminder_sent": {
       const type = metaString(meta, "inspectionTypeName");
       const due = metaString(meta, "dueAt");
-      const to = metaString(meta, "sentTo");
+      const to =
+        metaString(meta, "sentTo") ??
+        (Array.isArray(meta?.recipients) && typeof meta.recipients[0] === "string"
+          ? meta.recipients[0]
+          : null);
       const parts = [
         type ? `${type} due` : "Inspection due",
         due ? formatIsoDate(due) : null,
         to ? `emailed ${to}` : null,
       ].filter(Boolean);
       return parts.join(" · ") || "Due-date reminder emailed";
+    }
+    case "automation.due_reminders_run": {
+      const sent = meta?.remindersSent;
+      const lead = meta?.leadDays;
+      if (typeof sent === "number" && typeof lead === "number") {
+        return sent === 0
+          ? `Daily check · 0 due in ${lead} days to email`
+          : `Daily check · ${sent} due in ${lead} days emailed`;
+      }
+      return "Daily due-date reminder check";
+    }
+    case "automation.trial_reminders_run": {
+      const sent = meta?.remindersSent;
+      if (typeof sent === "number") {
+        return sent === 0 ? "Trial reminder check · none sent" : `Trial reminder check · ${sent} sent`;
+      }
+      return "Trial ending reminder check";
     }
     case "building.created":
       return metaString(meta, "customerId")
@@ -102,8 +123,17 @@ export function formatAuditEventSummary(event: AuditEventForDisplay): string {
       return "Customer requested quote changes";
     }
     case "billing.trial_reminder_sent": {
-      const days = meta?.daysBeforeEnd;
-      const to = metaString(meta, "sentTo");
+      const days =
+        typeof meta?.daysBeforeEnd === "number"
+          ? meta.daysBeforeEnd
+          : typeof meta?.daysBefore === "number"
+            ? meta.daysBefore
+            : null;
+      const to =
+        metaString(meta, "sentTo") ??
+        (Array.isArray(meta?.recipients) && typeof meta.recipients[0] === "string"
+          ? meta.recipients[0]
+          : null);
       if (typeof days === "number" && to) {
         return `Trial ends in ${days} day${days === 1 ? "" : "s"} — emailed ${to}`;
       }
