@@ -4,7 +4,7 @@ import { QuoteStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
-import { requireActiveCompanyBilling } from "@/lib/billing/guards";
+import { requireWritableTenant } from "@/lib/billing/guards";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { publicQuoteUrl, publicReportUrl } from "@/lib/app-url";
@@ -49,8 +49,8 @@ export async function updateDraftQuoteLineItems(
   if (!session) return { ok: false, error: "You must be signed in." };
   ensureCanManageJobs(session.role);
 
-  const billing = await requireActiveCompanyBilling(session);
-  if (!billing.ok) return { ok: false, error: billing.error };
+  const tenant = await requireWritableTenant(session);
+  if (!tenant.ok) return { ok: false, error: tenant.error };
 
   const lineItemsJson = formData.get("lineItemsJson");
   let parsedJson: unknown = [];
@@ -152,8 +152,8 @@ export async function sendDraftQuote(
   if (!session) return { ok: false, error: "You must be signed in." };
   ensureCanManageJobs(session.role);
 
-  const billing = await requireActiveCompanyBilling(session);
-  if (!billing.ok) return { ok: false, error: billing.error };
+  const tenant = await requireWritableTenant(session);
+  if (!tenant.ok) return { ok: false, error: tenant.error };
 
   const quoteId = formData.get("quoteId");
   if (typeof quoteId !== "string" || !quoteId.trim()) {
@@ -320,8 +320,8 @@ async function transitionQuoteStatus(
   if (!session) return;
   ensureCanManageJobs(session.role);
 
-  const billing = await requireActiveCompanyBilling(session);
-  if (!billing.ok) return;
+  const tenant = await requireWritableTenant(session);
+  if (!tenant.ok) return;
 
   const quote = await prisma.quote.findFirst({
     where: { id: quoteId, companyId: session.companyId, status: QuoteStatus.sent },

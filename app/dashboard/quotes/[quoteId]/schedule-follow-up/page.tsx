@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
-import { requireActiveCompanyBilling } from "@/lib/billing/guards";
+import { requireWritableTenant } from "@/lib/billing/guards";
 import { tryScheduleReinspectionAfterQuoteAccept } from "@/lib/quotes/accept-quote-schedule";
 import { dashboardReportsUrl } from "@/lib/quotes/dashboard-quote-urls";
 import { getDashboardSession } from "@/lib/dashboard/session";
@@ -26,8 +26,8 @@ export default async function ScheduleFollowUpFromQuotePage({
     redirect(`${dashboardReportsUrl(params.quoteId)}&error=permission`);
   }
 
-  const billing = await requireActiveCompanyBilling(session);
-  if (!billing.ok) {
+  const tenant = await requireWritableTenant(session);
+  if (!tenant.ok) {
     redirect(`${dashboardReportsUrl(params.quoteId)}&error=billing`);
   }
 

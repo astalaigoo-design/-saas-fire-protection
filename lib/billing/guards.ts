@@ -25,11 +25,14 @@ export async function hasActiveCompanyAccess(
   return access?.hasAccess ?? false;
 }
 
-export type ActiveBillingResult = { ok: true } | { ok: false; error: string };
+export type WritableTenantResult = { ok: true } | { ok: false; error: string };
+
+/** @deprecated Use WritableTenantResult */
+export type ActiveBillingResult = WritableTenantResult;
 
 export async function assertActiveCompanyAccess(
   session: DashboardSession,
-): Promise<ActiveBillingResult> {
+): Promise<WritableTenantResult> {
   const access = await resolveSessionCompanyAccess(session);
   if (!access) {
     return { ok: false, error: "Company not found." };
@@ -40,9 +43,16 @@ export async function assertActiveCompanyAccess(
   return { ok: true };
 }
 
-/** Use at the start of dashboard write actions (same as inspect `requireActiveBilling`). */
+/** Call at the start of dashboard server actions that mutate tenant data. */
+export async function requireWritableTenant(
+  session: DashboardSession,
+): Promise<WritableTenantResult> {
+  return assertActiveCompanyAccess(session);
+}
+
+/** @deprecated Use requireWritableTenant */
 export async function requireActiveCompanyBilling(
   session: DashboardSession,
-): Promise<ActiveBillingResult> {
-  return assertActiveCompanyAccess(session);
+): Promise<WritableTenantResult> {
+  return requireWritableTenant(session);
 }

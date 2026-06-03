@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
-import { requireActiveCompanyBilling } from "@/lib/billing/guards";
+import { requireWritableTenant } from "@/lib/billing/guards";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { captureServerActionError } from "@/lib/monitoring/capture";
 import type { CalendarMonth } from "@/lib/scheduling/calendar";
@@ -35,8 +35,8 @@ export async function scheduleJobFromQuoteAction(
     return { ok: false, error: "You do not have permission to schedule jobs." };
   }
 
-  const billing = await requireActiveCompanyBilling(session);
-  if (!billing.ok) return { ok: false, error: billing.error };
+  const tenant = await requireWritableTenant(session);
+  if (!tenant.ok) return { ok: false, error: tenant.error };
 
   const quoteId = String(formData.get("quoteId") ?? "").trim();
   const visitKindRaw = String(formData.get("visitKind") ?? "repair");

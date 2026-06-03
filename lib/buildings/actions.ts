@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { ensureCanManageCustomers } from "@/lib/auth/guards";
-import { requireActiveCompanyBilling } from "@/lib/billing/guards";
+import { requireWritableTenant } from "@/lib/billing/guards";
 import { getBuildingById } from "@/lib/buildings/queries";
 import {
   addBuildingNoteSchema,
@@ -32,8 +32,8 @@ export async function createBuilding(
   if (!session) return { ok: false, error: "Sign in required." };
   ensureCanManageCustomers(session.role);
 
-  const billing = await requireActiveCompanyBilling(session);
-  if (!billing.ok) return { ok: false, error: billing.error };
+  const tenant = await requireWritableTenant(session);
+  if (!tenant.ok) return { ok: false, error: tenant.error };
 
   const parsed = createBuildingSchema.safeParse({
     customerId: formData.get("customerId"),
@@ -105,8 +105,8 @@ export async function updateBuilding(
   if (!session) return { ok: false, error: "Sign in required." };
   ensureCanManageCustomers(session.role);
 
-  const billing = await requireActiveCompanyBilling(session);
-  if (!billing.ok) return { ok: false, error: billing.error };
+  const tenant = await requireWritableTenant(session);
+  if (!tenant.ok) return { ok: false, error: tenant.error };
 
   const parsed = updateBuildingSchema.safeParse({
     buildingId: formData.get("buildingId"),
@@ -158,8 +158,8 @@ export async function addBuildingNote(
   if (!session) return { ok: false, error: "Sign in required." };
   ensureCanManageCustomers(session.role);
 
-  const billing = await requireActiveCompanyBilling(session);
-  if (!billing.ok) return { ok: false, error: billing.error };
+  const tenant = await requireWritableTenant(session);
+  if (!tenant.ok) return { ok: false, error: tenant.error };
 
   const parsed = addBuildingNoteSchema.safeParse({
     buildingId: formData.get("buildingId"),

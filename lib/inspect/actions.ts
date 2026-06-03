@@ -7,7 +7,7 @@ import {
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { canViewAllJobs } from "@/lib/auth/permissions";
-import { requireActiveCompanyBilling } from "@/lib/billing/guards";
+import { requireWritableTenant } from "@/lib/billing/guards";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { isInspectionLocked } from "@/lib/inspect/queries";
 import { getPendingItemIdsInSection } from "@/lib/inspect/checklist-sections";
@@ -81,8 +81,8 @@ export async function startInspection(
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
 
-  const billing = await requireActiveCompanyBilling(session);
-  if (!billing.ok) return { ok: false, error: billing.error };
+  const tenant = await requireWritableTenant(session);
+  if (!tenant.ok) return { ok: false, error: tenant.error };
 
   const loaded = await loadEditableInspection(inspectionId, session);
   if (!loaded.ok) return { ok: false, error: loaded.error };
@@ -105,8 +105,8 @@ export async function updateChecklistItem(
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
 
-  const billing = await requireActiveCompanyBilling(session);
-  if (!billing.ok) return { ok: false, error: billing.error };
+  const tenant = await requireWritableTenant(session);
+  if (!tenant.ok) return { ok: false, error: tenant.error };
 
   const parsed = updateChecklistItemSchema.safeParse(input);
   if (!parsed.success) {
@@ -151,8 +151,8 @@ export async function bulkMarkChecklistSectionNa(
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
 
-  const billing = await requireActiveCompanyBilling(session);
-  if (!billing.ok) return { ok: false, error: billing.error };
+  const tenant = await requireWritableTenant(session);
+  if (!tenant.ok) return { ok: false, error: tenant.error };
 
   const parsed = bulkMarkSectionNaSchema.safeParse(input);
   if (!parsed.success) {
@@ -205,8 +205,8 @@ export async function uploadInspectionPhoto(
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
 
-  const billing = await requireActiveCompanyBilling(session);
-  if (!billing.ok) return { ok: false, error: billing.error };
+  const tenant = await requireWritableTenant(session);
+  if (!tenant.ok) return { ok: false, error: tenant.error };
 
   const parsed = uploadPhotoSchema.safeParse(input);
   if (!parsed.success) {
@@ -259,8 +259,8 @@ export async function deleteInspectionPhoto(
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
 
-  const billing = await requireActiveCompanyBilling(session);
-  if (!billing.ok) return { ok: false, error: billing.error };
+  const tenant = await requireWritableTenant(session);
+  if (!tenant.ok) return { ok: false, error: tenant.error };
 
   const loaded = await loadEditableInspection(inspectionId, session);
   if (!loaded.ok) return { ok: false, error: loaded.error };
@@ -291,8 +291,8 @@ export async function submitInspection(
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
 
-  const billing = await requireActiveCompanyBilling(session);
-  if (!billing.ok) return { ok: false, error: billing.error };
+  const tenant = await requireWritableTenant(session);
+  if (!tenant.ok) return { ok: false, error: tenant.error };
 
   const parsed = submitInspectionSchema.safeParse(input);
   if (!parsed.success) {

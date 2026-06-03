@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect";
 import { canManageCustomers } from "@/lib/auth/permissions";
-import { requireActiveCompanyBilling } from "@/lib/billing/guards";
+import { requireWritableTenant } from "@/lib/billing/guards";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { createCustomerSchema } from "@/lib/customers/schemas";
 import { getDashboardSession } from "@/lib/dashboard/session";
@@ -35,8 +35,8 @@ export async function createCustomer(
     return { ok: false, error: "You do not have permission to add customers." };
   }
 
-  const billing = await requireActiveCompanyBilling(session);
-  if (!billing.ok) return { ok: false, error: billing.error };
+  const tenant = await requireWritableTenant(session);
+  if (!tenant.ok) return { ok: false, error: tenant.error };
 
   const parsed = createCustomerSchema.safeParse(formDataToObject(formData));
   if (!parsed.success) {
