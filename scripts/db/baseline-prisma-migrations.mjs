@@ -1,4 +1,6 @@
-import "dotenv/config";
+import { loadEnv } from "./load-env.mjs";
+
+loadEnv();
 
 /**
  * One-time baseline for databases that already have the schema (e.g. from db push)

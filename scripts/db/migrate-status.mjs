@@ -1,4 +1,6 @@
-import "dotenv/config";
+import { loadEnv } from "./load-env.mjs";
+
+loadEnv();
 import { execSync } from "node:child_process";
 import { listMigrationNames } from "./list-migrations.mjs";
 

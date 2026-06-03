@@ -1,12 +1,41 @@
 import { execSync } from "node:child_process";
 
-function run(command) {
-  execSync(command, { stdio: "inherit" });
+const steps = [
+  { name: "Prisma generate", command: "npx prisma generate" },
+  { name: "SEO static files", command: "node scripts/generate-seo-static.mjs" },
+  { name: "Database migrations", command: "node scripts/db/migrate-deploy.mjs" },
+  { name: "Next.js build", command: "npx next build" },
+];
+
+function runStep(name, command) {
+  console.log(`\n▶ ${name}`);
+  console.log(`  $ ${command}\n`);
+  try {
+    execSync(command, { stdio: "inherit", env: process.env });
+  } catch (error) {
+    const code = error.status ?? 1;
+    console.error(`\n✖ ${name} failed (exit ${code})`);
+    if (name === "Database migrations") {
+      console.error(
+        "  Ensure Vercel Production has DIRECT_URL (session, port 5432) enabled for Build + Runtime.",
+      );
+    }
+    process.exit(code);
+  }
 }
 
-run("npx prisma generate");
-run("npx tsx scripts/generate-seo-static.ts");
+console.log(
+  `Vercel build — Node ${process.version}, VERCEL_ENV=${process.env.VERCEL_ENV ?? "local"}`,
+);
+console.log(
+  `  DATABASE_URL: ${process.env.DATABASE_URL?.trim() ? "set" : "missing"}`,
+);
+console.log(
+  `  DIRECT_URL: ${process.env.DIRECT_URL?.trim() ? "set" : "missing"}`,
+);
 
-run("node scripts/db/migrate-deploy.mjs");
+for (const step of steps) {
+  runStep(step.name, step.command);
+}
 
-run("npx next build");
+console.log("\n✔ Vercel build finished.");

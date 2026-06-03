@@ -1,4 +1,6 @@
-import "dotenv/config";
+import { loadEnv } from "./load-env.mjs";
+
+loadEnv();
 
 /**
  * Applies pending Prisma migrations (used by Vercel build and locally).

@@ -2,6 +2,9 @@
   "name": "getflareflow",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
@@ -35,7 +38,7 @@
     "pilot:verify-clerk": "tsx scripts/verify-clerk-metadata.ts",
     "pilot:invite-owner": "tsx scripts/pilot-invite-owner.ts",
     "migrate-shared-tenant-users": "tsx scripts/migrate-shared-tenant-users.ts",
-    "seo:generate": "tsx scripts/generate-seo-static.ts",
+    "seo:generate": "node scripts/generate-seo-static.mjs",
     "marketing:screenshots": "tsx scripts/capture-marketing-screenshots.ts",
     "db:list-shared-tenant": "node scripts/list-shared-tenant-users.mjs",
     "sync-user-clerk-metadata": "tsx scripts/sync-user-clerk-metadata.ts",
@@ -63,6 +66,7 @@
     "svix": "^1.93.0",
     "tailwind-merge": "^3.6.0",
     "tw-animate-css": "^1.4.0",
+    "dotenv": "^17.4.2",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -72,7 +76,6 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "autoprefixer": "^10.4.20",
-    "dotenv": "^17.4.2",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.2.28",
     "pg": "^8.20.0",

@@ -1,5 +1,12 @@
-import "dotenv/config";
+import { createRequire } from "node:module";
 import { defineConfig } from "prisma/config";
+
+const require = createRequire(import.meta.url);
+try {
+  require("dotenv/config");
+} catch {
+  // Vercel / CI inject env; dotenv optional when not installed.
+}
 
 /**
  * Prisma CLI configuration (migrations, seed, studio).

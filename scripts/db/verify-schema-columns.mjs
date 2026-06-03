@@ -1,4 +1,6 @@
-import "dotenv/config";
+import { loadEnv } from "./load-env.mjs";
+
+loadEnv();
 import pg from "pg";
 
 const url = process.env.DIRECT_URL?.trim() || process.env.DATABASE_URL?.trim();
