@@ -8,6 +8,8 @@ import { requireWritableTenant } from "@/lib/billing/guards";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { createCustomerSchema } from "@/lib/customers/schemas";
 import { getDefaultBranchId } from "@/lib/branches/default-branch";
+import { canFilterBranchesByCookie } from "@/lib/branches/scope";
+import { requiresAssignedBranch } from "@/lib/branches/user-branch";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { captureServerActionError } from "@/lib/monitoring/capture";
 import { prisma } from "@/lib/prisma";
@@ -45,17 +47,37 @@ export async function createCustomer(
     return { ok: false, error: message };
   }
 
-  const branchIdRaw = String(formData.get("branchId") ?? "").trim();
-  let branchId = branchIdRaw || session.activeBranchId || session.userBranchId;
-  if (branchId) {
-    const branch = await prisma.branch.findFirst({
-      where: { id: branchId, companyId: session.companyId },
-      select: { id: true },
-    });
-    if (!branch) branchId = null;
+  let branchId: string;
+  if (canFilterBranchesByCookie(session)) {
+    const branchIdRaw = String(formData.get("branchId") ?? "").trim();
+    let resolved = branchIdRaw || session.activeBranchId || null;
+    if (resolved) {
+      const branch = await prisma.branch.findFirst({
+        where: { id: resolved, companyId: session.companyId },
+        select: { id: true },
+      });
+      if (!branch) resolved = null;
+    }
+    branchId = resolved ?? (await getDefaultBranchId(session.companyId));
+  } else {
+    if (!session.userBranchId) {
+      return {
+        ok: false,
+        error: "Your account has no branch assigned. Ask the owner to set your branch in Organization → Team.",
+      };
+    }
+    const branchIdRaw = String(formData.get("branchId") ?? "").trim();
+    if (branchIdRaw && branchIdRaw !== session.userBranchId) {
+      return {
+        ok: false,
+        error: "You can only add customers to your assigned branch.",
+      };
+    }
+    branchId = session.userBranchId;
   }
-  if (!branchId) {
-    branchId = await getDefaultBranchId(session.companyId);
+
+  if (requiresAssignedBranch(session.role) && branchId !== session.userBranchId) {
+    return { ok: false, error: "You can only add customers to your assigned branch." };
   }
 
   try {

@@ -45,8 +45,22 @@ export async function getBranchSwitcherData(session: DashboardSession) {
 
 export async function listBranchesForCustomerForm(session: DashboardSession) {
   const branches = await listBranchesForCompany(session.companyId);
-  const defaultBranch =
-    branches.find((b) => b.isDefault) ?? branches[0] ?? null;
-  const preferredId = session.activeBranchId ?? session.userBranchId ?? defaultBranch?.id;
-  return { branches, defaultBranchId: preferredId ?? defaultBranch?.id ?? null };
+
+  if (canFilterBranchesByCookie(session)) {
+    const defaultBranch =
+      branches.find((b) => b.id === session.activeBranchId) ??
+      branches.find((b) => b.isDefault) ??
+      branches[0] ??
+      null;
+    return { branches, defaultBranchId: defaultBranch?.id ?? null };
+  }
+
+  const assigned = session.userBranchId
+    ? branches.filter((b) => b.id === session.userBranchId)
+    : branches.filter((b) => b.isDefault).slice(0, 1);
+
+  return {
+    branches: assigned,
+    defaultBranchId: assigned[0]?.id ?? null,
+  };
 }

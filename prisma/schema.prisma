@@ -144,7 +144,7 @@ model User {
   active      Boolean   @default(true)
   deletedAt   DateTime?
 
-  /// Null for owners (company-wide); set for admin/technician branch access.
+  /// Null for owners (company-wide). Admins and technicians belong to one branch via this FK — no join table.
   branchId String?
   branch   Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
 

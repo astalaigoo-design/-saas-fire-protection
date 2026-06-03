@@ -130,6 +130,7 @@ async function linkClerkUserToCompany(
       email: input.email,
       name: input.name,
       role: input.role,
+      branchId,
       active: true,
       deletedAt: null,
     },

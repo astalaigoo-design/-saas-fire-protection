@@ -33,10 +33,18 @@ describe("branchScopeFromSession", () => {
     ).toEqual({ mode: "branch", branchId: "br_a" });
   });
 
-  it("technician uses assigned branch", () => {
+  it("technician uses assigned branch only", () => {
     expect(
       branchScopeFromSession(
         session({ role: "technician", userBranchId: "br_b" }),
+      ),
+    ).toEqual({ mode: "branch", branchId: "br_b" });
+  });
+
+  it("admin ignores owner-style active branch filter", () => {
+    expect(
+      branchScopeFromSession(
+        session({ role: "admin", userBranchId: "br_b", activeBranchId: "br_other" }),
       ),
     ).toEqual({ mode: "branch", branchId: "br_b" });
   });

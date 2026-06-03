@@ -8,12 +8,17 @@ export type BranchScope =
   | { mode: "branch"; branchId: string };
 
 export function branchScopeFromSession(session: DashboardSession): BranchScope {
-  if (session.activeBranchId) {
-    return { mode: "branch", branchId: session.activeBranchId };
+  if (canFilterBranchesByCookie(session)) {
+    if (session.activeBranchId) {
+      return { mode: "branch", branchId: session.activeBranchId };
+    }
+    return { mode: "all" };
   }
+
   if (session.userBranchId) {
     return { mode: "branch", branchId: session.userBranchId };
   }
+
   return { mode: "all" };
 }
 

@@ -111,7 +111,8 @@ export function TeamInviteSection({ members, pendingInvites, branches }: TeamInv
               ))}
             </select>
             <p className="text-xs text-muted-foreground">
-              New members only see customers and jobs in this branch.
+              Each member is assigned to one branch and only sees that location&apos;s customers and
+              jobs.
             </p>
           </div>
         ) : null}
