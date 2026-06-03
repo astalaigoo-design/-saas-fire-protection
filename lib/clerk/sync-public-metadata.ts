@@ -1,4 +1,5 @@
 import {
+  BRANCH_METADATA_KEY,
   COMPANY_METADATA_KEY,
   ROLE_METADATA_KEY,
   type AppRole,
@@ -7,6 +8,8 @@ import {
 export type ClerkPublicMetadataPatch = {
   role?: AppRole;
   companyId?: string;
+  /** Set branch id for admin/technician; pass null to remove from metadata (owners). */
+  branchId?: string | null;
 };
 
 export type SyncClerkPublicMetadataResult =
@@ -23,7 +26,7 @@ export async function syncClerkPublicMetadata(
     return { ok: false, error: "CLERK_SECRET_KEY is not configured" };
   }
 
-  if (patch.role === undefined && patch.companyId === undefined) {
+  if (patch.role === undefined && patch.companyId === undefined && patch.branchId === undefined) {
     return { ok: true };
   }
 
@@ -49,6 +52,13 @@ export async function syncClerkPublicMetadata(
   }
   if (patch.companyId !== undefined) {
     public_metadata[COMPANY_METADATA_KEY] = patch.companyId;
+  }
+  if (patch.branchId !== undefined) {
+    if (patch.branchId === null) {
+      delete public_metadata[BRANCH_METADATA_KEY];
+    } else {
+      public_metadata[BRANCH_METADATA_KEY] = patch.branchId;
+    }
   }
 
   const patchResponse = await fetch(`https://api.clerk.com/v1/users/${clerkUserId}`, {

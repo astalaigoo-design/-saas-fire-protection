@@ -9,6 +9,7 @@ export type TeamMemberRow = {
   name: string | null;
   email: string | null;
   role: UserRole;
+  branchId: string | null;
   branchName: string | null;
 };
 
@@ -39,6 +40,7 @@ export async function listTeamMembers(session: DashboardSession): Promise<TeamMe
       name: true,
       email: true,
       role: true,
+      branchId: true,
       branch: { select: { name: true } },
     },
     orderBy: [{ role: "asc" }, { createdAt: "asc" }],
@@ -48,6 +50,7 @@ export async function listTeamMembers(session: DashboardSession): Promise<TeamMe
     name: row.name,
     email: row.email,
     role: row.role,
+    branchId: row.branchId,
     branchName: row.branch?.name ?? (row.role === "owner" ? "All locations" : null),
   }));
 }

@@ -5,6 +5,7 @@ import {
   inviteTeamMember,
   type InviteTeamMemberState,
 } from "@/lib/team/actions";
+import { TeamMemberBranchForm } from "@/components/dashboard/team-member-branch-form";
 import type { BranchListItem } from "@/lib/branches/queries";
 import type { PendingTeamInviteRow, TeamMemberRow } from "@/lib/team/queries";
 import { INVITABLE_TEAM_ROLES } from "@/lib/team/invite-schemas";
@@ -58,8 +59,8 @@ export function TeamInviteSection({ members, pendingInvites, branches }: TeamInv
           Team
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Invite field technicians or admins. They receive a Clerk email and join your
-          organization automatically with the right access.
+          Invite field technicians or admins, then reassign branch access for existing members
+          below.
         </p>
       </div>
 
@@ -134,34 +135,26 @@ export function TeamInviteSection({ members, pendingInvites, branches }: TeamInv
       {members.length > 0 ? (
         <div className="rounded-xl border border-border p-4">
           <h3 className="text-sm font-medium text-foreground">Current team</h3>
-          <ul className="mt-3 space-y-2">
+          <p className="mt-1 text-xs text-muted-foreground">
+            Each admin or technician belongs to one branch. Change assignments after they join.
+          </p>
+          <ul className="mt-3 divide-y divide-border">
             {members.map((member) => (
-              <li
-                key={member.id}
-                className="flex flex-col gap-0.5 text-sm sm:flex-row sm:items-center sm:justify-between"
-              >
-                <span className="text-foreground">
-                  {member.name ?? member.email ?? "Team member"}
-                </span>
-                <span className="text-muted-foreground">
-                  {member.email ? (
-                    <>
-                      {member.email}
-                      <span className="mx-2 hidden sm:inline" aria-hidden>
-                        ·
-                      </span>
-                    </>
-                  ) : null}
-                  <span className="font-medium">{roleLabel(member.role)}</span>
-                  {member.branchName ? (
-                    <>
-                      <span className="mx-2 hidden sm:inline" aria-hidden>
-                        ·
-                      </span>
-                      <span>{member.branchName}</span>
-                    </>
-                  ) : null}
-                </span>
+              <li key={member.id} className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0">
+                <div className="flex flex-col gap-0.5 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      {member.name ?? member.email ?? "Team member"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {member.email ? `${member.email} · ` : ""}
+                      {roleLabel(member.role)}
+                    </p>
+                  </div>
+                  <div className="sm:min-w-[14rem]">
+                    <TeamMemberBranchForm member={member} branches={branches} />
+                  </div>
+                </div>
               </li>
             ))}
           </ul>
