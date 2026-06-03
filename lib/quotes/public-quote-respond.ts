@@ -179,6 +179,7 @@ function revalidateAfterQuoteResponse(shareToken: string): void {
 
 async function notifyCompany(
   quote: {
+    id: string;
     inspection: {
       company: { name: string; reportEmail: string | null };
       building: { customer: { name: string; email: string | null } };

@@ -13,6 +13,7 @@ import { prisma } from "@/lib/prisma";
 import { requireWritableTenant } from "@/lib/billing/guards";
 
 const session = {
+  clerkUserId: "user_clerk_1",
   companyId: "co_1",
   appUserId: "user_1",
   role: "owner" as const,
@@ -27,11 +28,11 @@ describe("requireWritableTenant", () => {
 
   it("blocks when subscription has no access", async () => {
     vi.mocked(prisma.company.findFirst).mockResolvedValue({
-      subscriptionStatus: SubscriptionStatus.canceled,
+      subscriptionStatus: SubscriptionStatus.cancelled,
       trialEndsAt: new Date("2020-01-01"),
       subscriptionRenewsAt: null,
       designPartner: false,
-    });
+    } as Awaited<ReturnType<typeof prisma.company.findFirst>>);
 
     const result = await requireWritableTenant(session);
     expect(result.ok).toBe(false);
@@ -42,11 +43,11 @@ describe("requireWritableTenant", () => {
 
   it("allows design partners", async () => {
     vi.mocked(prisma.company.findFirst).mockResolvedValue({
-      subscriptionStatus: SubscriptionStatus.canceled,
+      subscriptionStatus: SubscriptionStatus.cancelled,
       trialEndsAt: null,
       subscriptionRenewsAt: null,
       designPartner: true,
-    });
+    } as Awaited<ReturnType<typeof prisma.company.findFirst>>);
 
     const result = await requireWritableTenant(session);
     expect(result).toEqual({ ok: true });
