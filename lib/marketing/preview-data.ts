@@ -3,7 +3,7 @@ import type { CommandCenterSnapshot } from "@/lib/operations/queries";
 import type { AutomationVisibility } from "@/lib/operations/automation-visibility";
 import type { InspectionFormData } from "@/lib/inspect/queries";
 
-export const marketingInspectionPreview: InspectionFormData = {
+export const marketingInspectionPreview = {
   id: "marketing-preview-inspection",
   status: InspectionStatus.in_progress,
   scheduledAt: new Date("2026-06-01T09:00:00Z"),
@@ -48,7 +48,7 @@ export const marketingInspectionPreview: InspectionFormData = {
     },
   ],
   photos: [],
-};
+} as InspectionFormData;
 
 export const marketingCommandCenterPreview: CommandCenterSnapshot = {
   dueByCadence: {

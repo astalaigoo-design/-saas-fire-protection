@@ -48,10 +48,14 @@ export function PaddleInlineCheckout({ companyId, customerEmail }: PaddleInlineC
 
     let cancelled = false;
 
+    const paddleToken = token;
+    const paddlePriceId = priceId;
+    const paddleEnvironment = environment;
+
     const inlineSettings = {
       displayMode: "inline" as const,
       frameTarget: PADDLE_CHECKOUT_FRAME_CLASS,
-      frameInitialHeight: "450",
+      frameInitialHeight: 450,
       frameStyle: FRAME_STYLE,
       theme: "dark" as const,
     };
@@ -59,8 +63,8 @@ export function PaddleInlineCheckout({ companyId, customerEmail }: PaddleInlineC
     async function init() {
       try {
         const paddle = await initializePaddle({
-          token,
-          environment,
+          token: paddleToken,
+          environment: paddleEnvironment,
           checkout: { settings: inlineSettings },
           eventCallback: (event) => {
             if (event.name === CheckoutEventNames.CHECKOUT_COMPLETED) {
@@ -80,7 +84,7 @@ export function PaddleInlineCheckout({ companyId, customerEmail }: PaddleInlineC
         paddleRef.current = paddle;
 
         paddle.Checkout.open({
-          items: [{ priceId, quantity: 1 }],
+          items: [{ priceId: paddlePriceId, quantity: 1 }],
           customData: { company_id: companyId },
           customer: customerEmail ? { email: customerEmail } : undefined,
           settings: inlineSettings,

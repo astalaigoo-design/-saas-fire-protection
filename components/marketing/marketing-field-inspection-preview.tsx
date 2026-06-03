@@ -26,7 +26,7 @@ export function MarketingFieldInspectionPreview() {
           <span className="size-2 rounded-full bg-amber-400" aria-hidden />
           <span className="text-[11px] font-medium text-amber-100">Saved locally — will sync</span>
         </div>
-        <BuildingHeader inspection={inspection} />
+        <BuildingHeader inspection={inspection} locked={false} />
         <ChecklistCarousel
           inspectionId={inspection.id}
           items={items}
