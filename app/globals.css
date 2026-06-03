@@ -76,6 +76,29 @@
   * {
     @apply border-border;
   }
+  /* Paddle inline checkout — keep iframe inside the billing card, not as a viewport overlay */
+  .paddle-checkout-host {
+    position: relative;
+    z-index: 0;
+  }
+
+  .paddle-checkout-frame {
+    position: relative;
+    width: 100%;
+    min-height: 450px;
+    overflow: hidden;
+    background-color: var(--card);
+  }
+
+  .paddle-checkout-frame iframe {
+    position: relative !important;
+    display: block;
+    width: 100% !important;
+    min-height: 450px;
+    max-width: 100%;
+    border: none;
+  }
+
   body {
     @apply bg-background text-foreground;
   }

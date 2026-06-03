@@ -1,4 +1,5 @@
-import type { CompanyBillingSnapshot } from "@/lib/billing/queries";import { PaddleInlineCheckout } from "@/components/billing/paddle-inline-checkout";
+import type { CompanyBillingSnapshot } from "@/lib/billing/queries";
+import { PaddleInlineCheckout } from "@/components/billing/paddle-inline-checkout";
 import { PaddlePortalButtons } from "@/components/billing/paddle-portal-buttons";
 import { PAID_CHECKOUT_ENABLED, TRIAL_DAYS } from "@/lib/billing/constants";
 import { isPaddleInlineCheckoutReady } from "@/lib/billing/paddle-env";
@@ -113,10 +114,12 @@ export function BillingPanel({ billing, canManageBilling, customerEmail }: Billi
             </p>
           </div>
           {inlineCheckoutReady ? (
-            <PaddleInlineCheckout
-              companyId={billing.companyId}
-              customerEmail={customerEmail}
-            />
+            <div className="w-full max-w-xl">
+              <PaddleInlineCheckout
+                companyId={billing.companyId}
+                customerEmail={customerEmail}
+              />
+            </div>
           ) : billing.checkoutUrl ? (
             <a
               href={billing.checkoutUrl}

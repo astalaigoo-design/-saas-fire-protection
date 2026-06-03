@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import {
   CheckoutEventNames,
   initializePaddle,
@@ -12,7 +12,11 @@ import {
   getPaddlePriceId,
 } from "@/lib/billing/paddle-env";
 
-const FRAME_CLASS = "paddle-checkout-frame";
+/** Class name passed to Paddle `frameTarget` (no leading dot). */
+export const PADDLE_CHECKOUT_FRAME_CLASS = "paddle-checkout-frame";
+
+const FRAME_STYLE =
+  "width: 100%; min-width: 312px; min-height: 450px; background-color: var(--card); border: none; border-radius: 0.75rem;";
 
 type PaddleInlineCheckoutProps = {
   companyId: string;
@@ -20,12 +24,12 @@ type PaddleInlineCheckoutProps = {
 };
 
 export function PaddleInlineCheckout({ companyId, customerEmail }: PaddleInlineCheckoutProps) {
+  const frameRef = useRef<HTMLDivElement>(null);
   const paddleRef = useRef<Paddle | undefined>();
-  const openedRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const token = getPaddleClientToken();
     const priceId = getPaddlePriceId();
     const environment = getPaddleEnvironment();
@@ -36,17 +40,28 @@ export function PaddleInlineCheckout({ companyId, customerEmail }: PaddleInlineC
       return;
     }
 
-    const paddleToken = token;
-    const paddlePriceId = priceId;
-    const paddleEnvironment = environment;
+    if (!frameRef.current) {
+      setError("Checkout container is not ready. Refresh and try again.");
+      setLoading(false);
+      return;
+    }
 
     let cancelled = false;
+
+    const inlineSettings = {
+      displayMode: "inline" as const,
+      frameTarget: PADDLE_CHECKOUT_FRAME_CLASS,
+      frameInitialHeight: "450",
+      frameStyle: FRAME_STYLE,
+      theme: "dark" as const,
+    };
 
     async function init() {
       try {
         const paddle = await initializePaddle({
-          token: paddleToken,
-          environment: paddleEnvironment,
+          token,
+          environment,
+          checkout: { settings: inlineSettings },
           eventCallback: (event) => {
             if (event.name === CheckoutEventNames.CHECKOUT_COMPLETED) {
               window.location.reload();
@@ -54,7 +69,7 @@ export function PaddleInlineCheckout({ companyId, customerEmail }: PaddleInlineC
           },
         });
 
-        if (cancelled) return;
+        if (cancelled || !frameRef.current) return;
 
         if (!paddle) {
           setError("Could not load Paddle checkout.");
@@ -64,20 +79,12 @@ export function PaddleInlineCheckout({ companyId, customerEmail }: PaddleInlineC
 
         paddleRef.current = paddle;
 
-        if (!openedRef.current) {
-          openedRef.current = true;
-          paddle.Checkout.open({
-            items: [{ priceId: paddlePriceId, quantity: 1 }],
-            customData: { company_id: companyId },
-            customer: customerEmail ? { email: customerEmail } : undefined,
-            settings: {
-              displayMode: "inline",
-              theme: "light",
-              frameTarget: FRAME_CLASS,
-              frameInitialHeight: 450,
-            },
-          });
-        }
+        paddle.Checkout.open({
+          items: [{ priceId, quantity: 1 }],
+          customData: { company_id: companyId },
+          customer: customerEmail ? { email: customerEmail } : undefined,
+          settings: inlineSettings,
+        });
       } catch {
         if (!cancelled) {
           setError("Could not initialize checkout. Try again or contact support.");
@@ -92,20 +99,24 @@ export function PaddleInlineCheckout({ companyId, customerEmail }: PaddleInlineC
     return () => {
       cancelled = true;
       paddleRef.current?.Checkout.close();
+      paddleRef.current = undefined;
     };
   }, [companyId, customerEmail]);
 
   return (
-    <div className="space-y-3">
+    <div className="paddle-checkout-host relative isolate overflow-hidden rounded-xl border border-border bg-card">
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading secure checkout…</p>
+        <p className="px-4 py-6 text-sm text-muted-foreground">Loading secure checkout…</p>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="px-4 py-3 text-sm text-destructive">
           {error}
         </p>
       ) : null}
-      <div className={FRAME_CLASS} />
+      <div
+        ref={frameRef}
+        className={`${PADDLE_CHECKOUT_FRAME_CLASS} min-h-[450px] w-full`}
+      />
     </div>
   );
 }
