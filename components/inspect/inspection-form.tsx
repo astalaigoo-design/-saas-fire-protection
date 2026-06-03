@@ -39,6 +39,8 @@ type InspectionFormProps = {
   writeAccess?: boolean;
   billingMessage?: string;
   checkoutUrl?: string | null;
+  inlineCheckoutReady?: boolean;
+  designPartner?: boolean;
   role?: AppRole;
   preJobBrief?: PreJobBrief | null;
 };
@@ -49,6 +51,8 @@ export function InspectionForm({
   writeAccess = true,
   billingMessage = "Subscribe to continue using GetFlareflow.",
   checkoutUrl = null,
+  inlineCheckoutReady = false,
+  designPartner = false,
   role = "technician",
   preJobBrief = null,
 }: InspectionFormProps) {
@@ -350,6 +354,8 @@ export function InspectionForm({
             message={billingMessage}
             role={role}
             checkoutUrl={checkoutUrl}
+            inlineCheckoutReady={inlineCheckoutReady}
+            designPartner={designPartner}
           />
         ) : (
           <div className="space-y-4">

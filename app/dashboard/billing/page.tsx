@@ -64,74 +64,59 @@ export default async function BillingPage() {
 
       {canManage && !isDesignPartner && !paddleCheckoutReady ? (
         <>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <section className="rounded-xl border border-primary/40 bg-card p-6 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-            {PILOT_PRICING.standard.label}
-          </p>
-          <p className="mt-2 font-heading text-3xl font-semibold text-foreground">
-            {PILOT_PRICING.standard.price}
-            <span className="text-base font-medium text-muted-foreground">
-              {PILOT_PRICING.standard.period}
-            </span>
-          </p>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            {PILOT_PRICING.standard.detail}
-          </p>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {TRIAL_DAYS}-day free trial for new workspaces.
-          </p>
-        </section>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <section className="rounded-xl border border-primary/40 bg-card p-6 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                {PILOT_PRICING.standard.label}
+              </p>
+              <p className="mt-2 font-heading text-3xl font-semibold text-foreground">
+                {PILOT_PRICING.standard.price}
+                <span className="text-base font-medium text-muted-foreground">
+                  {PILOT_PRICING.standard.period}
+                </span>
+              </p>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                {PILOT_PRICING.standard.detail}
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {TRIAL_DAYS}-day free trial for new workspaces.
+              </p>
+            </section>
 
-        <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {PILOT_PRICING.designPartner.label}
-          </p>
-          <p className="mt-2 font-heading text-3xl font-semibold text-foreground">
-            {PILOT_PRICING.designPartner.price}
-            <span className="text-base font-medium text-muted-foreground">
-              {PILOT_PRICING.designPartner.period}
-            </span>
-          </p>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            {PILOT_PRICING.designPartner.detail}
-          </p>
-          <p className="mt-2 text-xs text-muted-foreground">
-            {PILOT_PRICING.designPartner.limitNote}
-          </p>
-        </section>
-      </div>
+            <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {PILOT_PRICING.designPartner.label}
+              </p>
+              <p className="mt-2 font-heading text-3xl font-semibold text-foreground">
+                {PILOT_PRICING.designPartner.price}
+                <span className="text-base font-medium text-muted-foreground">
+                  {PILOT_PRICING.designPartner.period}
+                </span>
+              </p>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                {PILOT_PRICING.designPartner.detail}
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {PILOT_PRICING.designPartner.limitNote}
+              </p>
+            </section>
+          </div>
 
-      <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
-        <h2 className="text-base font-semibold text-foreground">Design partner?</h2>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          If you&apos;re in the pilot cohort, email us before subscribing — we&apos;ll confirm your
-          rate.
-        </p>
-        <Link
-          href={`mailto:${PILOT_SUPPORT_EMAIL}?subject=GetFlareflow%20design%20partner%20pricing`}
-          className={cn(buttonVariants({ variant: "outline" }), "mt-4 inline-flex min-h-10")}
-        >
-          Contact about pilot access
-        </Link>
-      </section>
+          <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
+            <h2 className="text-base font-semibold text-foreground">Design partner?</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              If you&apos;re in the pilot cohort, email us before subscribing — we&apos;ll confirm your
+              rate.
+            </p>
+            <Link
+              href={`mailto:${PILOT_SUPPORT_EMAIL}?subject=GetFlareflow%20design%20partner%20pricing`}
+              className={cn(buttonVariants({ variant: "outline" }), "mt-4 inline-flex min-h-10")}
+            >
+              Contact about pilot access
+            </Link>
+          </section>
         </>
-      ) : (
-        <section className="rounded-xl border border-primary/40 bg-card p-6 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-            {PILOT_PRICING.designPartner.label}
-          </p>
-          <p className="mt-2 font-heading text-3xl font-semibold text-foreground">
-            {PILOT_PRICING.designPartner.price}
-            <span className="text-base font-medium text-muted-foreground">
-              {PILOT_PRICING.designPartner.period}
-            </span>
-          </p>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            {PILOT_PRICING.designPartner.detail}
-          </p>
-        </section>
-      )}
+      ) : null}
     </div>
   );
 }

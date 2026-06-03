@@ -36,6 +36,8 @@ type InspectionFormShellProps = {
   writeAccess?: boolean;
   billingMessage?: string;
   checkoutUrl?: string | null;
+  inlineCheckoutReady?: boolean;
+  designPartner?: boolean;
   role?: AppRole;
 };
 
@@ -79,6 +81,8 @@ export function InspectionFormShell({
   writeAccess = true,
   billingMessage = "Subscribe to continue using GetFlareflow.",
   checkoutUrl = null,
+  inlineCheckoutReady = false,
+  designPartner = false,
   role = "technician",
 }: InspectionFormShellProps) {
   const [inspection, setInspection] = useState<InspectionFormData | null>(null);
@@ -179,6 +183,8 @@ export function InspectionFormShell({
       writeAccess={writeAccess}
       billingMessage={billingMessage}
       checkoutUrl={checkoutUrl}
+      inlineCheckoutReady={inlineCheckoutReady}
+      designPartner={designPartner}
       role={role}
       preJobBrief={preJobBrief}
     />

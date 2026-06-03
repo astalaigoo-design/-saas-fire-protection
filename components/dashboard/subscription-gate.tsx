@@ -4,6 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { canManageBilling, canViewBilling } from "@/lib/auth/permissions";
 import type { AppRole } from "@/lib/auth/roles";
+import {
+  canShowSubscribeCta,
+  resolveSubscribePrimaryLink,
+} from "@/lib/billing/subscribe-cta";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +15,8 @@ type SubscriptionGateBilling = {
   hasAccess: boolean;
   message: string;
   checkoutUrl: string | null;
+  inlineCheckoutReady: boolean;
+  designPartner: boolean;
 };
 
 type SubscriptionGateProps = {
@@ -24,6 +30,18 @@ export function SubscriptionGate({ billing, role, children }: SubscriptionGatePr
   const onBillingPage = pathname.startsWith("/dashboard/billing");
   const canManage = canManageBilling(role);
   const canView = canViewBilling(role);
+  const subscribeLink = canShowSubscribeCta({
+    checkoutUrl: billing.checkoutUrl,
+    inlineCheckoutReady: billing.inlineCheckoutReady,
+    designPartner: billing.designPartner,
+    canManage,
+  })
+    ? resolveSubscribePrimaryLink({
+        checkoutUrl: billing.checkoutUrl,
+        inlineCheckoutReady: billing.inlineCheckoutReady,
+        urgent: true,
+      })
+    : null;
 
   if (billing.hasAccess || onBillingPage) {
     return <>{children}</>;
@@ -42,24 +60,33 @@ export function SubscriptionGate({ billing, role, children }: SubscriptionGatePr
           <p className="mt-2 text-sm text-muted-foreground">{billing.message}</p>
           {canManage ? (
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              {billing.checkoutUrl ? (
-                <a
-                  href={billing.checkoutUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cn(buttonVariants(), "min-h-11 inline-flex")}
-                >
-                  Subscribe with Paddle
-                </a>
+              {subscribeLink ? (
+                subscribeLink.external ? (
+                  <a
+                    href={subscribeLink.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(buttonVariants(), "min-h-11 inline-flex")}
+                  >
+                    {subscribeLink.label}
+                  </a>
+                ) : (
+                  <Link
+                    href={subscribeLink.href}
+                    className={cn(buttonVariants(), "min-h-11 inline-flex")}
+                  >
+                    {subscribeLink.label}
+                  </Link>
+                )
               ) : null}
               <Link
                 href="/dashboard/billing"
                 className={cn(
-                  buttonVariants({ variant: billing.checkoutUrl ? "outline" : "default" }),
+                  buttonVariants({ variant: subscribeLink ? "outline" : "default" }),
                   "min-h-11",
                 )}
               >
-                {billing.checkoutUrl ? "Billing details" : "Open billing"}
+                {subscribeLink ? "Billing details" : "Open billing"}
               </Link>
             </div>
           ) : canView ? (

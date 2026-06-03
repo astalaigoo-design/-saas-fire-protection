@@ -2,7 +2,7 @@ import type { CompanyBillingSnapshot } from "@/lib/billing/queries";
 import { PaddleInlineCheckout } from "@/components/billing/paddle-inline-checkout";
 import { PaddlePortalButtons } from "@/components/billing/paddle-portal-buttons";
 import { PAID_CHECKOUT_ENABLED, TRIAL_DAYS } from "@/lib/billing/constants";
-import { isPaddleInlineCheckoutReady } from "@/lib/billing/paddle-env";
+import { BILLING_SUBSCRIBE_HASH } from "@/lib/billing/subscribe-cta";
 import { SubscriptionStatus } from "@prisma/client";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -31,7 +31,7 @@ function statusLabel(status: SubscriptionStatus): string {
 }
 
 export function BillingPanel({ billing, canManageBilling, customerEmail }: BillingPanelProps) {
-  const inlineCheckoutReady = isPaddleInlineCheckoutReady();
+  const inlineCheckoutReady = billing.inlineCheckoutReady;
   const showCheckout =
     PAID_CHECKOUT_ENABLED &&
     !billing.designPartner &&
@@ -105,7 +105,10 @@ export function BillingPanel({ billing, canManageBilling, customerEmail }: Billi
       </section>
 
       {showCheckout ? (
-        <section className="space-y-4 rounded-xl border border-border p-5">
+        <section
+          id={BILLING_SUBSCRIBE_HASH}
+          className="scroll-mt-24 space-y-4 rounded-xl border border-border p-5"
+        >
           <div>
             <h3 className="text-sm font-medium text-foreground">Subscribe with Paddle</h3>
             <p className="mt-1 text-sm text-muted-foreground">

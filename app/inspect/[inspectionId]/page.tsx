@@ -29,6 +29,8 @@ export default async function InspectPage({ params }: InspectPageProps) {
       writeAccess={billing?.hasAccess ?? false}
       billingMessage={billing?.message ?? "Subscribe to continue using GetFlareflow."}
       checkoutUrl={billing?.checkoutUrl ?? null}
+      inlineCheckoutReady={billing?.inlineCheckoutReady ?? false}
+      designPartner={billing?.designPartner ?? false}
       role={session.role}
     />
   );

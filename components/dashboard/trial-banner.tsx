@@ -3,6 +3,10 @@ import { SubscriptionStatus } from "@prisma/client";
 import Link from "next/link";
 import type { AppRole } from "@/lib/auth/roles";
 import { canManageBilling, canViewBilling } from "@/lib/auth/permissions";
+import {
+  canShowSubscribeCta,
+  resolveSubscribePrimaryLink,
+} from "@/lib/billing/subscribe-cta";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +30,20 @@ export function TrialBanner({ billing, role }: TrialBannerProps) {
   if (!showTrial && !showPastDue && !showExpired) return null;
 
   const urgent = showPastDue || showExpired;
+  const showSubscribe =
+    canShowSubscribeCta({
+      checkoutUrl: billing.checkoutUrl,
+      inlineCheckoutReady: billing.inlineCheckoutReady,
+      designPartner: billing.designPartner,
+      canManage,
+    }) && (showTrial || showExpired);
+  const subscribeLink = showSubscribe
+    ? resolveSubscribePrimaryLink({
+        checkoutUrl: billing.checkoutUrl,
+        inlineCheckoutReady: billing.inlineCheckoutReady,
+        urgent: showExpired,
+      })
+    : null;
 
   return (
     <div
@@ -39,25 +57,31 @@ export function TrialBanner({ billing, role }: TrialBannerProps) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p>{billing.message}</p>
         <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-          {canManage && billing.checkoutUrl && (showTrial || showExpired) ? (
-            <a
-              href={billing.checkoutUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(buttonVariants({ size: "sm" }), "min-h-10")}
-            >
-              {showExpired ? "Subscribe now" : "Subscribe before trial ends"}
-            </a>
+          {subscribeLink ? (
+            subscribeLink.external ? (
+              <a
+                href={subscribeLink.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(buttonVariants({ size: "sm" }), "min-h-10")}
+              >
+                {showExpired ? "Subscribe now" : "Subscribe before trial ends"}
+              </a>
+            ) : (
+              <Link
+                href={subscribeLink.href}
+                className={cn(buttonVariants({ size: "sm" }), "min-h-10")}
+              >
+                {showExpired ? "Subscribe now" : "Subscribe before trial ends"}
+              </Link>
+            )
           ) : null}
           {canView ? (
             <Link
               href="/dashboard/billing"
               className={cn(
                 buttonVariants({
-                  variant:
-                    canManage && billing.checkoutUrl && (showTrial || showExpired)
-                      ? "outline"
-                      : "default",
+                  variant: subscribeLink ? "outline" : "default",
                   size: "sm",
                 }),
                 "min-h-10",

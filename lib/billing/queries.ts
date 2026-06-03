@@ -1,6 +1,7 @@
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { resolveCompanyAccess, type CompanyAccess } from "@/lib/billing/access";
 import { isPaddlePortalApiConfigured } from "@/lib/billing/paddle-api";
+import { isPaddleInlineCheckoutReady } from "@/lib/billing/paddle-env";
 import { shouldShowPaidCheckout } from "@/lib/billing/design-partner";
 import { prisma } from "@/lib/prisma";
 
@@ -8,6 +9,8 @@ export type CompanyBillingSnapshot = CompanyAccess & {
   companyId: string;
   companyName: string;
   designPartner: boolean;
+  /** Paddle.js inline checkout (client token + price id). */
+  inlineCheckoutReady: boolean;
   checkoutUrl: string | null;
   /** Static portal homepage fallback (NEXT_PUBLIC_PADDLE_CUSTOMER_PORTAL_URL). */
   customerPortalUrl: string | null;
@@ -38,11 +41,13 @@ export async function getCompanyBillingSnapshot(
 
   const access = resolveCompanyAccess(company);
   const showCheckout = shouldShowPaidCheckout(company.designPartner);
+  const inlineCheckoutReady = showCheckout && isPaddleInlineCheckoutReady();
 
   return {
     companyId: company.id,
     companyName: company.name,
     designPartner: company.designPartner,
+    inlineCheckoutReady,
     checkoutUrl: showCheckout ? buildPaddleCheckoutUrl(company.id, email) : null,
     customerPortalUrl: showCheckout ? getPaddleCustomerPortalUrl() : null,
     paddleCustomerId: company.paddleCustomerId,
