@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import {
   APP_DESCRIPTION,
   APP_NAME,
@@ -17,6 +17,12 @@ export function getMetadataBase(): URL {
   return new URL(getAppOrigin());
 }
 
+export function buildRootViewport(): Viewport {
+  return {
+    themeColor: "#020617",
+  };
+}
+
 export function buildRootMetadata(): Metadata {
   const title = `${APP_NAME} — ${APP_TAGLINE}`;
 
@@ -28,7 +34,6 @@ export function buildRootMetadata(): Metadata {
     },
     description: APP_DESCRIPTION,
     manifest: "/manifest.webmanifest",
-    themeColor: "#020617",
     appleWebApp: {
       capable: true,
       statusBarStyle: "black-translucent",
