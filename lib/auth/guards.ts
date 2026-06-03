@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import type { AppRole } from "./roles";
 import {
+  canManageBilling,
   canManageCustomers,
   canManageJobs,
   canManageOrgSettings,
@@ -29,4 +30,9 @@ export function ensureCanManageOrgSettings(role: AppRole | null): void {
 export function ensureCanViewBilling(role: AppRole | null): void {
   requireAppRole(role);
   if (!canViewBilling(role)) redirect("/dashboard");
+}
+
+export function ensureCanManageBilling(role: AppRole | null): void {
+  requireAppRole(role);
+  if (!canManageBilling(role)) redirect("/dashboard");
 }
