@@ -16,7 +16,10 @@ export default defineConfig({
     seed: "npx tsx prisma/seed.ts",
   },
   datasource: {
-    // Use process.env (not env()) so `prisma generate` works when only DATABASE_URL is set.
-    url: process.env.DIRECT_URL ?? process.env.DATABASE_URL ?? "",
+    // Prefer DIRECT_URL for migrate deploy; fall back if unset or empty (Vercel placeholder).
+    url:
+      process.env.DIRECT_URL?.trim() ||
+      process.env.DATABASE_URL?.trim() ||
+      "",
   },
 });
