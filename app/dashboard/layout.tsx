@@ -58,7 +58,7 @@ export default async function DashboardLayout({
             >
               <BrandLogo logoClassName="size-9" />
             </Link>
-            <DashboardHeaderActions role={session.role} />
+            <DashboardHeaderActions />
           </div>
           <div className="px-4 pb-3">
             <DashboardNavMobile items={navItems} />
@@ -67,7 +67,7 @@ export default async function DashboardLayout({
 
         <header className="sticky top-0 z-40 hidden border-b border-border bg-card/80 backdrop-blur-md lg:block">
           <div className="flex items-center justify-end px-6 py-3">
-            <DashboardHeaderActions role={session.role} />
+            <DashboardHeaderActions />
           </div>
         </header>
 
