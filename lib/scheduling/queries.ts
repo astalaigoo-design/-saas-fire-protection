@@ -1,5 +1,11 @@
 import type { InspectionStatus, Prisma } from "@prisma/client";
+import {
+  branchScopeFromSession,
+  buildingWhereFromScope,
+  inspectionWhereFromScope,
+} from "@/lib/branches/scope";
 import { buildingLabel } from "@/lib/customers/format";
+import type { DashboardSession } from "@/lib/dashboard/session";
 import { getMonthRangeFromParts } from "@/lib/scheduling/calendar";
 import { prisma } from "@/lib/prisma";
 
@@ -25,15 +31,16 @@ export type CalendarInspection = Prisma.InspectionGetPayload<{
 }>;
 
 export async function getCalendarInspections(
-  companyId: string,
+  session: DashboardSession,
   year: number,
   month: number,
 ): Promise<CalendarInspection[]> {
   const { start, end } = getMonthRangeFromParts(year, month);
+  const scope = branchScopeFromSession(session);
 
   return prisma.inspection.findMany({
     where: {
-      companyId,
+      ...inspectionWhereFromScope(scope, session.companyId),
       scheduledAt: { gte: start, lt: end },
       status: { not: "cancelled" as InspectionStatus },
     },
@@ -54,10 +61,15 @@ export type ScheduleFormData = {
   technicians: { id: string; label: string }[];
 };
 
-export async function getScheduleFormData(companyId: string): Promise<ScheduleFormData> {
+export async function getScheduleFormData(
+  session: DashboardSession,
+): Promise<ScheduleFormData> {
+  const scope = branchScopeFromSession(session);
+  const buildingWhere = buildingWhereFromScope(scope, session.companyId);
+
   const [buildings, inspectionTypes, technicians] = await Promise.all([
     prisma.building.findMany({
-      where: { customer: { companyId } },
+      where: buildingWhere,
       select: {
         id: true,
         name: true,
@@ -68,12 +80,12 @@ export async function getScheduleFormData(companyId: string): Promise<ScheduleFo
       orderBy: [{ customer: { name: "asc" } }, { addressLine1: "asc" }],
     }),
     prisma.inspectionType.findMany({
-      where: { companyId },
+      where: { companyId: session.companyId },
       select: { id: true, name: true, code: true },
       orderBy: { name: "asc" },
     }),
     prisma.user.findMany({
-      where: { companyId, role: "technician", active: true },
+      where: { companyId: session.companyId, role: "technician", active: true },
       select: { id: true, name: true, email: true },
       orderBy: { name: "asc" },
     }),

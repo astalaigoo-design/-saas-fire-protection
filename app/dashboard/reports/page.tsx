@@ -51,8 +51,8 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   const highlightQuoteId = searchParams?.quote?.trim();
 
   const [{ quotes, schemaReady }, reports] = await Promise.all([
-    listCompanyQuotesSafe(session.companyId),
-    listCompanyReportsSafe(session.companyId),
+    listCompanyQuotesSafe(session),
+    listCompanyReportsSafe(session),
   ]);
   const draftQuotes = quotes.filter((quote) => quote.status === "draft");
   const sentQuotes = quotes.filter((quote) => quote.status === "sent");

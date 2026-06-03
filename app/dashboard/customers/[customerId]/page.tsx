@@ -23,8 +23,8 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
   ensureCanManageCustomers(session.role);
 
   const [customer, inspections] = await Promise.all([
-    getCustomerById(session.companyId, params.customerId),
-    getCustomerInspectionHistory(session.companyId, params.customerId),
+    getCustomerById(session, params.customerId),
+    getCustomerInspectionHistory(session, params.customerId),
   ]);
 
   if (!customer) notFound();

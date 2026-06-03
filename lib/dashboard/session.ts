@@ -1,10 +1,12 @@
 import { currentUser } from "@clerk/nextjs/server";
 import type { AppRole } from "@/lib/auth/roles";
 import {
+  BRANCH_METADATA_KEY,
   COMPANY_METADATA_KEY,
   parseAppRoleFromMetadata,
   resolveAppRole,
 } from "@/lib/auth/roles";
+import { readBranchCookie, resolveActiveBranchId } from "@/lib/branches/active-branch";
 import { ensureUserMembership } from "@/lib/dashboard/resolve-membership";
 
 export type DashboardSession = {
@@ -14,6 +16,10 @@ export type DashboardSession = {
   companyId: string;
   companyName: string;
   role: AppRole;
+  /** Assigned branch for admin/technician; null = company-wide (owner). */
+  userBranchId: string | null;
+  /** Effective filter (owner cookie or user assignment). */
+  activeBranchId: string | null;
 };
 
 export async function getDashboardSession(): Promise<DashboardSession | null> {
@@ -42,12 +48,21 @@ export async function getDashboardSession(): Promise<DashboardSession | null> {
     [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ").trim() || null;
   const resolvedRole = role ?? roleFromMetadata;
 
+  const branchIdRaw = (clerkUser.publicMetadata as Record<string, unknown> | undefined)?.[
+    BRANCH_METADATA_KEY
+  ];
+  const branchIdFromMetadata =
+    typeof branchIdRaw === "string" && branchIdRaw.trim().length > 0
+      ? branchIdRaw.trim()
+      : null;
+
   const membershipResult = await ensureUserMembership({
     clerkUserId: clerkUser.id,
     email,
     name,
     role: resolvedRole,
     companyIdFromMetadata,
+    branchIdFromMetadata,
   });
 
   if (!membershipResult.ok) {
@@ -60,6 +75,13 @@ export async function getDashboardSession(): Promise<DashboardSession | null> {
   }
 
   const appUser = membershipResult.membership;
+  const cookieBranchId = await readBranchCookie();
+  const activeBranchId = await resolveActiveBranchId({
+    companyId: appUser.companyId,
+    role: resolvedRole,
+    userBranchId: appUser.branchId,
+    cookieBranchId,
+  });
 
   return {
     clerkUserId: clerkUser.id,
@@ -68,5 +90,7 @@ export async function getDashboardSession(): Promise<DashboardSession | null> {
     companyId: appUser.companyId,
     companyName: appUser.company.name,
     role: resolvedRole,
+    userBranchId: appUser.branchId,
+    activeBranchId,
   };
 }

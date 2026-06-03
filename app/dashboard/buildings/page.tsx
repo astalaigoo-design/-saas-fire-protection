@@ -16,7 +16,7 @@ export default async function BuildingsPage() {
   if (!session) redirect("/sign-in");
   ensureCanManageCustomers(session.role);
 
-  const buildings = await listCompanyBuildings(session.companyId);
+  const buildings = await listCompanyBuildings(session);
 
   return (
     <div className="space-y-6">

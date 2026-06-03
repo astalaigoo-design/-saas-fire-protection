@@ -33,7 +33,7 @@ export default async function ScheduleInspectionPage({
   if (!session) redirect("/sign-in");
   ensureCanManageJobs(session.role);
 
-  const formData = await getScheduleFormData(session.companyId);
+  const formData = await getScheduleFormData(session);
   const defaultDate = resolveDefaultDate(searchParams);
   const buildingIdParam = searchParams.buildingId;
   const defaultBuildingId =

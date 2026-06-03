@@ -7,6 +7,7 @@ import { canManageCustomers } from "@/lib/auth/permissions";
 import { requireWritableTenant } from "@/lib/billing/guards";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { createCustomerSchema } from "@/lib/customers/schemas";
+import { getDefaultBranchId } from "@/lib/branches/default-branch";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { captureServerActionError } from "@/lib/monitoring/capture";
 import { prisma } from "@/lib/prisma";
@@ -44,10 +45,24 @@ export async function createCustomer(
     return { ok: false, error: message };
   }
 
+  const branchIdRaw = String(formData.get("branchId") ?? "").trim();
+  let branchId = branchIdRaw || session.activeBranchId || session.userBranchId;
+  if (branchId) {
+    const branch = await prisma.branch.findFirst({
+      where: { id: branchId, companyId: session.companyId },
+      select: { id: true },
+    });
+    if (!branch) branchId = null;
+  }
+  if (!branchId) {
+    branchId = await getDefaultBranchId(session.companyId);
+  }
+
   try {
     const customer = await prisma.customer.create({
       data: {
         companyId: session.companyId,
+        branchId,
         name: parsed.data.name,
         email: parsed.data.email ?? null,
         phone: parsed.data.phone ?? null,

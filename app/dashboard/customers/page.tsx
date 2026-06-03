@@ -20,7 +20,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
   ensureCanManageCustomers(session.role);
 
   const filters = parseCustomerSearchParams(searchParams);
-  const customers = await listCustomers(session.companyId, filters);
+  const customers = await listCustomers(session, filters);
 
   const description = [
     `${customers.length} ${customers.length === 1 ? "customer" : "customers"}`,

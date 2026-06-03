@@ -17,7 +17,7 @@ export default async function BuildingDetailPage({ params }: BuildingDetailPageP
   if (!session) redirect("/sign-in");
   ensureCanManageCustomers(session.role);
 
-  const data = await getBuildingDetailPageData(session.companyId, params.buildingId);
+  const data = await getBuildingDetailPageData(session, params.buildingId);
   if (!data) notFound();
 
   return (

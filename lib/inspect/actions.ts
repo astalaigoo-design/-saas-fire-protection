@@ -7,6 +7,10 @@ import {
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { canViewAllJobs } from "@/lib/auth/permissions";
+import {
+  branchScopeFromSession,
+  inspectionWhereFromScope,
+} from "@/lib/branches/scope";
 import { requireWritableTenant } from "@/lib/billing/guards";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { isInspectionLocked } from "@/lib/inspect/queries";
@@ -54,10 +58,11 @@ async function loadEditableInspection(
   inspectionId: string,
   session: NonNullable<Awaited<ReturnType<typeof getDashboardSession>>>,
 ): Promise<LoadEditableResult> {
+  const scope = branchScopeFromSession(session);
   const inspection = await prisma.inspection.findFirst({
     where: {
       id: inspectionId,
-      companyId: session.companyId,
+      ...inspectionWhereFromScope(scope, session.companyId),
       ...(canViewAllJobs(session.role)
         ? {}
         : { assignedToUserId: session.appUserId }),

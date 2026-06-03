@@ -1,4 +1,10 @@
 import type { Prisma } from "@prisma/client";
+import {
+  branchScopeFromSession,
+  customerWhereFromScope,
+  inspectionWhereFromScope,
+} from "@/lib/branches/scope";
+import type { DashboardSession } from "@/lib/dashboard/session";
 import { prisma } from "@/lib/prisma";
 import type { CustomerSearchParams } from "@/lib/customers/schemas";
 import {
@@ -29,10 +35,11 @@ export type CustomerListItem = Prisma.CustomerGetPayload<{
 }>;
 
 function buildWhere(
-  companyId: string,
+  session: DashboardSession,
   params: CustomerSearchParams,
 ): Prisma.CustomerWhereInput {
-  const and: Prisma.CustomerWhereInput[] = [{ companyId }];
+  const scope = branchScopeFromSession(session);
+  const and: Prisma.CustomerWhereInput[] = [customerWhereFromScope(scope, session.companyId)];
 
   if (params.buildings === "with") {
     and.push({ buildings: { some: {} } });
@@ -79,11 +86,11 @@ function buildOrderBy(
 }
 
 export async function listCustomers(
-  companyId: string,
+  session: DashboardSession,
   params: CustomerSearchParams,
 ): Promise<CustomerListItem[]> {
   return prisma.customer.findMany({
-    where: buildWhere(companyId, params),
+    where: buildWhere(session, params),
     orderBy: buildOrderBy(params.sort),
     select: customerListSelect,
   });
@@ -167,11 +174,12 @@ export type CustomerInspectionHistoryItem = Prisma.InspectionGetPayload<{
 }>;
 
 export async function getCustomerById(
-  companyId: string,
+  session: DashboardSession,
   customerId: string,
 ): Promise<CustomerDetail | null> {
+  const scope = branchScopeFromSession(session);
   const customer = await prisma.customer.findFirst({
-    where: { id: customerId, companyId },
+    where: { id: customerId, ...customerWhereFromScope(scope, session.companyId) },
     select: customerDetailSelect,
   });
   if (!customer) return null;
@@ -183,12 +191,13 @@ export async function getCustomerById(
 }
 
 export async function getCustomerInspectionHistory(
-  companyId: string,
+  session: DashboardSession,
   customerId: string,
 ): Promise<CustomerInspectionHistoryItem[]> {
+  const scope = branchScopeFromSession(session);
   return prisma.inspection.findMany({
     where: {
-      companyId,
+      ...inspectionWhereFromScope(scope, session.companyId),
       building: { customerId },
     },
     orderBy: [{ scheduledAt: "desc" }],

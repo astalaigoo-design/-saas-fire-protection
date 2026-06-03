@@ -1,4 +1,10 @@
 import { InspectionItemResult, InspectionStatus, QuoteStatus, ReportStatus } from "@prisma/client";
+import {
+  branchScopeFromSession,
+  buildingWhereFromScope,
+  inspectionWhereFromScope,
+  quoteWhereFromScope,
+} from "@/lib/branches/scope";
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { getMonthRange } from "@/lib/dashboard/dates";
 import { buildingLabel } from "@/lib/customers/format";
@@ -78,11 +84,22 @@ export async function getCommandCenterSnapshot(
   session: DashboardSession,
 ): Promise<CommandCenterSnapshot> {
   const { start: monthStart, end: monthEnd } = getMonthRange();
+  const scope = branchScopeFromSession(session);
+  const buildingWhere = buildingWhereFromScope(scope, session.companyId);
+  const inspectionWhere = inspectionWhereFromScope(scope, session.companyId, {
+    status: {
+      in: [
+        InspectionStatus.scheduled,
+        InspectionStatus.in_progress,
+        InspectionStatus.completed,
+      ],
+    },
+  });
 
   const [buildings, inspections, inspectionTypes, deficiencyItems, pendingQuotes, reportsSent] =
     await Promise.all([
       prisma.building.findMany({
-        where: { customer: { companyId: session.companyId } },
+        where: buildingWhere,
         select: {
           id: true,
           name: true,
@@ -93,16 +110,7 @@ export async function getCommandCenterSnapshot(
         orderBy: { updatedAt: "desc" },
       }),
       prisma.inspection.findMany({
-        where: {
-          companyId: session.companyId,
-          status: {
-            in: [
-              InspectionStatus.scheduled,
-              InspectionStatus.in_progress,
-              InspectionStatus.completed,
-            ],
-          },
-        },
+        where: inspectionWhere,
         select: {
           id: true,
           buildingId: true,
@@ -122,8 +130,9 @@ export async function getCommandCenterSnapshot(
         where: {
           result: InspectionItemResult.fail,
           inspection: {
-            companyId: session.companyId,
-            status: InspectionStatus.completed,
+            ...inspectionWhereFromScope(scope, session.companyId, {
+              status: InspectionStatus.completed,
+            }),
           },
         },
         select: {
@@ -154,7 +163,7 @@ export async function getCommandCenterSnapshot(
       }),
       prisma.quote.findMany({
         where: {
-          companyId: session.companyId,
+          ...quoteWhereFromScope(scope, session.companyId),
           status: QuoteStatus.draft,
         },
         select: {
@@ -185,7 +194,7 @@ export async function getCommandCenterSnapshot(
       }),
       prisma.report.findMany({
         where: {
-          inspection: { companyId: session.companyId },
+          inspection: inspectionWhereFromScope(scope, session.companyId),
           OR: [
             { emailedAt: { gte: monthStart, lt: monthEnd } },
             {

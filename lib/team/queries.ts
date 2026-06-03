@@ -9,6 +9,7 @@ export type TeamMemberRow = {
   name: string | null;
   email: string | null;
   role: UserRole;
+  branchName: string | null;
 };
 
 export type PendingTeamInviteRow = {
@@ -31,11 +32,24 @@ function readInviteRole(publicMetadata: unknown): string {
 }
 
 export async function listTeamMembers(session: DashboardSession): Promise<TeamMemberRow[]> {
-  return prisma.user.findMany({
+  const rows = await prisma.user.findMany({
     where: { companyId: session.companyId, active: true },
-    select: { id: true, name: true, email: true, role: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      branch: { select: { name: true } },
+    },
     orderBy: [{ role: "asc" }, { createdAt: "asc" }],
   });
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    role: row.role,
+    branchName: row.branch?.name ?? (row.role === "owner" ? "All locations" : null),
+  }));
 }
 
 export async function listPendingTeamInvites(

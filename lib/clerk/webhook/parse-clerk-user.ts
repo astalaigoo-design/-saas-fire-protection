@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  BRANCH_METADATA_KEY,
   COMPANY_METADATA_KEY,
   resolveAppRole,
   type AppRole,
@@ -26,6 +27,7 @@ export type ParsedClerkUser = {
   name: string | null;
   role: AppRole;
   companyIdFromMetadata: string | null;
+  branchIdFromMetadata: string | null;
 };
 
 export function parseClerkUserPayload(data: unknown): ParsedClerkUser | null {
@@ -49,11 +51,18 @@ export function parseClerkUserPayload(data: unknown): ParsedClerkUser | null {
       ? companyIdRaw.trim()
       : null;
 
+  const branchIdRaw = user.public_metadata[BRANCH_METADATA_KEY];
+  const branchIdFromMetadata =
+    typeof branchIdRaw === "string" && branchIdRaw.trim().length > 0
+      ? branchIdRaw.trim()
+      : null;
+
   return {
     clerkUserId: user.id,
     email: primary?.email_address ?? null,
     name,
     role: resolveAppRole(user.public_metadata, user.unsafe_metadata),
     companyIdFromMetadata,
+    branchIdFromMetadata,
   };
 }

@@ -8,6 +8,7 @@ import {
   sharedTenantCompanyId,
   shouldMigrateOffSharedTenant,
 } from "@/lib/companies/shared-tenant";
+import { resolveBranchIdForNewUser } from "@/lib/branches/default-branch";
 import { prisma } from "@/lib/prisma";
 
 export type UserMembership = User & { company: Company };
@@ -78,12 +79,36 @@ export async function listActiveMemberships(
   return Array.from(merged.values());
 }
 
+async function resolveBranchIdForMembership(
+  companyId: string,
+  role: AppRole,
+  branchIdFromMetadata?: string | null,
+): Promise<string | null> {
+  if (role === "owner") return null;
+
+  if (branchIdFromMetadata) {
+    const branch = await prisma.branch.findFirst({
+      where: { id: branchIdFromMetadata, companyId },
+      select: { id: true },
+    });
+    if (branch) return branch.id;
+  }
+
+  return resolveBranchIdForNewUser(companyId, role);
+}
+
 /** Ensure the signed-in Clerk user has an active row on the chosen company. */
 async function linkClerkUserToCompany(
   clerkUserId: string,
   companyId: string,
   input: EnsureMembershipInput,
 ): Promise<UserMembership> {
+  const branchId = await resolveBranchIdForMembership(
+    companyId,
+    input.role,
+    input.branchIdFromMetadata,
+  );
+
   return prisma.user.upsert({
     where: {
       companyId_clerkUserId: {
@@ -97,6 +122,7 @@ async function linkClerkUserToCompany(
       email: input.email,
       name: input.name,
       role: input.role,
+      branchId,
       active: true,
       deletedAt: null,
     },
@@ -117,6 +143,7 @@ export type EnsureMembershipInput = {
   name: string | null;
   role: AppRole;
   companyIdFromMetadata: string | null;
+  branchIdFromMetadata?: string | null;
 };
 
 export type EnsureMembershipResult =

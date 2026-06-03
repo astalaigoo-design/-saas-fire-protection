@@ -1,5 +1,9 @@
 import { publicReportUrl } from "@/lib/app-url";
 import { buildingLabel } from "@/lib/customers/format";
+import {
+  branchScopeFromSession,
+  inspectionWhereFromScope,
+} from "@/lib/branches/scope";
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { sendComplianceReportEmail } from "@/lib/email/send-compliance-report";
 import { isReportEmailConfigured } from "@/lib/email/env";
@@ -57,8 +61,12 @@ export async function emailComplianceReportAfterSubmit(
     };
   }
 
+  const scope = branchScopeFromSession(session);
   const data = await prisma.inspection.findFirst({
-    where: { id: inspectionId, companyId: session.companyId },
+    where: {
+      id: inspectionId,
+      ...inspectionWhereFromScope(scope, session.companyId),
+    },
     select: {
       completedAt: true,
       company: { select: { name: true, reportEmail: true } },

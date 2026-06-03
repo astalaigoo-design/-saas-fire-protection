@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { canManageOrgSettings } from "@/lib/auth/permissions";
 import { createTeamInvitation } from "@/lib/clerk/create-team-invitation";
+import { getDefaultBranchId } from "@/lib/branches/default-branch";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { prisma } from "@/lib/prisma";
 import {
@@ -59,10 +60,26 @@ export async function inviteTeamMember(
     };
   }
 
+  const branchIdRaw = String(formData.get("branchId") ?? "").trim();
+  let branchId: string;
+  if (branchIdRaw) {
+    const branch = await prisma.branch.findFirst({
+      where: { id: branchIdRaw, companyId: session.companyId },
+      select: { id: true },
+    });
+    if (!branch) {
+      return { ok: false, error: "Choose a valid branch for this invite." };
+    }
+    branchId = branch.id;
+  } else {
+    branchId = await getDefaultBranchId(session.companyId);
+  }
+
   const invite = await createTeamInvitation({
     emailAddress: parsed.data.email,
     role: parsed.data.role,
     companyId: session.companyId,
+    branchId,
   });
 
   if (!invite.ok) {

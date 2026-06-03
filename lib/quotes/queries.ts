@@ -1,3 +1,4 @@
+import { branchScopeFromSession, quoteWhereFromScope } from "@/lib/branches/scope";
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { prisma } from "@/lib/prisma";
 import { buildingLabel } from "@/lib/customers/format";
@@ -30,8 +31,9 @@ export async function getQuotePdfData(
   session: DashboardSession,
   quoteId: string,
 ): Promise<QuotePdfData | null> {
+  const scope = branchScopeFromSession(session);
   const quote = await prisma.quote.findFirst({
-    where: { id: quoteId, companyId: session.companyId },
+    where: { id: quoteId, ...quoteWhereFromScope(scope, session.companyId) },
     select: {
       id: true,
       title: true,

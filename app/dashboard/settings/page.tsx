@@ -5,7 +5,9 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { InspectionTypePacksSection } from "@/components/dashboard/inspection-type-packs-section";
+import { BranchesSettingsSection } from "@/components/dashboard/branches-settings-section";
 import { TeamInviteSection } from "@/components/dashboard/team-invite-section";
+import { listBranchesForCompany } from "@/lib/branches/queries";
 import { ensureCanManageOrgSettings } from "@/lib/auth/guards";
 import { getInspectionTypePacksData } from "@/lib/companies/inspection-type-queries";
 import { getCompanyProfile } from "@/lib/companies/queries";
@@ -17,10 +19,11 @@ export default async function OrgSettingsPage() {
   if (!session) redirect("/sign-in");
   ensureCanManageOrgSettings(session.role);
 
-  const [company, team, inspectionTypePacks] = await Promise.all([
+  const [company, team, inspectionTypePacks, branches] = await Promise.all([
     getCompanyProfile(session),
     getTeamManagementData(session),
     getInspectionTypePacksData(session),
+    listBranchesForCompany(session.companyId),
   ]);
   if (!company) redirect("/dashboard");
 
@@ -31,7 +34,13 @@ export default async function OrgSettingsPage() {
         description="Invite your team, configure company details for PDFs, and choose NFPA inspection packs."
       />
 
-      <TeamInviteSection members={team.members} pendingInvites={team.pendingInvites} />
+      <BranchesSettingsSection branches={branches} />
+
+      <TeamInviteSection
+        members={team.members}
+        pendingInvites={team.pendingInvites}
+        branches={branches}
+      />
 
       <InspectionTypePacksSection packs={inspectionTypePacks.packs} />
 

@@ -13,7 +13,7 @@ export default async function MyJobsPage() {
   if (!session) redirect("/sign-in");
   if (session.role !== "technician") redirect("/dashboard/jobs");
 
-  const jobs = await getMyAssignedInspections(session.appUserId, session.companyId);
+  const jobs = await getMyAssignedInspections(session);
 
   const catalogJobs = jobs.map((job) => ({
     inspectionId: job.id,

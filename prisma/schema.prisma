@@ -99,6 +99,7 @@ model Company {
   designPartner Boolean @default(false)
 
   users           User[]
+  branches        Branch[]
   customers       Customer[]
   inspectionTypes InspectionType[]
   inspections     Inspection[]
@@ -109,6 +110,25 @@ model Company {
   updatedAt DateTime @updatedAt
 
   @@map("companies")
+}
+
+/// Office / region under a company; customers belong to one branch.
+model Branch {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  name      String
+  isDefault Boolean @default(false)
+
+  customers Customer[]
+  users     User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@map("branches")
 }
 
 /// Staff member linked to Clerk; belongs to one company.
@@ -124,6 +144,10 @@ model User {
   active      Boolean   @default(true)
   deletedAt   DateTime?
 
+  /// Null for owners (company-wide); set for admin/technician branch access.
+  branchId String?
+  branch   Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
   inspectionsAssigned Inspection[] @relation("InspectionAssignee")
   auditEvents         AuditEvent[] @relation("AuditEventActor")
 
@@ -132,6 +156,7 @@ model User {
 
   @@unique([companyId, clerkUserId])
   @@index([companyId])
+  @@index([branchId])
   @@map("users")
 }
 
@@ -145,12 +170,16 @@ model Customer {
   email String?
   phone String?
 
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Restrict)
+
   buildings Building[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([companyId])
+  @@index([branchId])
   @@map("customers")
 }
 

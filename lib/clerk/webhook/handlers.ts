@@ -20,6 +20,7 @@ export async function handleUserCreated(data: unknown): Promise<WebhookHandlerRe
       name: user.name,
       role: user.role,
       companyIdFromMetadata: user.companyIdFromMetadata,
+      branchIdFromMetadata: user.branchIdFromMetadata,
     });
     if (!result.ok) {
       console.error("Clerk webhook user.created:", result.error, user.clerkUserId);
@@ -52,6 +53,7 @@ export async function handleUserUpdated(data: unknown): Promise<WebhookHandlerRe
       name: user.name,
       role: user.role,
       companyIdFromMetadata: user.companyIdFromMetadata,
+      branchIdFromMetadata: user.branchIdFromMetadata,
     });
     if (!result.ok) {
       console.error("Clerk webhook user.updated:", result.error, user.clerkUserId);

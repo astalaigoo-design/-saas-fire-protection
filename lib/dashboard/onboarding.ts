@@ -1,4 +1,10 @@
 import { InspectionStatus } from "@prisma/client";
+import {
+  branchScopeFromSession,
+  buildingWhereFromScope,
+  customerWhereFromScope,
+  inspectionWhereFromScope,
+} from "@/lib/branches/scope";
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { prisma } from "@/lib/prisma";
 
@@ -22,6 +28,11 @@ export type OnboardingProgress = {
 export async function getOnboardingProgress(
   session: DashboardSession,
 ): Promise<OnboardingProgress> {
+  const scope = branchScopeFromSession(session);
+  const customerWhere = customerWhereFromScope(scope, session.companyId);
+  const buildingWhere = buildingWhereFromScope(scope, session.companyId);
+  const inspectionWhere = inspectionWhereFromScope(scope, session.companyId);
+
   const [
     company,
     customerCount,
@@ -34,22 +45,18 @@ export async function getOnboardingProgress(
       where: { id: session.companyId },
       select: { logoUrl: true },
     }),
-    prisma.customer.count({ where: { companyId: session.companyId } }),
-    prisma.building.count({
-      where: { customer: { companyId: session.companyId } },
-    }),
-    prisma.inspection.count({
-      where: { companyId: session.companyId },
-    }),
+    prisma.customer.count({ where: customerWhere }),
+    prisma.building.count({ where: buildingWhere }),
+    prisma.inspection.count({ where: inspectionWhere }),
     prisma.inspection.count({
       where: {
-        companyId: session.companyId,
+        ...inspectionWhere,
         status: { in: [InspectionStatus.in_progress, InspectionStatus.completed] },
       },
     }),
     prisma.inspection.findFirst({
       where: {
-        companyId: session.companyId,
+        ...inspectionWhere,
         status: { in: [InspectionStatus.scheduled, InspectionStatus.in_progress] },
       },
       orderBy: { scheduledAt: "asc" },

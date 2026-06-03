@@ -1,11 +1,17 @@
+import {
+  branchScopeFromSession,
+  inspectionWhereFromScope,
+} from "@/lib/branches/scope";
+import type { DashboardSession } from "@/lib/dashboard/session";
 import { sortTechnicianJobs } from "@/lib/inspect/resume-job";
 import { prisma } from "@/lib/prisma";
 
-export async function getMyAssignedInspections(appUserId: string, companyId: string) {
+export async function getMyAssignedInspections(session: DashboardSession) {
+  const scope = branchScopeFromSession(session);
   const rows = await prisma.inspection.findMany({
     where: {
-      companyId,
-      assignedToUserId: appUserId,
+      ...inspectionWhereFromScope(scope, session.companyId),
+      assignedToUserId: session.appUserId,
       status: { in: ["scheduled", "in_progress"] },
     },
     orderBy: { scheduledAt: "asc" },

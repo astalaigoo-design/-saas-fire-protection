@@ -1,6 +1,7 @@
 import { SubscriptionStatus } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
 import { addTrialDays } from "@/lib/billing/access";
+import { ensureDefaultBranchForCompany } from "@/lib/branches/default-branch";
 import { DEFAULT_BOOTSTRAP_INSPECTION_TYPES } from "@/lib/inspections/inspection-type-templates";
 import { prisma } from "@/lib/prisma";
 
@@ -36,6 +37,8 @@ export async function createCompanyWithDefaults(
       name: type.name,
     })),
   });
+
+  await ensureDefaultBranchForCompany(company.id, client);
 
   return company;
 }

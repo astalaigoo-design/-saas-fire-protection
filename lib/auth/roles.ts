@@ -5,6 +5,7 @@
  */
 export const ROLE_METADATA_KEY = "role" as const;
 export const COMPANY_METADATA_KEY = "companyId" as const;
+export { BRANCH_METADATA_KEY } from "@/lib/branches/constants";
 
 export const APP_ROLES = ["owner", "admin", "technician"] as const;
 export type AppRole = (typeof APP_ROLES)[number];

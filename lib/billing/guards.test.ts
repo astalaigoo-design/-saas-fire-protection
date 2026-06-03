@@ -19,6 +19,8 @@ const session = {
   role: "owner" as const,
   email: "owner@example.com",
   companyName: "Test Co",
+  userBranchId: null,
+  activeBranchId: null,
 };
 
 describe("requireWritableTenant", () => {

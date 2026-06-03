@@ -4,10 +4,12 @@ import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { DASHBOARD_ROBOTS_METADATA } from "@/lib/seo/site-metadata";
 import { BrandLogo } from "@/components/brand-logo";
+import { BranchSwitcher } from "@/components/dashboard/branch-switcher";
 import { DashboardHeaderActions } from "@/components/dashboard/dashboard-header-actions";
 import { DashboardNav, DashboardNavMobile } from "@/components/dashboard/dashboard-nav";
 import { SubscriptionGate } from "@/components/dashboard/subscription-gate";
 import { TrialBanner } from "@/components/dashboard/trial-banner";
+import { getBranchSwitcherData } from "@/lib/branches/queries";
 import { getCompanyBillingSnapshot } from "@/lib/billing/queries";
 import { getDashboardNavItems } from "@/lib/dashboard/nav-items";
 import { getDashboardSession } from "@/lib/dashboard/session";
@@ -27,9 +29,10 @@ export default async function DashboardLayout({
     redirect("/sign-in");
   }
 
-  const [navItems, billing] = await Promise.all([
+  const [navItems, billing, branchSwitcher] = await Promise.all([
     Promise.resolve(getDashboardNavItems(session.role)),
     getCompanyBillingSnapshot(session, session.email),
+    getBranchSwitcherData(session),
   ]);
 
   const homeHref =
@@ -58,7 +61,16 @@ export default async function DashboardLayout({
             >
               <BrandLogo logoClassName="size-9" />
             </Link>
-            <DashboardHeaderActions />
+            <div className="flex items-center gap-2">
+              {branchSwitcher.canSwitch ? (
+                <BranchSwitcher
+                  branches={branchSwitcher.branches}
+                  activeBranchId={branchSwitcher.activeBranchId}
+                  label={branchSwitcher.label}
+                />
+              ) : null}
+              <DashboardHeaderActions />
+            </div>
           </div>
           <div className="px-4 pb-3">
             <DashboardNavMobile items={navItems} />
@@ -66,7 +78,14 @@ export default async function DashboardLayout({
         </header>
 
         <header className="sticky top-0 z-40 hidden border-b border-border bg-card/80 backdrop-blur-md lg:block">
-          <div className="flex items-center justify-end px-6 py-3">
+          <div className="flex items-center justify-end gap-4 px-6 py-3">
+            {branchSwitcher.canSwitch ? (
+              <BranchSwitcher
+                branches={branchSwitcher.branches}
+                activeBranchId={branchSwitcher.activeBranchId}
+                label={branchSwitcher.label}
+              />
+            ) : null}
             <DashboardHeaderActions />
           </div>
         </header>

@@ -1,5 +1,9 @@
 import type { Prisma } from "@prisma/client";
 import { canViewAllJobs } from "@/lib/auth/permissions";
+import {
+  branchScopeFromSession,
+  inspectionWhereFromScope,
+} from "@/lib/branches/scope";
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { prisma } from "@/lib/prisma";
 
@@ -52,10 +56,11 @@ export async function getInspectionForForm(
   session: DashboardSession,
   inspectionId: string,
 ): Promise<InspectionFormData | null> {
+  const scope = branchScopeFromSession(session);
   return prisma.inspection.findFirst({
     where: {
       id: inspectionId,
-      companyId: session.companyId,
+      ...inspectionWhereFromScope(scope, session.companyId),
       ...(canViewAllJobs(session.role)
         ? {}
         : { assignedToUserId: session.appUserId }),

@@ -1,5 +1,9 @@
 import { InspectionStatus, type Prisma } from "@prisma/client";
 import { canViewAllJobs } from "@/lib/auth/permissions";
+import {
+  branchScopeFromSession,
+  inspectionWhereFromScope,
+} from "@/lib/branches/scope";
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { calculateNextInspectionDue } from "@/lib/reports/next-inspection-due";
 import { prisma } from "@/lib/prisma";
@@ -100,11 +104,13 @@ export async function getComplianceReportData(
   session: DashboardSession,
   inspectionId: string,
 ): Promise<ComplianceReportData | null> {
+  const scope = branchScopeFromSession(session);
   const inspection = await prisma.inspection.findFirst({
     where: {
       id: inspectionId,
-      companyId: session.companyId,
-      status: InspectionStatus.completed,
+      ...inspectionWhereFromScope(scope, session.companyId, {
+        status: InspectionStatus.completed,
+      }),
       ...(canViewAllJobs(session.role)
         ? {}
         : { assignedToUserId: session.appUserId }),

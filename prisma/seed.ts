@@ -2,6 +2,10 @@ import { InspectionItemResult, InspectionStatus, PrismaClient, UserRole } from "
 import { DEMO_COMPANY_NAME } from "../lib/branding";
 import { syncBuildingComplianceStatus } from "../lib/buildings/sync-compliance";
 import { getWeekRange } from "../lib/dashboard/dates";
+import {
+  ensureDefaultBranchForCompany,
+  resolveBranchIdForNewUser,
+} from "../lib/branches/default-branch";
 import { buildInspectionChecklistItems } from "../lib/inspections/build-checklist";
 import { INSPECTION_TYPE_TEMPLATES } from "../lib/inspections/inspection-type-templates";
 
@@ -69,6 +73,8 @@ async function seedClerkUsers(companyId: string) {
     const clerkUserId = process.env[envKey]?.trim();
     if (!clerkUserId) continue;
 
+    const branchId = await resolveBranchIdForNewUser(companyId, role);
+
     await prisma.user.upsert({
       where: {
         companyId_clerkUserId: { companyId, clerkUserId },
@@ -78,6 +84,7 @@ async function seedClerkUsers(companyId: string) {
         companyId,
         clerkUserId,
         role,
+        branchId,
         name,
         email: process.env[`${envKey}_EMAIL`]?.trim() ?? null,
       },
@@ -113,9 +120,12 @@ async function seedSampleInspection(companyId: string) {
     where: { companyId, role: UserRole.technician },
   });
 
+  const defaultBranch = await ensureDefaultBranchForCompany(companyId);
+
   const customer = await prisma.customer.create({
     data: {
       companyId,
+      branchId: defaultBranch.id,
       name: "Riverside Property Management",
       email: "facilities@riverside-demo.example",
       phone: "+1-555-0100",

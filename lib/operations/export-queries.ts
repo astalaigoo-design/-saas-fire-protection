@@ -4,6 +4,11 @@ import {
   InspectionStatus,
   QuoteStatus,
 } from "@prisma/client";
+import {
+  branchScopeFromSession,
+  buildingWhereFromScope,
+  inspectionWhereFromScope,
+} from "@/lib/branches/scope";
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { buildingLabel } from "@/lib/customers/format";
 import {
@@ -61,9 +66,21 @@ export function dueStatusLabelForExport(status: DueInspectionRow["status"]): str
 export async function getDueBuildingsExportRows(
   session: DashboardSession,
 ): Promise<DueBuildingExportRow[]> {
+  const scope = branchScopeFromSession(session);
+  const buildingWhere = buildingWhereFromScope(scope, session.companyId);
+  const inspectionWhere = inspectionWhereFromScope(scope, session.companyId, {
+    status: {
+      in: [
+        InspectionStatus.scheduled,
+        InspectionStatus.in_progress,
+        InspectionStatus.completed,
+      ],
+    },
+  });
+
   const [buildings, inspections, inspectionTypes] = await Promise.all([
     prisma.building.findMany({
-      where: { customer: { companyId: session.companyId } },
+      where: buildingWhere,
       select: {
         id: true,
         name: true,
@@ -80,16 +97,7 @@ export async function getDueBuildingsExportRows(
       orderBy: [{ customer: { name: "asc" } }, { addressLine1: "asc" }],
     }),
     prisma.inspection.findMany({
-      where: {
-        companyId: session.companyId,
-        status: {
-          in: [
-            InspectionStatus.scheduled,
-            InspectionStatus.in_progress,
-            InspectionStatus.completed,
-          ],
-        },
-      },
+      where: inspectionWhere,
       select: {
         id: true,
         buildingId: true,
@@ -138,13 +146,13 @@ export async function getDueBuildingsExportRows(
 export async function getFailedItemsExportRows(
   session: DashboardSession,
 ): Promise<FailedItemExportRow[]> {
+  const scope = branchScopeFromSession(session);
   const items = await prisma.inspectionItem.findMany({
     where: {
       result: InspectionItemResult.fail,
-      inspection: {
-        companyId: session.companyId,
+      inspection: inspectionWhereFromScope(scope, session.companyId, {
         status: InspectionStatus.completed,
-      },
+      }),
     },
     select: {
       id: true,

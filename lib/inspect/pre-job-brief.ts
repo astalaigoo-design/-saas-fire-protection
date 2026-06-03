@@ -1,6 +1,10 @@
 import { InspectionItemResult, InspectionStatus } from "@prisma/client";
 import { canViewAllJobs } from "@/lib/auth/permissions";
 import {
+  branchScopeFromSession,
+  inspectionWhereFromScope,
+} from "@/lib/branches/scope";
+import {
   buildingLabel,
   formatBuildingAddress,
 } from "@/lib/customers/format";
@@ -61,10 +65,11 @@ export async function getPreJobBriefForInspection(
   session: DashboardSession,
   inspectionId: string,
 ): Promise<PreJobBrief | null> {
+  const scope = branchScopeFromSession(session);
   const inspection = await prisma.inspection.findFirst({
     where: {
       id: inspectionId,
-      companyId: session.companyId,
+      ...inspectionWhereFromScope(scope, session.companyId),
       ...(canViewAllJobs(session.role)
         ? {}
         : { assignedToUserId: session.appUserId }),

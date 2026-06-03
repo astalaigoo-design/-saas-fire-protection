@@ -5,6 +5,7 @@ import {
   inviteTeamMember,
   type InviteTeamMemberState,
 } from "@/lib/team/actions";
+import type { BranchListItem } from "@/lib/branches/queries";
 import type { PendingTeamInviteRow, TeamMemberRow } from "@/lib/team/queries";
 import { INVITABLE_TEAM_ROLES } from "@/lib/team/invite-schemas";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import { Label } from "@/components/ui/label";
 type TeamInviteSectionProps = {
   members: TeamMemberRow[];
   pendingInvites: PendingTeamInviteRow[];
+  branches: BranchListItem[];
 };
 
 function roleLabel(role: string): string {
@@ -38,7 +40,8 @@ function InviteSubmitButton() {
   );
 }
 
-export function TeamInviteSection({ members, pendingInvites }: TeamInviteSectionProps) {
+export function TeamInviteSection({ members, pendingInvites, branches }: TeamInviteSectionProps) {
+  const defaultBranchId = branches.find((b) => b.isDefault)?.id ?? branches[0]?.id ?? "";
   const [state, formAction] = useFormState<InviteTeamMemberState | undefined, FormData>(
     inviteTeamMember,
     undefined,
@@ -92,6 +95,26 @@ export function TeamInviteSection({ members, pendingInvites }: TeamInviteSection
             Technicians see assigned inspections only. Admins can manage customers and jobs.
           </p>
         </div>
+        {branches.length > 0 ? (
+          <div className="space-y-2">
+            <Label htmlFor="invite-branch">Branch</Label>
+            <select
+              id="invite-branch"
+              name="branchId"
+              defaultValue={defaultBranchId}
+              className="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              {branches.map((branch) => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              New members only see customers and jobs in this branch.
+            </p>
+          </div>
+        ) : null}
 
         {state?.ok === false ? (
           <p role="alert" className="text-sm text-destructive">
@@ -129,6 +152,14 @@ export function TeamInviteSection({ members, pendingInvites }: TeamInviteSection
                     </>
                   ) : null}
                   <span className="font-medium">{roleLabel(member.role)}</span>
+                  {member.branchName ? (
+                    <>
+                      <span className="mx-2 hidden sm:inline" aria-hidden>
+                        ·
+                      </span>
+                      <span>{member.branchName}</span>
+                    </>
+                  ) : null}
                 </span>
               </li>
             ))}

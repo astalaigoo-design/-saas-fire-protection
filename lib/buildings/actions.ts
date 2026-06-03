@@ -126,7 +126,7 @@ export async function updateBuilding(
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
-  const existing = await getBuildingById(session.companyId, parsed.data.buildingId);
+  const existing = await getBuildingById(session, parsed.data.buildingId);
   if (!existing) return { ok: false, error: "Building not found." };
 
   const d = parsed.data;
@@ -170,7 +170,7 @@ export async function addBuildingNote(
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
-  const existing = await getBuildingById(session.companyId, parsed.data.buildingId);
+  const existing = await getBuildingById(session, parsed.data.buildingId);
   if (!existing) return { ok: false, error: "Building not found." };
 
   await prisma.buildingNote.create({

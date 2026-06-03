@@ -1,4 +1,9 @@
 import type { ComplianceStatus, Prisma } from "@prisma/client";
+import {
+  branchScopeFromSession,
+  buildingWhereFromScope,
+} from "@/lib/branches/scope";
+import type { DashboardSession } from "@/lib/dashboard/session";
 import { prisma } from "@/lib/prisma";
 import { inspectionRowCompliance } from "@/lib/buildings/compliance";
 import { computeBuildingInspectionStats } from "@/lib/buildings/stats";
@@ -56,10 +61,11 @@ export type BuildingListItem = Prisma.BuildingGetPayload<{
 }>;
 
 export async function listCompanyBuildings(
-  companyId: string,
+  session: DashboardSession,
 ): Promise<BuildingListItem[]> {
+  const scope = branchScopeFromSession(session);
   return prisma.building.findMany({
-    where: { customer: { companyId } },
+    where: buildingWhereFromScope(scope, session.companyId),
     orderBy: [{ customer: { name: "asc" } }, { name: "asc" }],
     select: buildingListSelect,
   });
@@ -118,27 +124,28 @@ export type BuildingDetailPageData = {
 };
 
 export async function getBuildingById(
-  companyId: string,
+  session: DashboardSession,
   buildingId: string,
 ): Promise<BuildingDetailRecord | null> {
+  const scope = branchScopeFromSession(session);
   return prisma.building.findFirst({
     where: {
       id: buildingId,
-      customer: { companyId },
+      ...buildingWhereFromScope(scope, session.companyId),
     },
     select: buildingDetailSelect,
   });
 }
 
 export async function getBuildingDetailPageData(
-  companyId: string,
+  session: DashboardSession,
   buildingId: string,
 ): Promise<BuildingDetailPageData | null> {
-  const building = await getBuildingById(companyId, buildingId);
+  const building = await getBuildingById(session, buildingId);
   if (!building) return null;
 
   const inspections = await prisma.inspection.findMany({
-    where: { companyId, buildingId },
+    where: { companyId: session.companyId, buildingId },
     orderBy: [{ scheduledAt: "desc" }],
     select: inspectionWithRelationsSelect,
   });

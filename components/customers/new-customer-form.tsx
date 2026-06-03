@@ -10,9 +10,15 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { BranchListItem } from "@/lib/branches/queries";
 import { cn } from "@/lib/utils";
 
 const initialState: CreateCustomerFormState = { ok: false, error: "" };
+
+type NewCustomerFormProps = {
+  branches: BranchListItem[];
+  defaultBranchId: string | null;
+};
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -27,7 +33,7 @@ function SubmitButton() {
   );
 }
 
-export function NewCustomerForm() {
+export function NewCustomerForm({ branches, defaultBranchId }: NewCustomerFormProps) {
   const [state, formAction] = useFormState(createCustomer, initialState);
 
   return (
@@ -67,6 +73,27 @@ export function NewCustomerForm() {
               className="min-h-11"
             />
           </div>
+
+          {branches.length > 1 ? (
+            <div className="space-y-2">
+              <Label htmlFor="customer-branch">Branch</Label>
+              <select
+                id="customer-branch"
+                name="branchId"
+                defaultValue={defaultBranchId ?? undefined}
+                required
+                className="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                {branches.map((branch) => (
+                  <option key={branch.id} value={branch.id}>
+                    {branch.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : defaultBranchId ? (
+            <input type="hidden" name="branchId" value={defaultBranchId} />
+          ) : null}
 
           <div className="space-y-2">
             <Label htmlFor="customer-phone">Phone</Label>

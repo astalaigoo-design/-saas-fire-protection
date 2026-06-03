@@ -16,11 +16,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   ensureCanManageJobs(session.role);
 
   const month = parseCalendarMonth(searchParams);
-  const inspections = await getCalendarInspections(
-    session.companyId,
-    month.year,
-    month.month,
-  );
+  const inspections = await getCalendarInspections(session, month.year, month.month);
   const showScheduledBanner = searchParams.scheduled === "1";
 
   return (

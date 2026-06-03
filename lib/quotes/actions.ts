@@ -15,6 +15,7 @@ import { tryScheduleReinspectionAfterQuoteAccept } from "@/lib/quotes/accept-quo
 import { ensureQuoteShareToken } from "@/lib/quotes/share-token";
 import { recalculateQuoteTotals } from "@/lib/quotes/totals";
 import { captureServerActionError } from "@/lib/monitoring/capture";
+import { branchScopeFromSession, quoteWhereFromScope } from "@/lib/branches/scope";
 import { prisma } from "@/lib/prisma";
 
 export type QuoteLineItemsActionResult = { ok: true } | { ok: false; error: string };
@@ -72,10 +73,11 @@ export async function updateDraftQuoteLineItems(
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid quote update." };
   }
 
+  const scope = branchScopeFromSession(session);
   const quote = await prisma.quote.findFirst({
     where: {
       id: parsed.data.quoteId,
-      companyId: session.companyId,
+      ...quoteWhereFromScope(scope, session.companyId),
       status: QuoteStatus.draft,
     },
     select: {
@@ -160,10 +162,11 @@ export async function sendDraftQuote(
     return { ok: false, error: "Missing quote id." };
   }
 
+  const sendScope = branchScopeFromSession(session);
   const quote = await prisma.quote.findFirst({
     where: {
       id: quoteId,
-      companyId: session.companyId,
+      ...quoteWhereFromScope(sendScope, session.companyId),
       status: QuoteStatus.draft,
     },
     select: {
@@ -323,8 +326,13 @@ async function transitionQuoteStatus(
   const tenant = await requireWritableTenant(session);
   if (!tenant.ok) return;
 
+  const transitionScope = branchScopeFromSession(session);
   const quote = await prisma.quote.findFirst({
-    where: { id: quoteId, companyId: session.companyId, status: QuoteStatus.sent },
+    where: {
+      id: quoteId,
+      ...quoteWhereFromScope(transitionScope, session.companyId),
+      status: QuoteStatus.sent,
+    },
     select: { id: true },
   });
   if (!quote) return;
