@@ -4,7 +4,7 @@ import { CustomerContactRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { canManageCustomers } from "@/lib/auth/permissions";
 import { getDefaultBranchId } from "@/lib/branches/default-branch";
-import { canFilterBranchesByCookie } from "@/lib/branches/scope";
+import { resolveImportDefaultBranchId } from "@/lib/branches/import-default";
 import { normalizeNameKey } from "@/lib/buildings/import-csv-resolve";
 import { requireWritableTenant } from "@/lib/billing/guards";
 import {
@@ -137,9 +137,11 @@ export async function runCustomerImport(input: unknown): Promise<CustomerImportR
   if (!parsedRows.ok) return { ok: false, error: parsedRows.error };
 
   const ctx = await loadImportContext(session.companyId);
-  const defaultBranchId = canFilterBranchesByCookie(session)
-    ? (session.activeBranchId ?? ctx.defaultBranchId)
-    : ctx.defaultBranchId;
+  const defaultBranchId = resolveImportDefaultBranchId(
+    session,
+    ctx.branches,
+    ctx.defaultBranchId,
+  );
 
   const invalidRows = parsedRows.rows.filter(
     (r): r is { line: number; error: string; record: Record<string, string> } => "error" in r,

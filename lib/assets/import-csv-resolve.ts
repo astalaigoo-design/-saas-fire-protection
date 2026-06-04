@@ -12,6 +12,15 @@ import type { AssetType } from "@prisma/client";
 
 export type AssetImportPreviewStatus = "ready" | "error" | "duplicate";
 
+export type AssetImportBranchRow = {
+  id: string;
+  name: string;
+  isDefault: boolean;
+  isImportDefault: boolean;
+  defaultAssetType: AssetType | null;
+  defaultServiceIntervalMonths: number | null;
+};
+
 export type AssetImportPreviewRow = {
   line: number;
   status: AssetImportPreviewStatus;
@@ -37,10 +46,9 @@ export type ResolvedAssetImportRow = {
   status: AssetImportPreviewStatus;
   preview: AssetImportPreviewRow;
   buildingId?: string;
+  branchId?: string;
   row?: AssetImportRow;
 };
-
-type BranchRow = { id: string; name: string; isDefault: boolean };
 
 type CustomerRow = { id: string; name: string; branchId: string };
 
@@ -120,7 +128,7 @@ function resolveBuildingForRow(input: {
 
 export function resolveAssetImportRows(input: {
   rows: Array<{ line: number; data: AssetImportRow }>;
-  branches: BranchRow[];
+  branches: AssetImportBranchRow[];
   customers: CustomerRow[];
   buildings: BuildingRow[];
   existingAssetKeys: Set<string>;
@@ -144,7 +152,6 @@ export function resolveAssetImportRows(input: {
   let duplicates = 0;
 
   for (const { line, data } of input.rows) {
-    const equipment = assetTypeLabel(data.assetType);
     const tagDisplay = data.tagNumber ?? "—";
     const basePreview: AssetImportPreviewRow = {
       line,
@@ -152,7 +159,7 @@ export function resolveAssetImportRows(input: {
       branch: data.branch || "—",
       customer: data.customer,
       site: data.buildingName ?? data.addressLine1 ?? "—",
-      equipment,
+      equipment: "—",
       location: data.location,
       tag: tagDisplay,
       detail: "",
@@ -175,6 +182,26 @@ export function resolveAssetImportRows(input: {
       });
       continue;
     }
+
+    const branchDefaults = input.branches.find((b) => b.id === branchResult.branchId);
+    const assetType = data.assetType ?? branchDefaults?.defaultAssetType ?? null;
+    if (!assetType) {
+      errors += 1;
+      resolved.push({
+        line,
+        status: "error",
+        preview: {
+          ...basePreview,
+          branch: branchResult.branchLabel,
+          detail:
+            "Equipment type is required. Add asset_type in CSV or set a default equipment type for this branch in Settings → Branches.",
+        },
+      });
+      continue;
+    }
+
+    const equipment = assetTypeLabel(assetType);
+    const rowWithType = { ...data, assetType };
 
     const customerKey = normalizeNameKey(data.customer);
     const branchCustomers = customersByBranch.get(branchResult.branchId);
@@ -211,7 +238,7 @@ export function resolveAssetImportRows(input: {
     const customerId = customerMatches[0]!.id;
     const buildingResult = resolveBuildingForRow({
       customerId,
-      row: data,
+      row: rowWithType,
       buildingsForCustomer: buildingsByCustomerId.get(customerId) ?? [],
     });
 
@@ -232,9 +259,9 @@ export function resolveAssetImportRows(input: {
 
     const dedupeKey = assetDedupeKey({
       buildingId: buildingResult.buildingId,
-      tagNumber: data.tagNumber,
-      location: data.location,
-      assetType: data.assetType,
+      tagNumber: rowWithType.tagNumber,
+      location: rowWithType.location,
+      assetType,
     });
 
     if (seenInFile.has(dedupeKey)) {
@@ -246,6 +273,7 @@ export function resolveAssetImportRows(input: {
           ...basePreview,
           branch: branchResult.branchLabel,
           site: buildingResult.siteLabel,
+          equipment,
           status: "duplicate",
           detail: "Duplicate row in this file (same site, tag, or location + type).",
         },
@@ -263,15 +291,21 @@ export function resolveAssetImportRows(input: {
           ...basePreview,
           branch: branchResult.branchLabel,
           site: buildingResult.siteLabel,
+          equipment,
           status: "duplicate",
-          detail: data.tagNumber
+          detail: rowWithType.tagNumber
             ? "Equipment with this tag already exists on this site."
             : "Matching equipment already on this site (location + type).",
         },
         buildingId: buildingResult.buildingId,
+        branchId: branchResult.branchId,
       });
       continue;
     }
+
+    const intervalNote = branchDefaults?.defaultServiceIntervalMonths
+      ? ` · next due +${branchDefaults.defaultServiceIntervalMonths} mo if blank`
+      : "";
 
     ready += 1;
     resolved.push({
@@ -281,11 +315,13 @@ export function resolveAssetImportRows(input: {
         ...basePreview,
         branch: branchResult.branchLabel,
         site: buildingResult.siteLabel,
+        equipment,
         status: "ready",
-        detail: "Will add to equipment register.",
+        detail: `Will add to equipment register.${intervalNote}`,
       },
       buildingId: buildingResult.buildingId,
-      row: data,
+      branchId: branchResult.branchId,
+      row: rowWithType,
     });
   }
 

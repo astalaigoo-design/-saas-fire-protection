@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormState, useFormStatus } from "react-dom";
+import { BranchDefaultsForm } from "@/components/dashboard/branch-defaults-form";
 import { createBranch, type CreateBranchFormState } from "@/lib/branches/actions";
 import type { BranchListItem } from "@/lib/branches/queries";
 import { Button } from "@/components/ui/button";
@@ -37,25 +38,33 @@ export function BranchesSettingsSection({ branches }: BranchesSettingsSectionPro
           Branches
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Offices or regions under your company (you can add many). Each admin or technician is
-          assigned to one branch only — stored as a single branch on their user record, not multiple
-          memberships. Customers belong to one branch. Owners see all locations and can filter the
-          dashboard by branch.
+          Offices or regions under your company. Set per-branch equipment and CSV import defaults
+          below. Each admin or technician is assigned to one branch; customers belong to one branch.
+          Owners can filter the dashboard by branch (that filter also applies to imports when the CSV
+          branch column is blank).
         </p>
       </div>
 
       <ul className="divide-y divide-border rounded-lg border border-border">
         {branches.map((branch) => (
-          <li key={branch.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
-            <span className="font-medium text-foreground">
-              {branch.name}
-              {branch.isDefault ? (
-                <span className="ml-2 text-xs font-normal text-muted-foreground">Default</span>
-              ) : null}
-            </span>
-            <span className="text-muted-foreground">
-              {branch.customerCount} customer{branch.customerCount === 1 ? "" : "s"}
-            </span>
+          <li key={branch.id} className="px-4 py-3 text-sm">
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-medium text-foreground">
+                {branch.name}
+                {branch.isDefault ? (
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">
+                    Company default
+                  </span>
+                ) : null}
+                {branch.isImportDefault ? (
+                  <span className="ml-2 text-xs font-normal text-primary">CSV import default</span>
+                ) : null}
+              </span>
+              <span className="text-muted-foreground">
+                {branch.customerCount} customer{branch.customerCount === 1 ? "" : "s"}
+              </span>
+            </div>
+            <BranchDefaultsForm branch={branch} />
           </li>
         ))}
       </ul>

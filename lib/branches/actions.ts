@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { canManageOrgSettings } from "@/lib/auth/permissions";
+import { updateBranchDefaultsSchema } from "@/lib/branches/branch-defaults-schemas";
 import { BRANCH_COOKIE_NAME } from "@/lib/branches/constants";
 import { ensureDefaultBranchForCompany } from "@/lib/branches/default-branch";
 import { getDashboardSession } from "@/lib/dashboard/session";
@@ -80,4 +81,66 @@ export async function setActiveBranch(branchId: string | null): Promise<void> {
 export async function ensureCompanyHasDefaultBranch(companyId: string): Promise<string> {
   const branch = await ensureDefaultBranchForCompany(companyId);
   return branch.id;
+}
+
+export type UpdateBranchDefaultsState = { ok: true } | { ok: false; error: string };
+
+export async function updateBranchDefaults(
+  _prev: UpdateBranchDefaultsState | undefined,
+  formData: FormData,
+): Promise<UpdateBranchDefaultsState> {
+  const session = await getDashboardSession();
+  if (!session) return { ok: false, error: "You must be signed in." };
+  if (!canManageOrgSettings(session.role)) {
+    return { ok: false, error: "Only the owner can update branch defaults." };
+  }
+
+  const parsed = updateBranchDefaultsSchema.safeParse({
+    branchId: formData.get("branchId"),
+    defaultAssetType: formData.get("defaultAssetType"),
+    defaultServiceIntervalMonths: formData.get("defaultServiceIntervalMonths"),
+    isImportDefault: formData.get("isImportDefault"),
+  });
+
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  if (parsed.data.defaultServiceIntervalMonths === "invalid") {
+    return {
+      ok: false,
+      error: "Service interval must be a whole number between 1 and 60 months.",
+    };
+  }
+
+  const branch = await prisma.branch.findFirst({
+    where: { id: parsed.data.branchId, companyId: session.companyId },
+    select: { id: true },
+  });
+  if (!branch) return { ok: false, error: "Branch not found." };
+
+  await prisma.$transaction(async (tx) => {
+    if (parsed.data.isImportDefault) {
+      await tx.branch.updateMany({
+        where: { companyId: session.companyId, id: { not: branch.id } },
+        data: { isImportDefault: false },
+      });
+    }
+
+    await tx.branch.update({
+      where: { id: branch.id },
+      data: {
+        defaultAssetType: parsed.data.defaultAssetType,
+        defaultServiceIntervalMonths: parsed.data.defaultServiceIntervalMonths,
+        isImportDefault: parsed.data.isImportDefault,
+      },
+    });
+  });
+
+  revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard/buildings/import-equipment");
+  revalidatePath("/dashboard/customers/import");
+  revalidatePath("/dashboard/buildings/import");
+  revalidatePath("/dashboard/jobs/import");
+  return { ok: true };
 }

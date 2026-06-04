@@ -145,6 +145,12 @@ model Branch {
 
   name      String
   isDefault Boolean @default(false)
+  /// When CSV omits the branch column, use this branch (one per company recommended).
+  isImportDefault Boolean @default(false)
+  /// Default equipment type for manual add and imports missing asset_type.
+  defaultAssetType AssetType?
+  /// Months added to last service (or today) when next_service_due is omitted on import.
+  defaultServiceIntervalMonths Int?
 
   customers Customer[]
   users     User[]

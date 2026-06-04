@@ -18,6 +18,12 @@ import {
 import { prisma } from "@/lib/prisma";
 import { inspectionRowCompliance } from "@/lib/buildings/compliance";
 import { computeBuildingInspectionStats } from "@/lib/buildings/stats";
+import {
+  computeDefaultNextServiceDue,
+  getBranchAssetDefaults,
+  type BranchAssetDefaults,
+} from "@/lib/branches/asset-defaults";
+import { toDateInputValue } from "@/lib/scheduling/calendar";
 
 const buildingDetailSelect = {
   id: true,
@@ -42,6 +48,7 @@ const buildingDetailSelect = {
       id: true,
       name: true,
       companyId: true,
+      branchId: true,
     },
   },
   buildingNotes: {
@@ -125,12 +132,18 @@ export type BuildingInspectionRow = BuildingInspectionRecord & {
   compliance: ComplianceStatus;
 };
 
+export type BuildingAssetFormDefaults = {
+  assetType?: BranchAssetDefaults["defaultAssetType"];
+  nextServiceDue?: string;
+};
+
 export type BuildingDetailPageData = {
   building: BuildingDetailRecord;
   inspections: BuildingInspectionRow[];
   assets: BuildingAssetRow[];
   inactiveAssets: BuildingAssetRow[];
   assetAuditHistory: AuditEventForDisplay[];
+  assetFormDefaults: BuildingAssetFormDefaults;
   deficiencies: Awaited<ReturnType<typeof listDeficienciesForBuilding>>;
   assignableStaff: Awaited<ReturnType<typeof listAssignableStaff>>;
   stats: {
@@ -163,7 +176,7 @@ export async function getBuildingDetailPageData(
   const building = await getBuildingById(session, buildingId);
   if (!building) return null;
 
-  const [inspections, assets, inactiveAssets, assetAuditHistory, deficiencies, assignableStaff] =
+  const [inspections, assets, inactiveAssets, assetAuditHistory, deficiencies, assignableStaff, branchDefaults] =
     await Promise.all([
       prisma.inspection.findMany({
         where: { companyId: session.companyId, buildingId },
@@ -175,7 +188,20 @@ export async function getBuildingDetailPageData(
       listBuildingAssetAuditHistory(session, buildingId),
       listDeficienciesForBuilding(session, buildingId),
       listAssignableStaff(session),
+      getBranchAssetDefaults(building.customer.branchId),
     ]);
+
+  const assetFormDefaults: BuildingAssetFormDefaults = {};
+  if (branchDefaults?.defaultAssetType) {
+    assetFormDefaults.assetType = branchDefaults.defaultAssetType;
+  }
+  const defaultDue = computeDefaultNextServiceDue({
+    lastServiceAt: null,
+    intervalMonths: branchDefaults?.defaultServiceIntervalMonths ?? null,
+  });
+  if (defaultDue) {
+    assetFormDefaults.nextServiceDue = toDateInputValue(defaultDue);
+  }
 
   const inspectionsWithCompliance: BuildingInspectionRow[] = inspections.map((inspection) => ({
     ...inspection,
@@ -195,6 +221,7 @@ export async function getBuildingDetailPageData(
     assets,
     inactiveAssets,
     assetAuditHistory,
+    assetFormDefaults,
     deficiencies,
     assignableStaff,
     stats: {

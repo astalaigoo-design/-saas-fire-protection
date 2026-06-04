@@ -4,7 +4,7 @@ import type { RecurrenceInterval } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { canManageJobs } from "@/lib/auth/permissions";
 import { getDefaultBranchId } from "@/lib/branches/default-branch";
-import { canFilterBranchesByCookie } from "@/lib/branches/scope";
+import { resolveImportDefaultBranchId } from "@/lib/branches/import-default";
 import { requireWritableTenant } from "@/lib/billing/guards";
 import { syncBuildingComplianceStatus } from "@/lib/buildings/sync-compliance";
 import { writeAuditEvent } from "@/lib/audit/write-event";
@@ -60,7 +60,7 @@ async function loadImportContext(companyId: string) {
       prisma.branch.findMany({
         where: { companyId },
         orderBy: [{ isDefault: "desc" }, { name: "asc" }],
-        select: { id: true, name: true, isDefault: true },
+        select: { id: true, name: true, isDefault: true, isImportDefault: true },
       }),
       prisma.customer.findMany({
         where: { companyId },
@@ -192,9 +192,11 @@ export async function runScheduleImport(input: unknown): Promise<ScheduleImportR
   if (!parsedRows.ok) return { ok: false, error: parsedRows.error };
 
   const ctx = await loadImportContext(session.companyId);
-  const defaultBranchId = canFilterBranchesByCookie(session)
-    ? (session.activeBranchId ?? ctx.defaultBranchId)
-    : ctx.defaultBranchId;
+  const defaultBranchId = resolveImportDefaultBranchId(
+    session,
+    ctx.branches,
+    ctx.defaultBranchId,
+  );
 
   const invalidRows = parsedRows.rows.filter(
     (r): r is { line: number; error: string; record: Record<string, string> } => "error" in r,

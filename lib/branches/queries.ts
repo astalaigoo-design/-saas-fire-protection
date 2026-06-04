@@ -1,3 +1,4 @@
+import type { AssetType } from "@prisma/client";
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { canFilterBranchesByCookie } from "@/lib/branches/scope";
 import { prisma } from "@/lib/prisma";
@@ -6,6 +7,9 @@ export type BranchListItem = {
   id: string;
   name: string;
   isDefault: boolean;
+  isImportDefault: boolean;
+  defaultAssetType: AssetType | null;
+  defaultServiceIntervalMonths: number | null;
   customerCount: number;
 };
 
@@ -17,6 +21,9 @@ export async function listBranchesForCompany(companyId: string): Promise<BranchL
       id: true,
       name: true,
       isDefault: true,
+      isImportDefault: true,
+      defaultAssetType: true,
+      defaultServiceIntervalMonths: true,
       _count: { select: { customers: true } },
     },
   });
@@ -25,6 +32,9 @@ export async function listBranchesForCompany(companyId: string): Promise<BranchL
     id: row.id,
     name: row.name,
     isDefault: row.isDefault,
+    isImportDefault: row.isImportDefault,
+    defaultAssetType: row.defaultAssetType,
+    defaultServiceIntervalMonths: row.defaultServiceIntervalMonths,
     customerCount: row._count.customers,
   }));
 }

@@ -77,7 +77,7 @@ export const assetImportRowSchema = z
     address_line1: z.string().trim().max(200).optional().default(""),
     city: z.string().trim().max(100).optional().default(""),
     postal_code: z.string().trim().max(20).optional().default(""),
-    asset_type: z.string().trim().min(1, "Equipment type is required").max(80),
+    asset_type: z.string().trim().max(80).optional().default(""),
     tag_number: z.string().trim().max(80).optional().default(""),
     barcode: z.string().trim().max(200).optional().default(""),
     location: z.string().trim().min(1, "Location on site is required").max(200),
@@ -101,7 +101,8 @@ export const assetImportRowSchema = z
         path: ["building_name"],
       });
     }
-    if (!parseAssetTypeFromImport(data.asset_type)) {
+    const rawType = data.asset_type.trim();
+    if (rawType && !parseAssetTypeFromImport(rawType)) {
       ctx.addIssue({
         code: "custom",
         message:
@@ -117,7 +118,9 @@ export const assetImportRowSchema = z
     addressLine1: data.address_line1.trim() || undefined,
     city: data.city.trim() || undefined,
     postalCode: data.postal_code.trim() || undefined,
-    assetType: parseAssetTypeFromImport(data.asset_type)!,
+    assetType: data.asset_type.trim()
+      ? parseAssetTypeFromImport(data.asset_type.trim()) ?? undefined
+      : undefined,
     tagNumber: data.tag_number.trim() || undefined,
     barcodeValue: data.barcode.trim() || undefined,
     location: data.location,

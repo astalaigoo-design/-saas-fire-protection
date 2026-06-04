@@ -2,8 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { canManageCustomers } from "@/lib/auth/permissions";
+import { computeDefaultNextServiceDue } from "@/lib/branches/asset-defaults";
 import { getDefaultBranchId } from "@/lib/branches/default-branch";
-import { canFilterBranchesByCookie } from "@/lib/branches/scope";
+import { resolveImportDefaultBranchId } from "@/lib/branches/import-default";
 import { requireWritableTenant } from "@/lib/billing/guards";
 import {
   ASSET_IMPORT_MAX_ROWS,
@@ -61,7 +62,14 @@ async function loadImportContext(companyId: string) {
     prisma.branch.findMany({
       where: { companyId },
       orderBy: [{ isDefault: "desc" }, { name: "asc" }],
-      select: { id: true, name: true, isDefault: true },
+      select: {
+        id: true,
+        name: true,
+        isDefault: true,
+        isImportDefault: true,
+        defaultAssetType: true,
+        defaultServiceIntervalMonths: true,
+      },
     }),
     prisma.customer.findMany({
       where: { companyId },
@@ -111,7 +119,7 @@ function parseImportRows(csv: string) {
   }
 
   const canonicalHeaders = parsed.headers.map(canonicalizeAssetImportHeader);
-  const required = ["customer", "asset_type", "location"];
+  const required = ["customer", "location"];
   const missing = required.filter((key) => !canonicalHeaders.includes(key));
   if (missing.length > 0) {
     return {
@@ -191,9 +199,11 @@ export async function runAssetImport(input: unknown): Promise<AssetImportResult>
   if (!parsedRows.ok) return { ok: false, error: parsedRows.error };
 
   const ctx = await loadImportContext(session.companyId);
-  const defaultBranchId = canFilterBranchesByCookie(session)
-    ? (session.activeBranchId ?? ctx.defaultBranchId)
-    : ctx.defaultBranchId;
+  const defaultBranchId = resolveImportDefaultBranchId(
+    session,
+    ctx.branches,
+    ctx.defaultBranchId,
+  );
 
   const invalidRows = parsedRows.rows.filter(
     (r): r is { line: number; error: string; record: Record<string, string> } => "error" in r,
@@ -257,15 +267,26 @@ export async function runAssetImport(input: unknown): Promise<AssetImportResult>
         if (lastServiceAt === "invalid") {
           throw new Error("INVALID_DATE:last_service");
         }
-        const nextServiceDue = parseOptionalDate(row.nextServiceDue);
+        let nextServiceDue = parseOptionalDate(row.nextServiceDue);
         if (nextServiceDue === "invalid") {
           throw new Error("INVALID_DATE:next_service");
+        }
+
+        const branchForDefaults = item.branchId
+          ? ctx.branches.find((b) => b.id === item.branchId)
+          : undefined;
+
+        if (!nextServiceDue && branchForDefaults?.defaultServiceIntervalMonths) {
+          nextServiceDue = computeDefaultNextServiceDue({
+            lastServiceAt,
+            intervalMonths: branchForDefaults.defaultServiceIntervalMonths,
+          });
         }
 
         const asset = await tx.buildingAsset.create({
           data: {
             buildingId,
-            assetType: row.assetType,
+            assetType: row.assetType!,
             tagNumber: row.tagNumber ?? null,
             barcodeValue: row.barcodeValue ?? null,
             location: row.location,

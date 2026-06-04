@@ -46,6 +46,7 @@ export function BuildingDetailTabs({ data, defaultTab = "history" }: BuildingDet
           assets={data.assets}
           inactiveAssets={data.inactiveAssets}
           assetAuditHistory={data.assetAuditHistory}
+          assetFormDefaults={data.assetFormDefaults}
         />
       </TabsContent>
       <TabsContent value="deficiencies" className="mt-4">

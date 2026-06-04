@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { canManageCustomers } from "@/lib/auth/permissions";
 import { getDefaultBranchId } from "@/lib/branches/default-branch";
-import { canFilterBranchesByCookie } from "@/lib/branches/scope";
+import { resolveImportDefaultBranchId } from "@/lib/branches/import-default";
 import { requireWritableTenant } from "@/lib/billing/guards";
 import {
   BUILDING_IMPORT_MAX_ROWS,
@@ -50,7 +50,7 @@ async function loadImportContext(companyId: string) {
     prisma.branch.findMany({
       where: { companyId },
       orderBy: [{ isDefault: "desc" }, { name: "asc" }],
-      select: { id: true, name: true, isDefault: true },
+      select: { id: true, name: true, isDefault: true, isImportDefault: true },
     }),
     prisma.customer.findMany({
       where: { companyId },
@@ -164,9 +164,11 @@ export async function runBuildingImport(
   if (!parsedRows.ok) return { ok: false, error: parsedRows.error };
 
   const ctx = await loadImportContext(session.companyId);
-  const defaultBranchId = canFilterBranchesByCookie(session)
-    ? (session.activeBranchId ?? ctx.defaultBranchId)
-    : ctx.defaultBranchId;
+  const defaultBranchId = resolveImportDefaultBranchId(
+    session,
+    ctx.branches,
+    ctx.defaultBranchId,
+  );
 
   const invalidRows = parsedRows.rows.filter(
     (r): r is { line: number; error: string; record: Record<string, string> } =>

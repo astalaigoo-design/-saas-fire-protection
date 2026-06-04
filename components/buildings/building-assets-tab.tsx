@@ -12,6 +12,7 @@ import {
 import { assetTypeLabel } from "@/lib/assets/constants";
 import { buildingAssetLabel } from "@/lib/assets/format";
 import type { BuildingAssetRow } from "@/lib/assets/queries";
+import type { BuildingAssetFormDefaults } from "@/lib/buildings/queries";
 import { BuildingAssetEditDialog } from "@/components/buildings/building-asset-edit-dialog";
 import { BuildingAssetFormFields } from "@/components/buildings/building-asset-form-fields";
 import { BuildingAssetRegisterHistory } from "@/components/buildings/building-asset-register-history";
@@ -95,6 +96,7 @@ type BuildingAssetsTabProps = {
   assets: BuildingAssetRow[];
   inactiveAssets: BuildingAssetRow[];
   assetAuditHistory: AuditEventForDisplay[];
+  assetFormDefaults?: BuildingAssetFormDefaults;
 };
 
 export function BuildingAssetsTab({
@@ -102,6 +104,7 @@ export function BuildingAssetsTab({
   assets,
   inactiveAssets,
   assetAuditHistory,
+  assetFormDefaults,
 }: BuildingAssetsTabProps) {
   const [createState, createAction] = useFormState(createBuildingAsset, initialState);
   const [showRemoved, setShowRemoved] = useState(false);
@@ -136,7 +139,7 @@ export function BuildingAssetsTab({
                 Equipment added to the register.
               </p>
             ) : null}
-            <BuildingAssetFormFields idPrefix="new-asset" />
+            <BuildingAssetFormFields idPrefix="new-asset" defaults={assetFormDefaults} />
             <AddAssetButton />
           </form>
         </CardContent>
