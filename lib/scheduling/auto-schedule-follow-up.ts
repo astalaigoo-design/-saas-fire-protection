@@ -2,6 +2,7 @@ import { InspectionItemResult, InspectionStatus } from "@prisma/client";
 import { resolveInspectionChecklistCreateInputs } from "@/lib/inspections/resolve-checklist-items";
 import { syncBuildingComplianceStatus } from "@/lib/buildings/sync-compliance";
 import { writeAuditEvent } from "@/lib/audit/write-event";
+import { notifyTechnicianForInspection } from "@/lib/scheduling/notify-technician-job";
 import { prisma } from "@/lib/prisma";
 
 /** Days after a failed inspection to schedule the follow-up visit. */
@@ -113,6 +114,14 @@ export async function autoScheduleFollowUpInspection(input: {
       followUpDays: FOLLOW_UP_INSPECTION_DAYS,
     },
   });
+
+  if (inspection.assignedToUserId) {
+    await notifyTechnicianForInspection({
+      companyId: input.companyId,
+      inspectionId: created.id,
+      kind: "assigned",
+    });
+  }
 
   return { scheduled: true, inspectionId: created.id, scheduledAt: followUpAt };
 }

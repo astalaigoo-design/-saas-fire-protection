@@ -16,6 +16,8 @@ type InspectionCalendarProps = {
   month: CalendarMonth;
   inspections: CalendarInspection[];
   showScheduledBanner?: boolean;
+  showUpdatedBanner?: boolean;
+  canEditJobs?: boolean;
 };
 
 const weekdayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -62,6 +64,8 @@ export function InspectionCalendar({
   month,
   inspections,
   showScheduledBanner = false,
+  showUpdatedBanner = false,
+  canEditJobs = false,
 }: InspectionCalendarProps) {
   const router = useRouter();
   const byDay = groupByDay(inspections);
@@ -78,6 +82,14 @@ export function InspectionCalendar({
           className="rounded-lg border border-emerald-900/50 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200"
         >
           Inspection scheduled successfully.
+        </p>
+      ) : null}
+      {showUpdatedBanner ? (
+        <p
+          role="status"
+          className="rounded-lg border border-sky-900/50 bg-sky-950/40 px-4 py-3 text-sm text-sky-200"
+        >
+          Job updated — the assigned technician was notified by email when configured.
         </p>
       ) : null}
 
@@ -160,9 +172,14 @@ export function InspectionCalendar({
                   <ul className="space-y-1">
                     {dayInspections.slice(0, 2).map((inspection) => (
                       <li key={inspection.id}>
-                        <div
-                          className="rounded-md bg-slate-800/80 px-1.5 py-1 text-[11px] leading-tight text-slate-200"
-                          title={`${buildingLabel(inspection.building)} · ${inspection.inspectionType.name}`}
+                        <Link
+                          href={
+                            canEditJobs
+                              ? `/dashboard/jobs/${inspection.id}`
+                              : `/inspect/${inspection.id}`
+                          }
+                          className="block rounded-md bg-slate-800/80 px-1.5 py-1 text-[11px] leading-tight text-slate-200 hover:bg-slate-700/80"
+                          title={`${buildingLabel(inspection.building)} · ${inspection.inspectionType.name}${inspection.assignedTo?.name ? ` · ${inspection.assignedTo.name}` : ""}`}
                         >
                           <span
                             className={`mr-1 inline-block h-1.5 w-1.5 rounded-full ${statusDotClass[inspection.status]}`}
@@ -171,7 +188,7 @@ export function InspectionCalendar({
                           <span className="line-clamp-2">
                             {buildingLabel(inspection.building)}
                           </span>
-                        </div>
+                        </Link>
                       </li>
                     ))}
                     {dayInspections.length > 2 ? (

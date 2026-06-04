@@ -24,12 +24,20 @@ export default async function BuildingsPage() {
         title="Buildings"
         description="All sites across your customers. Open a building for inspections, photos, and reports."
         actions={
-          <Link
-            href="/dashboard/buildings/new"
-            className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-5")}
-          >
-            Add building
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/dashboard/buildings/import"
+              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-11 px-5")}
+            >
+              Import CSV
+            </Link>
+            <Link
+              href="/dashboard/buildings/new"
+              className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-5")}
+            >
+              Add building
+            </Link>
+          </div>
         }
       />
 

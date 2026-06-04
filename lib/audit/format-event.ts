@@ -38,6 +38,12 @@ export function formatAuditEventSummary(event: AuditEventForDisplay): string {
       }
       return "Inspection scheduled";
     }
+    case "inspection.rescheduled": {
+      const at = metaString(meta, "scheduledAt");
+      return at ? `Rescheduled to ${formatIsoDate(at)}` : "Inspection rescheduled";
+    }
+    case "inspection.assignee_changed":
+      return "Job assignee updated";
     case "inspection.auto_scheduled": {
       const at = metaString(meta, "scheduledAt");
       const cadence = metaString(meta, "cadence");

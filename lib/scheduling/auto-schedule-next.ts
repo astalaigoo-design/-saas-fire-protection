@@ -5,6 +5,7 @@ import { calculateNextInspectionDue } from "@/lib/reports/next-inspection-due";
 import { resolveRecurrenceInterval } from "@/lib/scheduling/recurrence-policy";
 import { syncBuildingComplianceStatus } from "@/lib/buildings/sync-compliance";
 import { writeAuditEvent } from "@/lib/audit/write-event";
+import { notifyTechnicianForInspection } from "@/lib/scheduling/notify-technician-job";
 import { prisma } from "@/lib/prisma";
 
 export type AutoScheduleNextResult =
@@ -98,6 +99,14 @@ export async function autoScheduleNextInspection(input: {
       cadence: interval,
     },
   });
+
+  if (inspection.assignedToUserId) {
+    await notifyTechnicianForInspection({
+      companyId: input.companyId,
+      inspectionId: created.id,
+      kind: "assigned",
+    });
+  }
 
   return { scheduled: true, inspectionId: created.id, scheduledAt };
 }

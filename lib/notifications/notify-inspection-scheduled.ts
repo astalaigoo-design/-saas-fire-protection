@@ -1,4 +1,5 @@
 import { createStaffNotification } from "@/lib/notifications/create";
+import { notifyTechnicianForInspection } from "@/lib/scheduling/notify-technician-job";
 import { prisma } from "@/lib/prisma";
 
 function formatScheduleDate(date: Date): string {
@@ -60,15 +61,15 @@ export async function notifyInspectionScheduled(input: {
   });
 
   if (inspection.assignedTo?.id) {
-    await createStaffNotification({
+    const occurrenceNote =
+      input.occurrenceCount > 1
+        ? `${input.occurrenceCount} recurring visits were scheduled; this email is for the first.`
+        : null;
+    await notifyTechnicianForInspection({
       companyId: input.companyId,
-      type: "inspection.assigned",
-      title: "Job assigned to you",
-      body: `${inspection.inspectionType.name} at ${buildingLabel} — ${when}.`,
-      href: `/inspect/${inspection.id}`,
-      entityType: "inspection",
-      entityId: inspection.id,
-      targetUserId: inspection.assignedTo.id,
+      inspectionId: inspection.id,
+      kind: "assigned",
+      occurrenceNote,
     });
   }
 }

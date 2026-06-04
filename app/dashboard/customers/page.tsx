@@ -43,12 +43,20 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
         title="Customers"
         description={description}
         actions={
-          <Link
-            href="/dashboard/customers/new"
-            className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-5")}
-          >
-            New customer
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/dashboard/buildings/import"
+              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-11 px-5")}
+            >
+              Import buildings
+            </Link>
+            <Link
+              href="/dashboard/customers/new"
+              className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-5")}
+            >
+              New customer
+            </Link>
+          </div>
         }
       />
 

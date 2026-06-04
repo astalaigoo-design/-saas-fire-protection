@@ -18,17 +18,20 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   const month = parseCalendarMonth(searchParams);
   const inspections = await getCalendarInspections(session, month.year, month.month);
   const showScheduledBanner = searchParams.scheduled === "1";
+  const showUpdatedBanner = searchParams.updated === "1";
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Calendar"
-        description="Inspection calendar for your company. Click a date to schedule."
+        description="Click a job to assign or reschedule and notify the technician. Click a day header to schedule new work."
       />
       <InspectionCalendar
         month={month}
         inspections={inspections}
         showScheduledBanner={showScheduledBanner}
+        showUpdatedBanner={showUpdatedBanner}
+        canEditJobs
       />
     </div>
   );

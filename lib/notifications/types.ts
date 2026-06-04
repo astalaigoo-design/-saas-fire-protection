@@ -4,6 +4,7 @@ export const STAFF_NOTIFICATION_TYPES = [
   "quote.changes_requested",
   "inspection.scheduled",
   "inspection.assigned",
+  "inspection.rescheduled",
   "report.email_failed",
 ] as const;
 
