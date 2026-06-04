@@ -6,15 +6,28 @@ const INVALID_HOSTS = new Set(["x"]);
 /** Not valid on Vercel/serverless — use Supabase pooler in deployed envs. */
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1"]);
 
+/** Strip wrapping quotes / newlines from Vercel env paste mistakes. */
+function normalizeEnvUrl(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  let value = raw.trim().replace(/\r?\n/g, "");
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
+    value = value.slice(1, -1).trim();
+  }
+  return value.length > 0 ? value : undefined;
+}
+
 export function assertValidDatabaseUrl(
   raw: string | undefined,
   label = "DATABASE_URL",
 ): string {
-  const primary = raw?.trim();
+  const primary = normalizeEnvUrl(raw);
   const fallback =
     label === "DIRECT_URL"
-      ? process.env.DATABASE_URL?.trim()
-      : process.env.DIRECT_URL?.trim();
+      ? normalizeEnvUrl(process.env.DATABASE_URL)
+      : normalizeEnvUrl(process.env.DIRECT_URL);
   const value = primary || fallback;
 
   if (!value) {
@@ -36,7 +49,8 @@ export function assertValidDatabaseUrl(
     url = new URL(value);
   } catch {
     throw new Error(
-      `${label} is not a valid URL. If your password has @ or # characters, URL-encode it.`,
+      `${label} is not a valid URL. In Vercel, paste the Supabase URI with no surrounding quotes. ` +
+        `If the password contains @, #, or %, URL-encode it.`,
     );
   }
 
@@ -66,8 +80,8 @@ export function assertValidDatabaseUrl(
 
 /** Dev-only: bump connection_limit when Supabase pooler is set to 1. */
 export function resolveDatabaseUrlForPrisma(): string {
-  const rawDatabaseUrl = process.env.DATABASE_URL?.trim();
-  const rawDirectUrl = process.env.DIRECT_URL?.trim();
+  const rawDatabaseUrl = normalizeEnvUrl(process.env.DATABASE_URL);
+  const rawDirectUrl = normalizeEnvUrl(process.env.DIRECT_URL);
   const validated = assertValidDatabaseUrl(rawDatabaseUrl || rawDirectUrl, "DATABASE_URL");
 
   if (process.env.NODE_ENV === "production") {
