@@ -62,6 +62,9 @@ const ACTION_LABELS: Record<string, string> = {
   "deficiency.assigned": "Deficiency assigned",
   "deficiency.status_changed": "Deficiency status updated",
   "deficiency.verified": "Deficiency verified on re-inspection",
+  "asset.created": "Equipment added",
+  "asset.updated": "Equipment updated",
+  "asset.retired": "Equipment removed",
   "billing.trial_reminder_sent": "Trial ending reminder sent",
 };
 

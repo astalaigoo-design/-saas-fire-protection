@@ -14,6 +14,9 @@ import { buildingAssetLabel } from "@/lib/assets/format";
 import type { BuildingAssetRow } from "@/lib/assets/queries";
 import { BuildingAssetEditDialog } from "@/components/buildings/building-asset-edit-dialog";
 import { BuildingAssetFormFields } from "@/components/buildings/building-asset-form-fields";
+import { BuildingAssetRegisterHistory } from "@/components/buildings/building-asset-register-history";
+import { BuildingInactiveAssetCard } from "@/components/buildings/building-inactive-asset-card";
+import type { AuditEventForDisplay } from "@/lib/audit/format-event";
 import { formatDate } from "@/lib/dashboard/dates";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -90,10 +93,18 @@ function RetireAssetForm({
 type BuildingAssetsTabProps = {
   buildingId: string;
   assets: BuildingAssetRow[];
+  inactiveAssets: BuildingAssetRow[];
+  assetAuditHistory: AuditEventForDisplay[];
 };
 
-export function BuildingAssetsTab({ buildingId, assets }: BuildingAssetsTabProps) {
+export function BuildingAssetsTab({
+  buildingId,
+  assets,
+  inactiveAssets,
+  assetAuditHistory,
+}: BuildingAssetsTabProps) {
   const [createState, createAction] = useFormState(createBuildingAsset, initialState);
+  const [showRemoved, setShowRemoved] = useState(false);
 
   return (
     <div className="space-y-8">
@@ -132,9 +143,28 @@ export function BuildingAssetsTab({ buildingId, assets }: BuildingAssetsTabProps
       </Card>
 
       <section className="space-y-3">
-        <h3 className="font-heading text-base font-semibold text-foreground">
-          Asset register ({assets.length})
-        </h3>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <h3 className="font-heading text-base font-semibold text-foreground">
+            Asset register ({assets.length})
+            {inactiveAssets.length > 0 ? (
+              <span className="ml-1 text-sm font-normal text-muted-foreground">
+                · {inactiveAssets.length} removed
+              </span>
+            ) : null}
+          </h3>
+          {inactiveAssets.length > 0 ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="min-h-10 shrink-0"
+              aria-pressed={showRemoved}
+              onClick={() => setShowRemoved((value) => !value)}
+            >
+              {showRemoved ? "Hide removed" : `Show removed (${inactiveAssets.length})`}
+            </Button>
+          ) : null}
+        </div>
         {assets.length === 0 ? (
           <EmptyState
             title="No equipment on file"
@@ -210,6 +240,35 @@ export function BuildingAssetsTab({ buildingId, assets }: BuildingAssetsTabProps
             ))}
           </ul>
         )}
+
+        {showRemoved && inactiveAssets.length > 0 ? (
+          <ul className="space-y-3 border-t border-border pt-4">
+            {inactiveAssets.map((asset) => (
+              <li key={asset.id}>
+                <BuildingInactiveAssetCard asset={asset} />
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
+
+      <section className="space-y-3 border-t border-border pt-8">
+        <div>
+          <h3 className="font-heading text-base font-semibold text-foreground">
+            Register history
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Adds, edits, and removals on this building. Company-wide activity is in{" "}
+            <Link
+              href="/dashboard/operations?tab=activity&entity=asset"
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
+              Command center → Activity
+            </Link>
+            .
+          </p>
+        </div>
+        <BuildingAssetRegisterHistory events={assetAuditHistory} />
       </section>
     </div>
   );

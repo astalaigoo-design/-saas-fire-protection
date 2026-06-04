@@ -17,6 +17,7 @@ const buildingAssetSelect = {
   nextServiceDue: true,
   notes: true,
   active: true,
+  retiredAt: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.BuildingAssetSelect;
@@ -39,6 +40,20 @@ export async function listBuildingAssets(
       ...(options?.includeInactive ? {} : { active: true }),
     },
     orderBy: [{ assetType: "asc" }, { location: "asc" }, { tagNumber: "asc" }],
+    select: buildingAssetSelect,
+  });
+}
+
+export async function listInactiveBuildingAssets(
+  session: DashboardSession,
+  buildingId: string,
+): Promise<BuildingAssetRow[]> {
+  const building = await getBuildingById(session, buildingId);
+  if (!building) return [];
+
+  return prisma.buildingAsset.findMany({
+    where: { buildingId, active: false },
+    orderBy: [{ retiredAt: "desc" }, { updatedAt: "desc" }],
     select: buildingAssetSelect,
   });
 }

@@ -22,7 +22,13 @@ export function BuildingDetailTabs({ data, defaultTab = "history" }: BuildingDet
       <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
         <TabsList variant="line" className="min-w-max">
           <TabsTrigger value="history">Inspection history</TabsTrigger>
-          <TabsTrigger value="assets">Equipment ({data.assets.length})</TabsTrigger>
+          <TabsTrigger value="assets">
+            Equipment ({data.assets.length}
+            {data.inactiveAssets.length > 0
+              ? ` · ${data.inactiveAssets.length} removed`
+              : ""}
+            )
+          </TabsTrigger>
           <TabsTrigger value="deficiencies">
             Deficiencies ({data.stats.openDeficiencyCount})
           </TabsTrigger>
@@ -35,7 +41,12 @@ export function BuildingDetailTabs({ data, defaultTab = "history" }: BuildingDet
         <BuildingInspectionHistoryTab inspections={data.inspections} />
       </TabsContent>
       <TabsContent value="assets" className="mt-4">
-        <BuildingAssetsTab buildingId={data.building.id} assets={data.assets} />
+        <BuildingAssetsTab
+          buildingId={data.building.id}
+          assets={data.assets}
+          inactiveAssets={data.inactiveAssets}
+          assetAuditHistory={data.assetAuditHistory}
+        />
       </TabsContent>
       <TabsContent value="deficiencies" className="mt-4">
         <BuildingDeficienciesTab

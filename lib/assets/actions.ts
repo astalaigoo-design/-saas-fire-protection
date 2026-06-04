@@ -205,9 +205,10 @@ export async function retireBuildingAsset(
   if (!existing.active) return { ok: true };
 
   try {
+    const retiredAt = new Date();
     await prisma.buildingAsset.update({
       where: { id: existing.id },
-      data: { active: false },
+      data: { active: false, retiredAt },
     });
 
     await writeAuditEvent({
@@ -219,6 +220,8 @@ export async function retireBuildingAsset(
       metadata: {
         buildingId: building.id,
         label: assetTypeLabel(existing.assetType),
+        location: existing.location,
+        tagNumber: existing.tagNumber,
       },
     });
 

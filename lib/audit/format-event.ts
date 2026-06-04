@@ -164,7 +164,12 @@ export function formatAuditEventSummary(event: AuditEventForDisplay): string {
       return "Equipment record updated";
     case "asset.retired": {
       const label = metaString(meta, "label");
-      return label ? `Equipment removed · ${label}` : "Equipment removed from register";
+      const tag = metaString(meta, "tagNumber");
+      const location = metaString(meta, "location");
+      const parts = [label, tag ? `tag ${tag}` : null, location].filter(Boolean);
+      return parts.length > 0
+        ? `Equipment removed · ${parts.join(" · ")}`
+        : "Equipment removed from register";
     }
     case "billing.trial_reminder_sent": {
       const days =
@@ -231,6 +236,8 @@ export function auditEventLinkLabel(event: AuditEventForDisplay): string {
       return "View reports";
     case "deficiency":
       return "View deficiencies";
+    case "asset":
+      return "View equipment";
     case "company":
       return "Organization";
     default:

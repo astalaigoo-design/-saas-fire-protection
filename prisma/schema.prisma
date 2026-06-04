@@ -267,6 +267,7 @@ model BuildingAsset {
   nextServiceDue DateTime?
   notes          String?   @db.Text
   active         Boolean   @default(true)
+  retiredAt      DateTime?
 
   inspectionChecks InspectionAssetCheck[]
 

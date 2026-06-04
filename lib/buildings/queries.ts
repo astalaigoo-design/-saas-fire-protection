@@ -4,7 +4,13 @@ import {
   buildingWhereFromScope,
 } from "@/lib/branches/scope";
 import type { DashboardSession } from "@/lib/dashboard/session";
-import { listBuildingAssets, type BuildingAssetRow } from "@/lib/assets/queries";
+import { listBuildingAssetAuditHistory } from "@/lib/assets/audit-history";
+import {
+  listBuildingAssets,
+  listInactiveBuildingAssets,
+  type BuildingAssetRow,
+} from "@/lib/assets/queries";
+import type { AuditEventForDisplay } from "@/lib/audit/format-event";
 import {
   listDeficienciesForBuilding,
   listAssignableStaff,
@@ -121,6 +127,8 @@ export type BuildingDetailPageData = {
   building: BuildingDetailRecord;
   inspections: BuildingInspectionRow[];
   assets: BuildingAssetRow[];
+  inactiveAssets: BuildingAssetRow[];
+  assetAuditHistory: AuditEventForDisplay[];
   deficiencies: Awaited<ReturnType<typeof listDeficienciesForBuilding>>;
   assignableStaff: Awaited<ReturnType<typeof listAssignableStaff>>;
   stats: {
@@ -153,16 +161,19 @@ export async function getBuildingDetailPageData(
   const building = await getBuildingById(session, buildingId);
   if (!building) return null;
 
-  const [inspections, assets, deficiencies, assignableStaff] = await Promise.all([
-    prisma.inspection.findMany({
-      where: { companyId: session.companyId, buildingId },
-      orderBy: [{ scheduledAt: "desc" }],
-      select: inspectionWithRelationsSelect,
-    }),
-    listBuildingAssets(session, buildingId),
-    listDeficienciesForBuilding(session, buildingId),
-    listAssignableStaff(session),
-  ]);
+  const [inspections, assets, inactiveAssets, assetAuditHistory, deficiencies, assignableStaff] =
+    await Promise.all([
+      prisma.inspection.findMany({
+        where: { companyId: session.companyId, buildingId },
+        orderBy: [{ scheduledAt: "desc" }],
+        select: inspectionWithRelationsSelect,
+      }),
+      listBuildingAssets(session, buildingId),
+      listInactiveBuildingAssets(session, buildingId),
+      listBuildingAssetAuditHistory(session, buildingId),
+      listDeficienciesForBuilding(session, buildingId),
+      listAssignableStaff(session),
+    ]);
 
   const inspectionsWithCompliance: BuildingInspectionRow[] = inspections.map((inspection) => ({
     ...inspection,
@@ -180,6 +191,8 @@ export async function getBuildingDetailPageData(
     building,
     inspections: inspectionsWithCompliance,
     assets,
+    inactiveAssets,
+    assetAuditHistory,
     deficiencies,
     assignableStaff,
     stats: {
