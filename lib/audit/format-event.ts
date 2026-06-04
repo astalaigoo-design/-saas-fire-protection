@@ -103,6 +103,13 @@ export function formatAuditEventSummary(event: AuditEventForDisplay): string {
       return metaString(meta, "name")
         ? `Customer “${metaString(meta, "name")}” added`
         : "New customer added";
+    case "customer.branch_reassigned": {
+      const name = metaString(meta, "name");
+      const branchName = metaString(meta, "branchName");
+      if (name && branchName) return `“${name}” moved to ${branchName}`;
+      if (branchName) return `Customer moved to ${branchName}`;
+      return "Customer moved to another branch";
+    }
     case "quote.sent": {
       const to = metaString(meta, "sentTo");
       return to ? `Quote emailed to ${to}` : "Repair quote sent to customer";

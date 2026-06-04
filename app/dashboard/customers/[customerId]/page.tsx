@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { CustomerBranchForm } from "@/components/customers/customer-branch-form";
 import { CustomerBuildingsSection } from "@/components/customers/customer-buildings-section";
 import { CustomerInspectionHistory } from "@/components/customers/customer-inspection-history";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { listBranchesForCompany } from "@/lib/branches/queries";
+import { canFilterBranchesByCookie } from "@/lib/branches/scope";
 import { ensureCanManageCustomers } from "@/lib/auth/guards";
 import { canManageJobs } from "@/lib/auth/permissions";
 import { formatDate } from "@/lib/dashboard/dates";
@@ -22,12 +25,17 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
   if (!session) redirect("/sign-in");
   ensureCanManageCustomers(session.role);
 
-  const [customer, inspections] = await Promise.all([
+  const [customer, inspections, branches] = await Promise.all([
     getCustomerById(session, params.customerId),
     getCustomerInspectionHistory(session, params.customerId),
+    canFilterBranchesByCookie(session)
+      ? listBranchesForCompany(session.companyId)
+      : Promise.resolve([]),
   ]);
 
   if (!customer) notFound();
+
+  const canMoveBranch = canFilterBranchesByCookie(session) && branches.length > 1;
 
   return (
     <div className="space-y-8">
@@ -52,14 +60,29 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
               <span>
                 Added {formatDate(customer.createdAt)}
               </span>
+              {!canMoveBranch && customer.branch?.name ? (
+                <span>Branch · {customer.branch.name}</span>
+              ) : null}
             </div>
           </div>
-          <Link
-            href={`/dashboard/buildings/new?customerId=${customer.id}`}
-            className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-5")}
-          >
-            Add building
-          </Link>
+          <div className="flex flex-col gap-3 sm:items-end">
+            {canMoveBranch ? (
+              <div className="flex w-full flex-col gap-1 sm:w-auto sm:items-end">
+                <p className="text-xs font-medium text-muted-foreground">Branch</p>
+                <CustomerBranchForm
+                  customerId={customer.id}
+                  branchId={customer.branchId}
+                  branches={branches}
+                />
+              </div>
+            ) : null}
+            <Link
+              href={`/dashboard/buildings/new?customerId=${customer.id}`}
+              className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-5")}
+            >
+              Add building
+            </Link>
+          </div>
         </div>
       </header>
 

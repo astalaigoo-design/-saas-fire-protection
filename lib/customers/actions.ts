@@ -7,6 +7,7 @@ import { canManageCustomers } from "@/lib/auth/permissions";
 import { requireWritableTenant } from "@/lib/billing/guards";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { createCustomerSchema } from "@/lib/customers/schemas";
+import { reassignCustomerBranchSchema } from "@/lib/customers/reassign-branch-schema";
 import { getDefaultBranchId } from "@/lib/branches/default-branch";
 import { canFilterBranchesByCookie } from "@/lib/branches/scope";
 import { requiresAssignedBranch } from "@/lib/branches/user-branch";
@@ -109,4 +110,86 @@ export async function createCustomer(
     captureServerActionError("createCustomer", error);
     return { ok: false, error: "Could not create customer. Please try again." };
   }
+}
+
+export type ReassignCustomerBranchState =
+  | { ok: true; branchName: string }
+  | { ok: false; error: string };
+
+export async function reassignCustomerBranch(
+  _prev: ReassignCustomerBranchState | undefined,
+  formData: FormData,
+): Promise<ReassignCustomerBranchState> {
+  const session = await getDashboardSession();
+  if (!session) {
+    return { ok: false, error: "You must be signed in." };
+  }
+  if (!canManageCustomers(session.role)) {
+    return { ok: false, error: "You do not have permission to update customers." };
+  }
+  if (!canFilterBranchesByCookie(session)) {
+    return { ok: false, error: "Only the owner can move customers between branches." };
+  }
+
+  const tenant = await requireWritableTenant(session);
+  if (!tenant.ok) return { ok: false, error: tenant.error };
+
+  const parsed = reassignCustomerBranchSchema.safeParse({
+    customerId: formData.get("customerId"),
+    branchId: formData.get("branchId"),
+  });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  const customer = await prisma.customer.findFirst({
+    where: { id: parsed.data.customerId, companyId: session.companyId },
+    select: { id: true, name: true, branchId: true },
+  });
+  if (!customer) {
+    return { ok: false, error: "Customer not found." };
+  }
+
+  const branch = await prisma.branch.findFirst({
+    where: { id: parsed.data.branchId, companyId: session.companyId },
+    select: { id: true, name: true },
+  });
+  if (!branch) {
+    return { ok: false, error: "Choose a valid branch." };
+  }
+
+  if (customer.branchId === branch.id) {
+    return { ok: true, branchName: branch.name };
+  }
+
+  try {
+    await prisma.customer.update({
+      where: { id: customer.id },
+      data: { branchId: branch.id },
+    });
+
+    await writeAuditEvent({
+      companyId: session.companyId,
+      actorUserId: session.appUserId,
+      action: "customer.branch_reassigned",
+      entityType: "customer",
+      entityId: customer.id,
+      metadata: {
+        name: customer.name,
+        fromBranchId: customer.branchId,
+        toBranchId: branch.id,
+        branchName: branch.name,
+      },
+    });
+  } catch (error) {
+    captureServerActionError("reassignCustomerBranch", error);
+    return { ok: false, error: "Could not update branch. Try again." };
+  }
+
+  revalidatePath("/dashboard/customers");
+  revalidatePath(`/dashboard/customers/${customer.id}`);
+  revalidatePath("/dashboard/buildings");
+  revalidatePath("/dashboard/jobs");
+  revalidatePath("/dashboard");
+  return { ok: true, branchName: branch.name };
 }

@@ -108,6 +108,8 @@ const customerDetailSelect = {
   name: true,
   email: true,
   phone: true,
+  branchId: true,
+  branch: { select: { name: true } },
   createdAt: true,
   updatedAt: true,
   buildings: {
