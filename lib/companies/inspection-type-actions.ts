@@ -7,6 +7,7 @@ import {
   getInspectionTypeTemplate,
   isKnownInspectionTypeTemplateCode,
 } from "@/lib/inspections/inspection-type-templates";
+import { ensureChecklistTemplateSeeded } from "@/lib/inspections/checklist-template-seed";
 import { captureServerActionError } from "@/lib/monitoring/capture";
 import { prisma } from "@/lib/prisma";
 
@@ -37,7 +38,7 @@ export async function enableInspectionTypePack(
   }
 
   try {
-    await prisma.inspectionType.upsert({
+    const inspectionType = await prisma.inspectionType.upsert({
       where: {
         companyId_code: { companyId: session.companyId, code: template.code },
       },
@@ -47,7 +48,10 @@ export async function enableInspectionTypePack(
         code: template.code,
         name: template.name,
       },
+      select: { id: true, code: true },
     });
+
+    await ensureChecklistTemplateSeeded(inspectionType.id, inspectionType.code);
 
     revalidatePath("/dashboard/settings");
     revalidatePath("/dashboard/jobs/new");

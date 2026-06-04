@@ -1,5 +1,5 @@
 import { InspectionStatus, QuoteStatus } from "@prisma/client";
-import { buildInspectionChecklistItems } from "@/lib/inspections/build-checklist";
+import { resolveInspectionChecklistCreateInputs } from "@/lib/inspections/resolve-checklist-items";
 import { syncBuildingComplianceStatus } from "@/lib/buildings/sync-compliance";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { prisma } from "@/lib/prisma";
@@ -117,7 +117,9 @@ export async function scheduleJobFromAcceptedQuote(input: {
     .filter(Boolean)
     .join(" ");
 
-  const checklistItems = buildInspectionChecklistItems(source.inspectionType.code);
+  const checklistItems = await resolveInspectionChecklistCreateInputs(
+    source.inspectionTypeId,
+  );
 
   const created = await prisma.$transaction(async (tx) => {
     const inspection = await tx.inspection.create({

@@ -1,6 +1,6 @@
 import type { RecurrenceInterval } from "@prisma/client";
 import { InspectionStatus } from "@prisma/client";
-import { buildInspectionChecklistItems } from "@/lib/inspections/build-checklist";
+import { resolveInspectionChecklistCreateInputs } from "@/lib/inspections/resolve-checklist-items";
 import { calculateNextInspectionDue } from "@/lib/reports/next-inspection-due";
 import { resolveRecurrenceInterval } from "@/lib/scheduling/recurrence-policy";
 import { syncBuildingComplianceStatus } from "@/lib/buildings/sync-compliance";
@@ -65,7 +65,9 @@ export async function autoScheduleNextInspection(input: {
     inspection.inspectionType.code,
   );
 
-  const checklistItems = buildInspectionChecklistItems(inspection.inspectionType.code);
+  const checklistItems = await resolveInspectionChecklistCreateInputs(
+    inspection.inspectionTypeId,
+  );
 
   const created = await prisma.inspection.create({
     data: {

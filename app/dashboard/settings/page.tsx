@@ -4,12 +4,14 @@ import { CompanySettingsForm } from "@/components/dashboard/company-settings-for
 import { PageHeader } from "@/components/dashboard/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ChecklistTemplatesSection } from "@/components/dashboard/checklist-templates-section";
 import { InspectionTypePacksSection } from "@/components/dashboard/inspection-type-packs-section";
 import { BranchesSettingsSection } from "@/components/dashboard/branches-settings-section";
 import { TeamInviteSection } from "@/components/dashboard/team-invite-section";
 import { listBranchesForCompany } from "@/lib/branches/queries";
 import { ensureCanManageOrgSettings } from "@/lib/auth/guards";
 import { getInspectionTypePacksData } from "@/lib/companies/inspection-type-queries";
+import { getChecklistTemplatesEditorData } from "@/lib/inspections/checklist-template-queries";
 import { getCompanyProfile } from "@/lib/companies/queries";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { getTeamManagementData } from "@/lib/team/queries";
@@ -19,12 +21,14 @@ export default async function OrgSettingsPage() {
   if (!session) redirect("/sign-in");
   ensureCanManageOrgSettings(session.role);
 
-  const [company, team, inspectionTypePacks, branches] = await Promise.all([
-    getCompanyProfile(session),
-    getTeamManagementData(session),
-    getInspectionTypePacksData(session),
-    listBranchesForCompany(session.companyId),
-  ]);
+  const [company, team, inspectionTypePacks, checklistTemplates, branches] =
+    await Promise.all([
+      getCompanyProfile(session),
+      getTeamManagementData(session),
+      getInspectionTypePacksData(session),
+      getChecklistTemplatesEditorData(session),
+      listBranchesForCompany(session.companyId),
+    ]);
   if (!company) redirect("/dashboard");
 
   return (
@@ -43,6 +47,8 @@ export default async function OrgSettingsPage() {
       />
 
       <InspectionTypePacksSection packs={inspectionTypePacks.packs} />
+
+      <ChecklistTemplatesSection data={checklistTemplates} />
 
       <section className="max-w-lg rounded-xl border border-border bg-card p-5 shadow-sm">
         <h2 className="font-heading text-base font-semibold text-foreground">

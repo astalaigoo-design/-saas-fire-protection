@@ -76,7 +76,8 @@ export function InspectionTypePacksSection({ packs }: InspectionTypePacksSection
         <p className="mt-1 text-sm text-muted-foreground">
           Add system-specific inspection types beyond monthly, quarterly, and annual cadence —
           wet pipe, dry pipe, sprinkler, fire alarm, and commercial kitchen (NFPA 25 / 72 /
-          96). Each pack creates citation-backed checklist items when you schedule a job.
+          96). Enable packs here, then customize each type&apos;s checklist under Checklist
+          templates below.
         </p>
       </div>
 

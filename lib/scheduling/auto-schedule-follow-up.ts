@@ -1,5 +1,5 @@
 import { InspectionItemResult, InspectionStatus } from "@prisma/client";
-import { buildInspectionChecklistItems } from "@/lib/inspections/build-checklist";
+import { resolveInspectionChecklistCreateInputs } from "@/lib/inspections/resolve-checklist-items";
 import { syncBuildingComplianceStatus } from "@/lib/buildings/sync-compliance";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { prisma } from "@/lib/prisma";
@@ -82,7 +82,9 @@ export async function autoScheduleFollowUpInspection(input: {
   });
   const notes = `Follow-up for deficiencies from ${inspection.inspectionType.name} completed ${completedLabel}.`;
 
-  const checklistItems = buildInspectionChecklistItems(inspection.inspectionType.code);
+  const checklistItems = await resolveInspectionChecklistCreateInputs(
+    inspection.inspectionTypeId,
+  );
 
   const created = await prisma.inspection.create({
     data: {

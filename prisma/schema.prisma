@@ -246,13 +246,33 @@ model InspectionType {
   code String
   name String
 
-  inspections Inspection[]
+  inspections            Inspection[]
+  checklistTemplateItems ChecklistTemplateItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([companyId, code])
   @@map("inspection_types")
+}
+
+/// Owner-editable checklist rows copied onto new inspections for this inspection type.
+model ChecklistTemplateItem {
+  id               String         @id @default(cuid())
+  inspectionTypeId String
+  inspectionType   InspectionType @relation(fields: [inspectionTypeId], references: [id], onDelete: Cascade)
+
+  label       String
+  description String? @db.Text
+  sortOrder   Int     @default(0)
+  /// Hidden items are omitted when scheduling new jobs (existing inspections unchanged).
+  hidden      Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([inspectionTypeId])
+  @@map("checklist_template_items")
 }
 
 /// Scheduled or completed inspection visit for one building.

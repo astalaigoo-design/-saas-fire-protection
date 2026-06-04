@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { canManageJobs } from "@/lib/auth/permissions";
 import { requireWritableTenant } from "@/lib/billing/guards";
 import { getDashboardSession } from "@/lib/dashboard/session";
-import { buildInspectionChecklistItems } from "@/lib/inspections/build-checklist";
+import { resolveInspectionChecklistCreateInputs } from "@/lib/inspections/resolve-checklist-items";
 import { syncBuildingComplianceStatus } from "@/lib/buildings/sync-compliance";
 import { captureServerActionError } from "@/lib/monitoring/capture";
 import { prisma } from "@/lib/prisma";
@@ -125,7 +125,9 @@ export async function scheduleInspection(
   const recurrenceInterval: RecurrenceInterval | null =
     recurrence === "none" ? null : recurrence;
 
-  const checklistItems = buildInspectionChecklistItems(entityCheck.inspectionTypeCode);
+  const checklistItems = await resolveInspectionChecklistCreateInputs(
+    parsed.data.inspectionTypeId,
+  );
 
   const redirectMonth: CalendarMonth = {
     year: scheduledAt.getFullYear(),

@@ -38,6 +38,11 @@ const checks = [
     sql: `SELECT 1 FROM information_schema.columns
           WHERE table_schema = 'public' AND table_name = 'customers' AND column_name = 'branchId'`,
   },
+  {
+    label: "checklist_template_items",
+    sql: `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'checklist_template_items'`,
+  },
 ];
 
 let failed = false;
