@@ -1,4 +1,3 @@
-import { currentUser } from "@clerk/nextjs/server";
 import type { AppRole } from "@/lib/auth/roles";
 import {
   BRANCH_METADATA_KEY,
@@ -7,6 +6,7 @@ import {
   resolveAppRole,
 } from "@/lib/auth/roles";
 import { readBranchCookie, resolveActiveBranchId } from "@/lib/branches/active-branch";
+import { getClerkProvisioningInput } from "@/lib/dashboard/clerk-provisioning-input";
 import { ensureUserMembership } from "@/lib/dashboard/resolve-membership";
 
 export type DashboardSession = {
@@ -23,53 +23,28 @@ export type DashboardSession = {
 };
 
 export async function getDashboardSession(): Promise<DashboardSession | null> {
-  const clerkUser = await currentUser();
-  if (!clerkUser) return null;
+  const input = await getClerkProvisioningInput();
+  if (!input) return null;
 
-  const roleFromMetadata = resolveAppRole(
-    clerkUser.publicMetadata as Record<string, unknown>,
-    clerkUser.unsafeMetadata as Record<string, unknown> | undefined,
-  );
-  const role = parseAppRoleFromMetadata(
-    clerkUser.publicMetadata as Record<string, unknown>,
-    clerkUser.unsafeMetadata as Record<string, unknown> | undefined,
-  );
+  let membershipResult = await ensureUserMembership(input);
 
-  const companyIdRaw = (clerkUser.publicMetadata as Record<string, unknown> | undefined)?.[
-    COMPANY_METADATA_KEY
-  ];
-  const companyIdFromMetadata =
-    typeof companyIdRaw === "string" && companyIdRaw.trim().length > 0
-      ? companyIdRaw.trim()
-      : null;
-
-  const email = clerkUser.primaryEmailAddress?.emailAddress ?? null;
-  const name =
-    [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ").trim() || null;
-  const resolvedRole = role ?? roleFromMetadata;
-
-  const branchIdRaw = (clerkUser.publicMetadata as Record<string, unknown> | undefined)?.[
-    BRANCH_METADATA_KEY
-  ];
-  const branchIdFromMetadata =
-    typeof branchIdRaw === "string" && branchIdRaw.trim().length > 0
-      ? branchIdRaw.trim()
-      : null;
-
-  const membershipResult = await ensureUserMembership({
-    clerkUserId: clerkUser.id,
-    email,
-    name,
-    role: resolvedRole,
-    companyIdFromMetadata,
-    branchIdFromMetadata,
-  });
+  if (!membershipResult.ok && input.companyIdFromMetadata) {
+    console.warn(
+      "Dashboard session: retrying membership without company metadata",
+      membershipResult.error,
+      input.clerkUserId,
+    );
+    membershipResult = await ensureUserMembership({
+      ...input,
+      companyIdFromMetadata: null,
+    });
+  }
 
   if (!membershipResult.ok) {
     console.error(
       "Dashboard session: could not resolve tenant",
       membershipResult.error,
-      clerkUser.id,
+      input.clerkUserId,
     );
     return null;
   }
@@ -78,18 +53,18 @@ export async function getDashboardSession(): Promise<DashboardSession | null> {
   const cookieBranchId = await readBranchCookie();
   const activeBranchId = await resolveActiveBranchId({
     companyId: appUser.companyId,
-    role: resolvedRole,
+    role: input.role,
     userBranchId: appUser.branchId,
     cookieBranchId,
   });
 
   return {
-    clerkUserId: clerkUser.id,
-    email: email ?? appUser.email ?? null,
+    clerkUserId: input.clerkUserId,
+    email: input.email ?? appUser.email ?? null,
     appUserId: appUser.id,
     companyId: appUser.companyId,
     companyName: appUser.company.name,
-    role: resolvedRole,
+    role: input.role,
     userBranchId: appUser.branchId,
     activeBranchId,
   };

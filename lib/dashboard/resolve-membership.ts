@@ -173,10 +173,12 @@ export async function ensureUserMembership(
         select: { id: true, name: true },
       });
       if (metaCompany && !isSharedTenantCompany(metaCompany)) {
-        return {
-          ok: false,
-          error: `No active membership for company ${input.companyIdFromMetadata}.`,
-        };
+        const fromMetadata = memberships.find(
+          (m) => m.companyId === input.companyIdFromMetadata,
+        );
+        if (fromMetadata) {
+          chosen = fromMetadata;
+        }
       }
     }
   }

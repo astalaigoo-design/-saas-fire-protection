@@ -41,7 +41,9 @@ Complete these once per environment:
 
 **If dashboard is empty or role is wrong:**
 
-New sign-ups should get both fields automatically via the Clerk webhook (`user.created`). For an existing pilot owner, run (with production `.env` / Clerk secret):
+New sign-ups are linked in the database **on first sign-in** (webhook optional). If you land on **Connect your workspace**, click **Connect workspace** — that runs the same provisioning without waiting for Clerk.
+
+For an existing pilot owner, run (with production `.env` / Clerk secret):
 
 ```bash
 npm run fix-user -- <clerk_user_id> owner
@@ -232,7 +234,7 @@ After submit:
 | CSV import fails / branch column | Migrations for `branches` + `customers.branchId`; use **Main** or match Organization branch names. |
 | Send quote does nothing | `RESEND_API_KEY`, `REPORT_EMAIL_FROM`, verified domain; customer email set. |
 | Photos fail to upload | `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, bucket `inspection-photos`. |
-| User not in database | Clerk webhook URL + `CLERK_WEBHOOK_SIGNING_SECRET`; check Vercel function logs. |
+| User not in database / stuck on account setup | App now **auto-provisions on sign-in** (no webhook required). If still stuck: open `/account-setup` → **Connect workspace**. Ops: Clerk webhook → `https://getflareflow.com/api/webhooks/clerk` + `CLERK_WEBHOOK_SIGNING_SECRET`; `npm run fix-user -- <clerk_user_id> owner` as fallback. |
 
 ---
 
