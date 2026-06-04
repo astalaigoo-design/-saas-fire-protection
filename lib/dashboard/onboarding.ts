@@ -134,10 +134,18 @@ export async function getOnboardingProgress(
       optional: true,
     },
     {
-      id: "schedule",
-      title: "Schedule an inspection",
+      id: "import-schedule",
+      title: "Import schedule from CSV",
       description:
-        "Pick a cadence or NFPA system pack — checklist items are created automatically.",
+        "Bulk-schedule visits: branch, site, inspection type, date/time, optional technician and recurrence.",
+      href: "/dashboard/jobs/import",
+      done: scheduledInspectionCount > 0,
+    },
+    {
+      id: "schedule",
+      title: "Or schedule one inspection",
+      description:
+        "Single visit from the calendar — checklist items are created from your inspection type.",
       href: "/dashboard/jobs/new",
       done: scheduledInspectionCount > 0,
     },

@@ -109,7 +109,7 @@ npm run db:verify-schema
 
 See [PRODUCTION-MIGRATIONS.md](./PRODUCTION-MIGRATIONS.md) if anything is `MISSING` (e.g. `building_assets` for equipment, `branches` for multi-location).
 
-2. Continue with the field checklist: [PILOT.md](./PILOT.md) (**Import customers** or new customer → **Import buildings** / add building → optional **Equipment** → schedule → inspect). The dashboard **Get started** card mirrors this order.
+2. Continue with the field checklist: [PILOT.md](./PILOT.md) (**Import customers** → **Import buildings** → optional **Equipment** → **Import schedule** → inspect). The dashboard **Get started** card mirrors this order.
 
 3. After each production deploy, run [PRODUCTION-SMOKE-TEST.md](./PRODUCTION-SMOKE-TEST.md).
 

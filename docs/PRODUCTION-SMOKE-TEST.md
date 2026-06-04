@@ -68,6 +68,7 @@ Use a dedicated **smoke** owner account (not a real client tenant if you can avo
 - [ ] **Organization** opens (`/dashboard/settings`).
 - [ ] **Billing** opens (`/dashboard/billing`) — trial banner or plan status renders (no crash).
 - [ ] **Command center** opens (`/dashboard/operations`) if you ship ops features.
+- [ ] **Calendar → Import schedule** loads (`/dashboard/jobs/import`) — preview + branch — owner/admin.
 - [ ] **Customers → Import CSV** loads (`/dashboard/customers/import`) — preview + branch column — owner/admin.
 - [ ] **Buildings → Import equipment** loads (`/dashboard/buildings/import-equipment`) — preview + branch — owner/admin.
 - [ ] **Buildings → Import CSV** loads (`/dashboard/buildings/import`) — owner/admin.

@@ -136,9 +136,19 @@ Requires migration `20260607120000_add_building_assets` on production (`npm run 
 
 ---
 
-## 4. Schedule one inspection
+## 4. Schedule inspections (CSV import or one-by-one)
 
-1. **Dashboard** → **Schedule inspection** (or **Calendar** / **Inspections** → schedule flow).
+### Bulk — Import schedule CSV
+
+1. **Calendar** → **Import schedule** (`/dashboard/jobs/import`).
+2. Template: `branch`, `customer`, `building_name` (or address), `inspection_type`, `scheduled_date`, `scheduled_time`, optional `technician_email`, `recurrence` (`none` / `monthly` / `quarterly` / `annual`).
+3. Preview → schedule (max 400 total visits per file; technicians notified when assigned).
+
+Sites and inspection types must already exist. Use inspection type **codes** (`annual`, `quarterly`, `monthly`) or exact type names from Organization settings.
+
+### Single visit
+
+1. **Dashboard** → **Schedule inspection** (or **Calendar** → **Schedule one job**).
 2. Select:
    - **Building** — the site from step 3.
    - **Inspection type** — e.g. **Annual Inspection**.
