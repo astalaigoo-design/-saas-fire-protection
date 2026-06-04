@@ -18,7 +18,10 @@ import {
   parseDateInputValue,
   type CalendarMonth,
 } from "@/lib/scheduling/calendar";
-import { notifyTechnicianForInspection } from "@/lib/scheduling/notify-technician-job";
+import {
+  notifyTechnicianForInspection,
+  notifyTechnicianJobUnassigned,
+} from "@/lib/scheduling/notify-technician-job";
 import { updateInspectionJobSchema } from "@/lib/scheduling/update-inspection-job-schemas";
 
 export type UpdateInspectionJobState =
@@ -137,6 +140,22 @@ export async function updateInspectionJob(
         previousScheduledAt: before.scheduledAt.toISOString(),
         scheduledAt: scheduledAt.toISOString(),
       },
+    });
+  }
+
+  if (assigneeChanged && before.assignedToUserId) {
+    const newAssignee = assigneeId
+      ? await prisma.user.findFirst({
+          where: { id: assigneeId, companyId: session.companyId },
+          select: { name: true },
+        })
+      : null;
+
+    await notifyTechnicianJobUnassigned({
+      companyId: session.companyId,
+      inspectionId: before.id,
+      previousAssigneeUserId: before.assignedToUserId,
+      newAssigneeName: newAssignee?.name ?? null,
     });
   }
 

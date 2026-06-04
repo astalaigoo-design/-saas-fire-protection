@@ -42,8 +42,14 @@ export function formatAuditEventSummary(event: AuditEventForDisplay): string {
       const at = metaString(meta, "scheduledAt");
       return at ? `Rescheduled to ${formatIsoDate(at)}` : "Inspection rescheduled";
     }
-    case "inspection.assignee_changed":
+    case "inspection.assignee_changed": {
+      const previousId = metaString(meta, "previousAssigneeId");
+      const nextId = metaString(meta, "assignedToUserId");
+      if (previousId && !nextId) return "Job unassigned";
+      if (previousId && nextId) return "Job reassigned to another technician";
+      if (!previousId && nextId) return "Job assigned to technician";
       return "Job assignee updated";
+    }
     case "inspection.auto_scheduled": {
       const at = metaString(meta, "scheduledAt");
       const cadence = metaString(meta, "cadence");

@@ -24,9 +24,9 @@ export function TechnicianAlertsSettingsSection({
         Technician job alerts
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        When you assign or reschedule a job, the assigned technician is notified through the
-        channels below. Pilots still miss jobs if they only rely on email — encourage My jobs and
-        the in-app bell.
+        When you assign, reschedule, or reassign a job, the current and previous technicians are
+        notified through the channels below. Pilots still miss jobs if they only rely on email —
+        encourage My jobs and the in-app bell.
       </p>
 
       <ul className="mt-4 space-y-3 text-sm">
@@ -45,7 +45,7 @@ export function TechnicianAlertsSettingsSection({
             <p className="font-medium text-foreground">Email (Resend)</p>
             <p className="text-muted-foreground">
               {emailStatus.configured
-                ? "Assign/reschedule emails send only when User.email is set — check Organization → Team (job alert contact). Invite email or Clerk sign-in sync."
+                ? "Assign, reschedule, and reassignment emails send when User.email is set — check Organization → Team (job alert contact). Invite email or Clerk sign-in sync."
                 : "Disabled until outbound email is configured above."}
             </p>
           </div>
@@ -56,7 +56,7 @@ export function TechnicianAlertsSettingsSection({
             <p className="font-medium text-foreground">SMS (Twilio)</p>
             <p className="text-muted-foreground">
               {smsStatus.configured
-                ? `Assign/reschedule texts + day-of cron (≈7:00 AM ET). From ${smsStatus.fromNumber ?? "configured number"}. Technicians need a mobile on file under Team or My jobs.`
+                ? `Assign, reschedule, reassignment texts + day-of cron (≈7:00 AM ET). From ${smsStatus.fromNumber ?? "configured number"}. Technicians need a mobile on file under Team or My jobs.`
                 : "Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_SMS_FROM on the server."}
             </p>
           </div>

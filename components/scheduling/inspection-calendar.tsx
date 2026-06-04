@@ -89,7 +89,7 @@ export function InspectionCalendar({
           role="status"
           className="rounded-lg border border-sky-900/50 bg-sky-950/40 px-4 py-3 text-sm text-sky-200"
         >
-          Job updated — technician notified in-app; email/SMS when configured and contact on file.
+          Job updated — assigned and previous technicians notified in-app; email/SMS when configured.
         </p>
       ) : null}
 

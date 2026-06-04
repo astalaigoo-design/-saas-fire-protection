@@ -118,3 +118,99 @@ export async function notifyTechnicianForInspection(input: {
     });
   }
 }
+
+/** Notify a technician they were removed from a job (reassigned to someone else or unassigned). */
+export async function notifyTechnicianJobUnassigned(input: {
+  companyId: string;
+  inspectionId: string;
+  previousAssigneeUserId: string;
+  newAssigneeName?: string | null;
+}): Promise<void> {
+  const [inspection, previousAssignee] = await Promise.all([
+    prisma.inspection.findFirst({
+      where: { id: input.inspectionId, companyId: input.companyId },
+      select: inspectionNotifySelect,
+    }),
+    prisma.user.findFirst({
+      where: {
+        id: input.previousAssigneeUserId,
+        companyId: input.companyId,
+        role: UserRole.technician,
+      },
+      select: { id: true, name: true, email: true, phone: true, active: true },
+    }),
+  ]);
+
+  if (!inspection || !previousAssignee?.active) return;
+
+  const siteLabel = buildingLabel(inspection.building);
+  const whenLabel = inspection.scheduledAt.toLocaleString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  const newName = input.newAssigneeName?.trim();
+  const inAppBody = newName
+    ? `${inspection.inspectionType.name} at ${siteLabel} on ${whenLabel} — now assigned to ${newName}.`
+    : `${inspection.inspectionType.name} at ${siteLabel} on ${whenLabel} — removed from your schedule.`;
+
+  await createStaffNotification({
+    companyId: input.companyId,
+    type: "inspection.unassigned",
+    title: "Job reassigned",
+    body: inAppBody,
+    href: "/dashboard/my-jobs",
+    entityType: "inspection",
+    entityId: inspection.id,
+    targetUserId: previousAssignee.id,
+  });
+
+  const email = previousAssignee.email?.trim();
+  if (email) {
+    const result = await sendTechnicianJobEmail({
+      to: email,
+      technicianName: previousAssignee.name,
+      companyName: inspection.company.name,
+      kind: "unassigned",
+      inspectionTypeName: inspection.inspectionType.name,
+      buildingLabel: siteLabel,
+      scheduledAt: inspection.scheduledAt,
+      inspectionId: inspection.id,
+      newAssigneeName: newName ?? null,
+    });
+
+    if (!result.ok) {
+      console.error("sendTechnicianJobEmail (unassigned) failed", result.error, {
+        inspectionId: inspection.id,
+        userId: previousAssignee.id,
+      });
+    }
+  }
+
+  const phoneRaw = previousAssignee.phone?.trim();
+  if (!phoneRaw) return;
+
+  const toE164 = normalizeSmsPhone(phoneRaw);
+  if (!toE164) return;
+
+  const sms = await sendTechnicianJobSms({
+    toE164,
+    kind: "unassigned",
+    inspectionTypeName: inspection.inspectionType.name,
+    buildingLabel: siteLabel,
+    scheduledAt: inspection.scheduledAt,
+    inspectionId: inspection.id,
+    companyName: inspection.company.name,
+    newAssigneeName: newName ?? null,
+  });
+
+  if (!sms.ok) {
+    console.error("sendTechnicianJobSms (unassigned) failed", sms.error, {
+      inspectionId: inspection.id,
+      userId: previousAssignee.id,
+    });
+  }
+}

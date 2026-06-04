@@ -1,7 +1,11 @@
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { prisma } from "@/lib/prisma";
 
-const JOB_ALERT_TYPES = ["inspection.assigned", "inspection.rescheduled"] as const;
+const JOB_ALERT_TYPES = [
+  "inspection.assigned",
+  "inspection.rescheduled",
+  "inspection.unassigned",
+] as const;
 
 export type JobAssignmentAlert = {
   id: string;
@@ -12,7 +16,7 @@ export type JobAssignmentAlert = {
   createdAt: Date;
 };
 
-/** Unread assign/reschedule notifications for the signed-in technician. */
+/** Unread assign/reschedule/unassigned notifications for the signed-in technician. */
 export async function getUnreadJobAssignmentAlerts(
   session: DashboardSession,
 ): Promise<JobAssignmentAlert[]> {

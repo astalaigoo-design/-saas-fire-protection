@@ -3,7 +3,7 @@ import { APP_NAME } from "@/lib/branding";
 import { getAppOrigin } from "@/lib/app-url";
 import { Resend } from "resend";
 
-export type TechnicianJobEmailKind = "assigned" | "rescheduled";
+export type TechnicianJobEmailKind = "assigned" | "rescheduled" | "unassigned";
 
 export type SendTechnicianJobEmailInput = {
   to: string;
@@ -16,6 +16,8 @@ export type SendTechnicianJobEmailInput = {
   previousScheduledAt?: Date | null;
   inspectionId: string;
   occurrenceNote?: string | null;
+  /** When reassigned to another technician. */
+  newAssigneeName?: string | null;
 };
 
 export type SendTechnicianJobEmailResult =
@@ -46,6 +48,9 @@ function subjectFor(input: SendTechnicianJobEmailInput): string {
   if (input.kind === "rescheduled") {
     return `Job rescheduled — ${site}`;
   }
+  if (input.kind === "unassigned") {
+    return `Job reassigned — ${site}`;
+  }
   return `New job assigned — ${site}`;
 }
 
@@ -61,6 +66,13 @@ function bodyFor(input: SendTechnicianJobEmailInput): string {
       ? ` (was ${escapeHtml(formatWhen(input.previousScheduledAt))})`
       : "";
     return `${greeting}<br/><br/>Your assigned inspection was rescheduled to <strong>${escapeHtml(when)}</strong>${was}.<br/>${jobLine}.`;
+  }
+
+  if (input.kind === "unassigned") {
+    const reassigned = input.newAssigneeName?.trim()
+      ? ` It is now assigned to <strong>${escapeHtml(input.newAssigneeName.trim())}</strong>.`
+      : " It was removed from your schedule.";
+    return `${greeting}<br/><br/>You are no longer assigned to this job on <strong>${escapeHtml(when)}</strong>.<br/>${jobLine}.${reassigned}`;
   }
 
   const extra = input.occurrenceNote
@@ -89,14 +101,19 @@ export async function sendTechnicianJobEmail(
     return { ok: false, error: "REPORT_EMAIL_FROM is missing." };
   }
 
-  const jobUrl = `${getAppOrigin()}/inspect/${encodeURIComponent(input.inspectionId)}`;
+  const jobUrl =
+    input.kind === "unassigned"
+      ? `${getAppOrigin()}/dashboard/my-jobs`
+      : `${getAppOrigin()}/inspect/${encodeURIComponent(input.inspectionId)}`;
+  const ctaLabel =
+    input.kind === "unassigned" ? "View My jobs" : `Open job in ${escapeHtml(APP_NAME)}`;
   const html = `
     <p style="font-family:system-ui,sans-serif;font-size:15px;color:#111;line-height:1.5;">
       ${bodyFor(input)}
     </p>
     <p style="margin-top:20px;">
       <a href="${escapeHtml(jobUrl)}" style="display:inline-block;padding:10px 16px;background:#dc2626;color:#fff;text-decoration:none;border-radius:8px;font-weight:600;">
-        Open job in ${escapeHtml(APP_NAME)}
+        ${ctaLabel}
       </a>
     </p>
     <p style="margin-top:16px;color:#64748b;font-size:13px;">${escapeHtml(input.companyName)}</p>

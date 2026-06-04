@@ -27,6 +27,7 @@ function buildBody(input: {
   scheduledAt: Date;
   inspectionId: string;
   companyName?: string;
+  newAssigneeName?: string | null;
 }): string {
   const when = formatWhen(input.scheduledAt);
   const jobUrl = `${getAppOrigin()}/inspect/${encodeURIComponent(input.inspectionId)}`;
@@ -40,6 +41,16 @@ function buildBody(input: {
   if (input.kind === "rescheduled") {
     return truncateBody(
       `Job rescheduled: ${input.inspectionTypeName} at ${input.buildingLabel} — now ${when}. ${jobUrl}`,
+    );
+  }
+
+  if (input.kind === "unassigned") {
+    const myJobsUrl = `${getAppOrigin()}/dashboard/my-jobs`;
+    const reassigned = input.newAssigneeName?.trim()
+      ? ` Now assigned to ${input.newAssigneeName.trim()}.`
+      : " Removed from your schedule.";
+    return truncateBody(
+      `Job reassigned: ${input.inspectionTypeName} at ${input.buildingLabel} on ${when}.${reassigned} ${myJobsUrl}`,
     );
   }
 
@@ -60,6 +71,7 @@ export async function sendTechnicianJobSms(input: {
   scheduledAt: Date;
   inspectionId: string;
   companyName?: string;
+  newAssigneeName?: string | null;
 }): Promise<SendTechnicianJobSmsResult> {
   if (!isSmsConfigured()) {
     return { ok: false, error: "SMS is not configured." };
