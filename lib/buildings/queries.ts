@@ -4,6 +4,7 @@ import {
   buildingWhereFromScope,
 } from "@/lib/branches/scope";
 import type { DashboardSession } from "@/lib/dashboard/session";
+import { listBuildingAssets, type BuildingAssetRow } from "@/lib/assets/queries";
 import {
   listDeficienciesForBuilding,
   listAssignableStaff,
@@ -119,6 +120,7 @@ export type BuildingInspectionRow = BuildingInspectionRecord & {
 export type BuildingDetailPageData = {
   building: BuildingDetailRecord;
   inspections: BuildingInspectionRow[];
+  assets: BuildingAssetRow[];
   deficiencies: Awaited<ReturnType<typeof listDeficienciesForBuilding>>;
   assignableStaff: Awaited<ReturnType<typeof listAssignableStaff>>;
   stats: {
@@ -151,12 +153,13 @@ export async function getBuildingDetailPageData(
   const building = await getBuildingById(session, buildingId);
   if (!building) return null;
 
-  const [inspections, deficiencies, assignableStaff] = await Promise.all([
+  const [inspections, assets, deficiencies, assignableStaff] = await Promise.all([
     prisma.inspection.findMany({
       where: { companyId: session.companyId, buildingId },
       orderBy: [{ scheduledAt: "desc" }],
       select: inspectionWithRelationsSelect,
     }),
+    listBuildingAssets(session, buildingId),
     listDeficienciesForBuilding(session, buildingId),
     listAssignableStaff(session),
   ]);
@@ -176,6 +179,7 @@ export async function getBuildingDetailPageData(
   return {
     building,
     inspections: inspectionsWithCompliance,
+    assets,
     deficiencies,
     assignableStaff,
     stats: {

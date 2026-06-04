@@ -53,6 +53,16 @@ enum BuildingType {
   other
 }
 
+/// Equipment on a building site (extinguishers, panels, etc.).
+enum AssetType {
+  fire_extinguisher
+  fire_alarm_panel
+  sprinkler_component
+  emergency_light
+  hose_cabinet
+  other
+}
+
 /// Building-level compliance derived from inspection activity (synced on inspection changes).
 enum ComplianceStatus {
   PASS
@@ -225,6 +235,7 @@ model Building {
   inspections   Inspection[]
   buildingNotes BuildingNote[]
   deficiencies  Deficiency[]
+  assets        BuildingAsset[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -232,6 +243,32 @@ model Building {
   @@index([customerId])
   @@index([currentStatus])
   @@map("buildings")
+}
+
+/// Registered fire equipment at a building (extinguisher tags, panels, last service).
+model BuildingAsset {
+  id         String   @id @default(cuid())
+  buildingId String
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  assetType AssetType
+  /// Extinguisher tag / asset ID on site.
+  tagNumber String?
+  /// Where on site (floor, room, panel location).
+  location  String
+  manufacturer String?
+  model        String?
+  serialNumber String?
+  lastServiceAt  DateTime?
+  nextServiceDue DateTime?
+  notes          String?   @db.Text
+  active         Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([buildingId, active])
+  @@map("building_assets")
 }
 
 /// Timestamped note on a building (site history).

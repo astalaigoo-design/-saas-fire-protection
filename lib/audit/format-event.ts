@@ -156,6 +156,16 @@ export function formatAuditEventSummary(event: AuditEventForDisplay): string {
       const label = metaString(meta, "label");
       return label ? `Verified on re-inspection · ${label}` : "Deficiency verified";
     }
+    case "asset.created": {
+      const location = metaString(meta, "location");
+      return location ? `Equipment added · ${location}` : "Equipment added to register";
+    }
+    case "asset.updated":
+      return "Equipment record updated";
+    case "asset.retired": {
+      const label = metaString(meta, "label");
+      return label ? `Equipment removed · ${label}` : "Equipment removed from register";
+    }
     case "billing.trial_reminder_sent": {
       const days =
         typeof meta?.daysBeforeEnd === "number"

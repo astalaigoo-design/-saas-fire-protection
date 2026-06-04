@@ -21,6 +21,9 @@ export const AUDIT_ACTIONS = [
   "deficiency.assigned",
   "deficiency.status_changed",
   "deficiency.verified",
+  "asset.created",
+  "asset.updated",
+  "asset.retired",
   "billing.trial_reminder_sent",
 ] as const;
 
@@ -31,6 +34,7 @@ export const AUDIT_ENTITY_TYPES = [
   "building",
   "customer",
   "quote",
+  "asset",
   "company",
 ] as const;
 
@@ -67,6 +71,7 @@ const ENTITY_LABELS: Record<string, string> = {
   customer: "Customer",
   quote: "Quote",
   deficiency: "Deficiency",
+  asset: "Equipment",
   company: "Company",
 };
 
