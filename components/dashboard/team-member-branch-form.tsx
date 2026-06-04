@@ -7,6 +7,7 @@ import {
 } from "@/lib/team/actions";
 import type { BranchListItem } from "@/lib/branches/queries";
 import type { TeamMemberRow } from "@/lib/team/queries";
+import { BranchReassignHint } from "@/components/dashboard/branch-reassign-hint";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +43,19 @@ export function TeamMemberBranchForm({ member, branches }: TeamMemberBranchFormP
 
   const currentBranchId =
     member.branchId ?? branches.find((b) => b.isDefault)?.id ?? branches[0]?.id ?? "";
+  const currentBranchName =
+    branches.find((b) => b.id === currentBranchId)?.name ??
+    member.branchName ??
+    "Branch";
+
+  if (branches.length < 2) {
+    return (
+      <div className="flex flex-col gap-1 sm:items-end">
+        <span className="text-sm text-foreground">{currentBranchName}</span>
+        <BranchReassignHint />
+      </div>
+    );
+  }
 
   return (
     <form

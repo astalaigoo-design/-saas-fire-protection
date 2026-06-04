@@ -31,7 +31,7 @@ export default async function OrgSettingsPage() {
     <div className="space-y-10">
       <PageHeader
         title="Organization"
-        description="Invite your team, configure company details for PDFs, and choose NFPA inspection packs."
+        description="Manage branches, reassign team members and customers between locations, and configure company details."
       />
 
       <BranchesSettingsSection branches={branches} />

@@ -60,8 +60,8 @@ export function TeamInviteSection({ members, pendingInvites, branches }: TeamInv
           Team
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Invite field technicians or admins, then change branch assignments for current members
-          or pending invites below.
+          Invite field technicians or admins. Reassign branch for current members in the list below,
+          or for pending invites before they accept.
         </p>
       </div>
 

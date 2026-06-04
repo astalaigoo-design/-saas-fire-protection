@@ -5,6 +5,8 @@ import { CustomerSearchForm } from "@/components/customers/customer-search-form"
 import { PageHeader } from "@/components/dashboard/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { listBranchesForCompany } from "@/lib/branches/queries";
+import { canFilterBranchesByCookie } from "@/lib/branches/scope";
 import { ensureCanManageCustomers } from "@/lib/auth/guards";
 import { listCustomers } from "@/lib/customers/queries";
 import { parseCustomerSearchParams } from "@/lib/customers/schemas";
@@ -20,7 +22,13 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
   ensureCanManageCustomers(session.role);
 
   const filters = parseCustomerSearchParams(searchParams);
-  const customers = await listCustomers(session, filters);
+  const canReassignBranch = canFilterBranchesByCookie(session);
+  const [customers, branches] = await Promise.all([
+    listCustomers(session, filters),
+    canReassignBranch
+      ? listBranchesForCompany(session.companyId)
+      : Promise.resolve([]),
+  ]);
 
   const description = [
     `${customers.length} ${customers.length === 1 ? "customer" : "customers"}`,
@@ -45,7 +53,11 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
       />
 
       <CustomerSearchForm params={filters} />
-      <CustomerList customers={customers} />
+      <CustomerList
+        customers={customers}
+        branches={branches}
+        canReassignBranch={canReassignBranch}
+      />
     </div>
   );
 }

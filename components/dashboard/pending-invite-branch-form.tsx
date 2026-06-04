@@ -7,6 +7,7 @@ import {
 } from "@/lib/team/actions";
 import type { BranchListItem } from "@/lib/branches/queries";
 import type { PendingTeamInviteRow } from "@/lib/team/queries";
+import { BranchReassignHint } from "@/components/dashboard/branch-reassign-hint";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -50,6 +51,15 @@ export function PendingInviteBranchForm({ invite, branches }: PendingInviteBranc
 
   const currentBranchId =
     invite.branchId ?? branches.find((b) => b.isDefault)?.id ?? branches[0]?.id ?? "";
+
+  if (branches.length < 2) {
+    return (
+      <div className="flex flex-col gap-1 sm:items-end">
+        <span className="text-sm text-foreground">{invite.branchName ?? "Default branch"}</span>
+        <BranchReassignHint />
+      </div>
+    );
+  }
 
   return (
     <form

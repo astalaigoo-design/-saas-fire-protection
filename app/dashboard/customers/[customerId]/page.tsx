@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { BranchReassignHint } from "@/components/dashboard/branch-reassign-hint";
 import { CustomerBranchForm } from "@/components/customers/customer-branch-form";
 import { CustomerBuildingsSection } from "@/components/customers/customer-buildings-section";
 import { CustomerInspectionHistory } from "@/components/customers/customer-inspection-history";
@@ -35,7 +36,8 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
 
   if (!customer) notFound();
 
-  const canMoveBranch = canFilterBranchesByCookie(session) && branches.length > 1;
+  const canManageCustomerBranch = canFilterBranchesByCookie(session);
+  const canMoveBranch = canManageCustomerBranch && branches.length > 1;
 
   return (
     <div className="space-y-8">
@@ -66,14 +68,23 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
             </div>
           </div>
           <div className="flex flex-col gap-3 sm:items-end">
-            {canMoveBranch ? (
+            {canManageCustomerBranch ? (
               <div className="flex w-full flex-col gap-1 sm:w-auto sm:items-end">
                 <p className="text-xs font-medium text-muted-foreground">Branch</p>
-                <CustomerBranchForm
-                  customerId={customer.id}
-                  branchId={customer.branchId}
-                  branches={branches}
-                />
+                {canMoveBranch ? (
+                  <CustomerBranchForm
+                    customerId={customer.id}
+                    branchId={customer.branchId}
+                    branches={branches}
+                  />
+                ) : (
+                  <>
+                    <span className="text-sm text-foreground">
+                      {customer.branch?.name ?? "Main"}
+                    </span>
+                    <BranchReassignHint />
+                  </>
+                )}
               </div>
             ) : null}
             <Link
