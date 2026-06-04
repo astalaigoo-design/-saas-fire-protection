@@ -1,12 +1,16 @@
+"use client";
+
 import Link from "next/link";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDate } from "@/lib/dashboard/dates";
 import { AutomationPanel } from "@/components/operations/automation-panel";
 import { AuditLogFeed } from "@/components/operations/audit-log-feed";
+import { CommandCenterDeficienciesTab } from "@/components/operations/command-center-deficiencies-tab";
 import type { AuditLogPage } from "@/lib/audit/queries";
 import type { AutomationVisibility } from "@/lib/operations/automation-visibility";
 import type { CommandCenterSnapshot } from "@/lib/operations/queries";
@@ -103,11 +107,17 @@ function DueInspectionList({ rows }: { rows: DueInspectionRow[] }) {
   );
 }
 
+type AssignableStaff = { id: string; name: string | null; role: string };
+
+export type CommandCenterTab = "overview" | "deficiencies" | "quotes" | "activity";
+
 type CommandCenterViewProps = {
   snapshot: CommandCenterSnapshot;
   auditLog: AuditLogPage;
   auditFilters: { action: string; entityType: string };
   automation: AutomationVisibility;
+  assignableStaff: AssignableStaff[];
+  defaultTab: CommandCenterTab;
 };
 
 export function CommandCenterView({
@@ -115,6 +125,8 @@ export function CommandCenterView({
   auditLog,
   auditFilters,
   automation,
+  assignableStaff,
+  defaultTab,
 }: CommandCenterViewProps) {
   const overdueTotal =
     snapshot.dueTotals.overdue + snapshot.dueTotals.neverInspected;
@@ -123,7 +135,7 @@ export function CommandCenterView({
     <div className="space-y-8">
       <PageHeader
         title="Command center"
-        description={`Compliance workload at a glance. Failed jobs auto-schedule a follow-up; recurring cadence jobs auto-schedule on submit. Due-date emails send ${DUE_REMINDER_DAYS} days ahead to your report email.`}
+        description={`Track open violations, due dates, and quotes. Deficiencies move open → owned → resolved → verified (auto on pass re-inspection). Due-date emails send ${DUE_REMINDER_DAYS} days ahead.`}
         actions={
           <div className="flex flex-col items-stretch gap-3 sm:items-end">
             <OperationsExportButtons />
@@ -150,168 +162,159 @@ export function CommandCenterView({
         </div>
       </section>
 
-      <section aria-labelledby="due-heading" className="space-y-4">
-        <div>
-          <h2 id="due-heading" className="font-heading text-lg font-semibold text-foreground">
-            Buildings due & overdue
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Monthly, quarterly, and annual cadences based on last completed visit or open scheduled
-            jobs.
-          </p>
+      <Tabs defaultValue={defaultTab} className="w-full">
+        <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+          <TabsList variant="line" className="min-w-max">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="deficiencies">
+              Deficiencies ({snapshot.summary.openDeficiencies})
+            </TabsTrigger>
+            <TabsTrigger value="quotes">
+              Quotes & reports
+            </TabsTrigger>
+            <TabsTrigger value="activity">Activity</TabsTrigger>
+          </TabsList>
         </div>
-        <div className="grid gap-6 xl:grid-cols-3">
-          {(
-            [
-              ["Monthly", snapshot.dueByCadence.monthly],
-              ["Quarterly", snapshot.dueByCadence.quarterly],
-              ["Annual", snapshot.dueByCadence.annual],
-            ] as const
-          ).map(([label, rows]) => (
-            <Card key={label}>
-              <CardHeader className="border-b border-border/60">
-                <CardTitle className="text-base">{label}</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4">
-                <DueInspectionList rows={rows} />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section aria-labelledby="deficiencies-heading" className="space-y-3">
-          <h2 id="deficiencies-heading" className="font-heading text-lg font-semibold text-foreground">
-            Open deficiencies
-          </h2>
-          {snapshot.deficiencies.length === 0 ? (
-            <EmptyState
-              title="No open deficiencies"
-              description="Failed checklist items from completed inspections appear here until quoted or resolved."
-            />
-          ) : (
-            <ul className="space-y-3">
-              {snapshot.deficiencies.map((item) => (
-                <li key={item.id}>
-                  <Card>
-                    <CardContent className="space-y-2 pt-4">
-                      <p className="font-medium text-foreground">{item.label}</p>
-                      {item.description ? (
-                        <p className="text-xs leading-5 text-muted-foreground">{item.description}</p>
-                      ) : null}
-                      <p className="text-sm text-muted-foreground">
-                        <Link
-                          href={`/dashboard/buildings/${item.buildingId}`}
-                          className="text-primary hover:underline"
-                        >
-                          {item.buildingLabel}
-                        </Link>
-                        {" · "}
-                        {item.customerName} · {item.inspectionTypeName}
-                      </p>
-                      {item.completedAt ? (
-                        <p className="text-xs text-muted-foreground">
-                          Found {formatDate(item.completedAt)}
-                        </p>
-                      ) : null}
-                      <Link
-                        href="/dashboard/reports"
-                        className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-                      >
-                        {item.quoteId ? "Review quote" : "Create quote"}
-                      </Link>
-                    </CardContent>
-                  </Card>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <div className="space-y-6">
-          <section aria-labelledby="quotes-heading" className="space-y-3">
-            <h2 id="quotes-heading" className="font-heading text-lg font-semibold text-foreground">
-              Quotes pending approval
+        <TabsContent value="overview" className="mt-6 space-y-4">
+          <div>
+            <h2 className="font-heading text-lg font-semibold text-foreground">
+              Buildings due & overdue
             </h2>
-            {snapshot.pendingQuotes.length === 0 ? (
-              <EmptyState
-                title="No draft quotes"
-                description="Draft repair quotes from failed inspections wait here for your review before sending."
-              />
-            ) : (
-              <ul className="space-y-3">
-                {snapshot.pendingQuotes.map((quote) => (
-                  <li key={quote.id}>
-                    <Card>
-                      <CardContent className="space-y-2 pt-4">
-                        <p className="font-medium text-foreground">
-                          {quote.title ?? "Repair quote"}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {quote.buildingLabel} · {quote.customerName}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {quote.lineItemCount} line item
-                          {quote.lineItemCount === 1 ? "" : "s"} ·{" "}
-                          {formatCurrency(quote.totalCents, quote.currency)} · Draft
-                        </p>
-                        <Link
-                          href="/dashboard/reports"
-                          className={cn(buttonVariants({ size: "sm" }))}
-                        >
-                          Review & send
-                        </Link>
-                      </CardContent>
-                    </Card>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Monthly, quarterly, and annual cadences based on last completed visit or open
+              scheduled jobs.
+            </p>
+          </div>
+          <div className="grid gap-6 xl:grid-cols-3">
+            {(
+              [
+                ["Monthly", snapshot.dueByCadence.monthly],
+                ["Quarterly", snapshot.dueByCadence.quarterly],
+                ["Annual", snapshot.dueByCadence.annual],
+              ] as const
+            ).map(([label, rows]) => (
+              <Card key={label}>
+                <CardHeader className="border-b border-border/60">
+                  <CardTitle className="text-base">{label}</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4">
+                  <DueInspectionList rows={rows} />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
 
-          <section aria-labelledby="reports-heading" className="space-y-3">
-            <h2 id="reports-heading" className="font-heading text-lg font-semibold text-foreground">
-              Reports sent this month
+        <TabsContent value="deficiencies" className="mt-6 space-y-4">
+          <div>
+            <h2 className="font-heading text-lg font-semibold text-foreground">
+              Corrective actions
             </h2>
-            {snapshot.reportsSentThisMonth.length === 0 ? (
-              <EmptyState
-                title="No reports sent yet this month"
-                description="Compliance PDFs emailed to customers after inspection submit appear here."
-              />
-            ) : (
-              <ul className="space-y-3">
-                {snapshot.reportsSentThisMonth.map((report) => (
-                  <li key={report.id}>
-                    <Card>
-                      <CardContent className="space-y-2 pt-4">
-                        <p className="font-medium text-foreground">{report.title}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {report.buildingLabel} · {report.customerName}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Sent {formatDate(report.sentAt)}
-                          {report.sentTo ? ` to ${report.sentTo}` : ""}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </div>
-      </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Each failed checklist line becomes a tracked deficiency on the building. Assign an
+              owner, set a due date, mark resolved when work is done, and verify on a passing
+              re-inspection.
+            </p>
+          </div>
+          <CommandCenterDeficienciesTab
+            deficiencies={snapshot.deficiencies}
+            assignableStaff={assignableStaff}
+          />
+        </TabsContent>
 
-      <AutomationPanel automation={automation} />
+        <TabsContent value="quotes" className="mt-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <section aria-labelledby="quotes-heading" className="space-y-3">
+              <h2
+                id="quotes-heading"
+                className="font-heading text-lg font-semibold text-foreground"
+              >
+                Quotes pending approval
+              </h2>
+              {snapshot.pendingQuotes.length === 0 ? (
+                <EmptyState
+                  title="No draft quotes"
+                  description="Draft repair quotes from failed inspections wait here for your review before sending."
+                />
+              ) : (
+                <ul className="space-y-3">
+                  {snapshot.pendingQuotes.map((quote) => (
+                    <li key={quote.id}>
+                      <Card>
+                        <CardContent className="space-y-2 pt-4">
+                          <p className="font-medium text-foreground">
+                            {quote.title ?? "Repair quote"}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {quote.buildingLabel} · {quote.customerName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {quote.lineItemCount} line item
+                            {quote.lineItemCount === 1 ? "" : "s"} ·{" "}
+                            {formatCurrency(quote.totalCents, quote.currency)} · Draft
+                          </p>
+                          <Link
+                            href="/dashboard/reports"
+                            className={cn(buttonVariants({ size: "sm" }))}
+                          >
+                            Review & send
+                          </Link>
+                        </CardContent>
+                      </Card>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
 
-      <AuditLogFeed
-        key={`${auditFilters.action}|${auditFilters.entityType}`}
-        initialEvents={auditLog.events}
-        initialNextCursor={auditLog.nextCursor}
-        initialAction={auditFilters.action}
-        initialEntityType={auditFilters.entityType}
-      />
+            <section aria-labelledby="reports-heading" className="space-y-3">
+              <h2
+                id="reports-heading"
+                className="font-heading text-lg font-semibold text-foreground"
+              >
+                Reports sent this month
+              </h2>
+              {snapshot.reportsSentThisMonth.length === 0 ? (
+                <EmptyState
+                  title="No reports sent yet this month"
+                  description="Compliance PDFs emailed to customers after inspection submit appear here."
+                />
+              ) : (
+                <ul className="space-y-3">
+                  {snapshot.reportsSentThisMonth.map((report) => (
+                    <li key={report.id}>
+                      <Card>
+                        <CardContent className="space-y-2 pt-4">
+                          <p className="font-medium text-foreground">{report.title}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {report.buildingLabel} · {report.customerName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Sent {formatDate(report.sentAt)}
+                            {report.sentTo ? ` to ${report.sentTo}` : ""}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="activity" className="mt-6 space-y-8">
+          <AutomationPanel automation={automation} />
+          <AuditLogFeed
+            key={`${auditFilters.action}|${auditFilters.entityType}`}
+            initialEvents={auditLog.events}
+            initialNextCursor={auditLog.nextCursor}
+            initialAction={auditFilters.action}
+            initialEntityType={auditFilters.entityType}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

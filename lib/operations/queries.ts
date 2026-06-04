@@ -1,4 +1,4 @@
-import { InspectionItemResult, InspectionStatus, QuoteStatus, ReportStatus } from "@prisma/client";
+import { InspectionStatus, QuoteStatus, ReportStatus } from "@prisma/client";
 import {
   branchScopeFromSession,
   buildingWhereFromScope,
@@ -14,22 +14,12 @@ import {
   groupDueByCadence,
   type DueInspectionRow,
 } from "@/lib/operations/due-inspections";
+import type { DeficiencyRow } from "@/lib/deficiencies/queries";
+import { listOpenDeficiencies } from "@/lib/deficiencies/queries";
 import { prisma } from "@/lib/prisma";
 
-export type OpenDeficiencyRow = {
-  id: string;
-  label: string;
-  description: string | null;
-  notes: string | null;
-  buildingId: string;
-  buildingLabel: string;
-  customerName: string;
-  inspectionId: string;
-  inspectionTypeName: string;
-  completedAt: Date | null;
-  quoteId: string | null;
-  quoteStatus: string | null;
-};
+/** @deprecated Use DeficiencyRow — kept for export/legacy references. */
+export type OpenDeficiencyRow = DeficiencyRow;
 
 export type PendingQuoteRow = {
   id: string;
@@ -62,7 +52,7 @@ export type CommandCenterSnapshot = {
     dueSoon: number;
     neverInspected: number;
   };
-  deficiencies: OpenDeficiencyRow[];
+  deficiencies: DeficiencyRow[];
   pendingQuotes: PendingQuoteRow[];
   reportsSentThisMonth: SentReportRow[];
   summary: {
@@ -96,7 +86,7 @@ export async function getCommandCenterSnapshot(
     },
   });
 
-  const [buildings, inspections, inspectionTypes, deficiencyItems, pendingQuotes, reportsSent] =
+  const [buildings, inspections, inspectionTypes, deficiencies, pendingQuotes, reportsSent] =
     await Promise.all([
       prisma.building.findMany({
         where: buildingWhere,
@@ -126,41 +116,7 @@ export async function getCommandCenterSnapshot(
         select: { code: true, name: true },
         orderBy: { code: "asc" },
       }),
-      prisma.inspectionItem.findMany({
-        where: {
-          result: InspectionItemResult.fail,
-          inspection: {
-            ...inspectionWhereFromScope(scope, session.companyId, {
-              status: InspectionStatus.completed,
-            }),
-          },
-        },
-        select: {
-          id: true,
-          label: true,
-          description: true,
-          notes: true,
-          inspection: {
-            select: {
-              id: true,
-              completedAt: true,
-              inspectionType: { select: { name: true } },
-              building: {
-                select: {
-                  id: true,
-                  name: true,
-                  addressLine1: true,
-                  city: true,
-                  customer: { select: { name: true } },
-                },
-              },
-              quote: { select: { id: true, status: true } },
-            },
-          },
-        },
-        orderBy: { updatedAt: "desc" },
-        take: 50,
-      }),
+      listOpenDeficiencies(session, { limit: 80 }),
       prisma.quote.findMany({
         where: {
           ...quoteWhereFromScope(scope, session.companyId),
@@ -239,26 +195,6 @@ export async function getCommandCenterSnapshot(
   const dueRows = computeDueInspections({ buildings, inspections, typeCodes });
   const dueByCadence = groupDueByCadence(dueRows);
   const dueTotals = countDue(dueRows);
-
-  const deficiencies: OpenDeficiencyRow[] = deficiencyItems
-    .filter((item) => {
-      const quoteStatus = item.inspection.quote?.status;
-      return !quoteStatus || quoteStatus === QuoteStatus.draft;
-    })
-    .map((item) => ({
-      id: item.id,
-      label: item.label,
-      description: item.description,
-      notes: item.notes,
-      buildingId: item.inspection.building.id,
-      buildingLabel: buildingLabel(item.inspection.building),
-      customerName: item.inspection.building.customer.name,
-      inspectionId: item.inspection.id,
-      inspectionTypeName: item.inspection.inspectionType.name,
-      completedAt: item.inspection.completedAt,
-      quoteId: item.inspection.quote?.id ?? null,
-      quoteStatus: item.inspection.quote?.status ?? null,
-    }));
 
   const pendingQuoteRows: PendingQuoteRow[] = pendingQuotes.map((quote) => ({
     id: quote.id,

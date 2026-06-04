@@ -48,6 +48,11 @@ const checks = [
     sql: `SELECT 1 FROM information_schema.tables
           WHERE table_schema = 'public' AND table_name = 'staff_notifications'`,
   },
+  {
+    label: "deficiencies",
+    sql: `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'deficiencies'`,
+  },
 ];
 
 let failed = false;

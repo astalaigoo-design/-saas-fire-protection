@@ -36,6 +36,8 @@ import { autoScheduleFollowUpInspection } from "@/lib/scheduling/auto-schedule-f
 import { autoScheduleNextInspection } from "@/lib/scheduling/auto-schedule-next";
 import { prisma } from "@/lib/prisma";
 import { writeAuditEvent } from "@/lib/audit/write-event";
+import { createDeficienciesFromFailedItems } from "@/lib/deficiencies/create-from-inspection";
+import { verifyDeficienciesAfterInspectionSubmit } from "@/lib/deficiencies/verify-on-inspection";
 import { notifyReportEmailFailed } from "@/lib/notifications/notify-report-email-failed";
 import { captureServerActionError } from "@/lib/monitoring/capture";
 
@@ -355,6 +357,31 @@ export async function submitInspection(
   });
 
   await syncBuildingComplianceStatus(loaded.inspection.buildingId);
+
+  try {
+    await verifyDeficienciesAfterInspectionSubmit({
+      companyId: session.companyId,
+      inspectionId: parsed.data.inspectionId,
+      buildingId: loaded.inspection.buildingId,
+      actorUserId: session.appUserId,
+      completedAt: now,
+    });
+  } catch (error) {
+    captureServerActionError("verifyDeficienciesAfterInspectionSubmit", error);
+  }
+
+  if (hasFailedItems) {
+    try {
+      await createDeficienciesFromFailedItems({
+        companyId: session.companyId,
+        inspectionId: parsed.data.inspectionId,
+        actorUserId: session.appUserId,
+        completedAt: now,
+      });
+    } catch (error) {
+      captureServerActionError("createDeficienciesFromFailedItems", error);
+    }
+  }
 
   try {
     await autoScheduleNextInspection({

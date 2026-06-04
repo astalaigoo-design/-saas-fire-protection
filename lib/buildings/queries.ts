@@ -4,6 +4,10 @@ import {
   buildingWhereFromScope,
 } from "@/lib/branches/scope";
 import type { DashboardSession } from "@/lib/dashboard/session";
+import {
+  listDeficienciesForBuilding,
+  listAssignableStaff,
+} from "@/lib/deficiencies/queries";
 import { prisma } from "@/lib/prisma";
 import { inspectionRowCompliance } from "@/lib/buildings/compliance";
 import { computeBuildingInspectionStats } from "@/lib/buildings/stats";
@@ -115,11 +119,14 @@ export type BuildingInspectionRow = BuildingInspectionRecord & {
 export type BuildingDetailPageData = {
   building: BuildingDetailRecord;
   inspections: BuildingInspectionRow[];
+  deficiencies: Awaited<ReturnType<typeof listDeficienciesForBuilding>>;
+  assignableStaff: Awaited<ReturnType<typeof listAssignableStaff>>;
   stats: {
     compliance: ComplianceStatus;
     nextScheduledAt: Date | null;
     lastCompletedAt: Date | null;
     completedCount: number;
+    openDeficiencyCount: number;
   };
 };
 
@@ -144,11 +151,15 @@ export async function getBuildingDetailPageData(
   const building = await getBuildingById(session, buildingId);
   if (!building) return null;
 
-  const inspections = await prisma.inspection.findMany({
-    where: { companyId: session.companyId, buildingId },
-    orderBy: [{ scheduledAt: "desc" }],
-    select: inspectionWithRelationsSelect,
-  });
+  const [inspections, deficiencies, assignableStaff] = await Promise.all([
+    prisma.inspection.findMany({
+      where: { companyId: session.companyId, buildingId },
+      orderBy: [{ scheduledAt: "desc" }],
+      select: inspectionWithRelationsSelect,
+    }),
+    listDeficienciesForBuilding(session, buildingId),
+    listAssignableStaff(session),
+  ]);
 
   const inspectionsWithCompliance: BuildingInspectionRow[] = inspections.map((inspection) => ({
     ...inspection,
@@ -165,9 +176,12 @@ export async function getBuildingDetailPageData(
   return {
     building,
     inspections: inspectionsWithCompliance,
+    deficiencies,
+    assignableStaff,
     stats: {
       ...inspectionStats,
       lastCompletedAt: lastCompleted?.completedAt ?? null,
+      openDeficiencyCount: deficiencies.open.length,
     },
   };
 }

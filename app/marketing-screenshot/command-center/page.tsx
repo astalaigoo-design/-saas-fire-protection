@@ -21,6 +21,11 @@ export default function MarketingCommandCenterPage() {
           auditLog={emptyAuditLog}
           auditFilters={{ action: "", entityType: "" }}
           automation={marketingAutomationPreview}
+          assignableStaff={[
+            { id: "user-tech", name: "Jordan Lee", role: "technician" },
+            { id: "user-admin", name: "Alex Morgan", role: "admin" },
+          ]}
+          defaultTab="deficiencies"
         />
       </div>
     </main>

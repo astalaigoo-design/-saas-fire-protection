@@ -76,6 +76,14 @@ enum SubscriptionStatus {
   expired
 }
 
+/// Corrective-action lifecycle for a failed checklist item.
+enum DeficiencyStatus {
+  open
+  owned
+  resolved
+  verified
+}
+
 // --- Core tenant -----------------------------------------------------------
 
 /// Fire inspection company (tenant).
@@ -106,6 +114,7 @@ model Company {
   quotes          Quote[]
   auditEvents         AuditEvent[]
   staffNotifications  StaffNotification[]
+  deficiencies        Deficiency[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -150,6 +159,7 @@ model User {
   branch   Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
 
   inspectionsAssigned     Inspection[]            @relation("InspectionAssignee")
+  deficienciesAssigned    Deficiency[]            @relation("DeficiencyAssignee")
   auditEvents             AuditEvent[]            @relation("AuditEventActor")
   staffNotificationReads  StaffNotificationRead[]
 
@@ -214,6 +224,7 @@ model Building {
 
   inspections   Inspection[]
   buildingNotes BuildingNote[]
+  deficiencies  Deficiency[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -318,6 +329,9 @@ model Inspection {
   /// Job scheduled after the customer accepted the repair quote.
   scheduledForQuote Quote? @relation("QuoteScheduledJob")
 
+  deficienciesOpened   Deficiency[] @relation("DeficiencySourceInspection")
+  deficienciesVerified Deficiency[] @relation("DeficiencyVerifiedInspection")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -342,11 +356,55 @@ model InspectionItem {
   result InspectionItemResult @default(pending)
   notes  String?              @db.Text
 
+  deficiency Deficiency?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([inspectionId])
   @@map("inspection_items")
+}
+
+/// Open violation / corrective action tracked across visits for one building.
+model Deficiency {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  buildingId String
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  inspectionItemId String         @unique
+  inspectionItem   InspectionItem @relation(fields: [inspectionItemId], references: [id], onDelete: Cascade)
+
+  sourceInspectionId String
+  sourceInspection   Inspection @relation("DeficiencySourceInspection", fields: [sourceInspectionId], references: [id], onDelete: Cascade)
+
+  label       String
+  description String? @db.Text
+  notes       String? @db.Text
+
+  status DeficiencyStatus @default(open)
+
+  dueAt DateTime?
+
+  assignedToUserId String?
+  assignedTo       User?   @relation("DeficiencyAssignee", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+
+  resolvedAt DateTime?
+  resolvedNote String? @db.Text
+
+  verifiedAt             DateTime?
+  verifiedInspectionId   String?
+  verifiedInspection     Inspection? @relation("DeficiencyVerifiedInspection", fields: [verifiedInspectionId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId, status])
+  @@index([buildingId, status])
+  @@index([assignedToUserId])
+  @@map("deficiencies")
 }
 
 /// Image captured during an inspection (storage path or public URL).

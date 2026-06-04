@@ -136,6 +136,20 @@ export function formatAuditEventSummary(event: AuditEventForDisplay): string {
       if (building) return `Customer requested changes · ${building}`;
       return "Customer requested quote changes";
     }
+    case "deficiency.created": {
+      const label = metaString(meta, "label");
+      return label ? `Deficiency opened · ${label}` : "Deficiency opened";
+    }
+    case "deficiency.assigned":
+      return "Deficiency assignee updated";
+    case "deficiency.status_changed": {
+      const status = metaString(meta, "status");
+      return status ? `Deficiency status → ${status}` : "Deficiency status updated";
+    }
+    case "deficiency.verified": {
+      const label = metaString(meta, "label");
+      return label ? `Verified on re-inspection · ${label}` : "Deficiency verified";
+    }
     case "billing.trial_reminder_sent": {
       const days =
         typeof meta?.daysBeforeEnd === "number"
@@ -180,6 +194,8 @@ export function auditEventHref(event: AuditEventForDisplay): string | null {
       return `/dashboard/customers/${event.entityId}`;
     case "quote":
       return "/dashboard/reports";
+    case "deficiency":
+      return "/dashboard/operations?tab=deficiencies";
     case "company":
       return "/dashboard/settings";
     default:
@@ -197,6 +213,8 @@ export function auditEventLinkLabel(event: AuditEventForDisplay): string {
       return "View customer";
     case "quote":
       return "View reports";
+    case "deficiency":
+      return "View deficiencies";
     case "company":
       return "Organization";
     default:

@@ -15,6 +15,10 @@ export const AUDIT_ACTIONS = [
   "quote.accepted",
   "quote.declined",
   "quote.changes_requested",
+  "deficiency.created",
+  "deficiency.assigned",
+  "deficiency.status_changed",
+  "deficiency.verified",
   "billing.trial_reminder_sent",
 ] as const;
 
@@ -46,6 +50,10 @@ const ACTION_LABELS: Record<string, string> = {
   "quote.accepted": "Quote accepted",
   "quote.declined": "Quote declined",
   "quote.changes_requested": "Customer requested quote changes",
+  "deficiency.created": "Deficiency opened",
+  "deficiency.assigned": "Deficiency assigned",
+  "deficiency.status_changed": "Deficiency status updated",
+  "deficiency.verified": "Deficiency verified on re-inspection",
   "billing.trial_reminder_sent": "Trial ending reminder sent",
 };
 
@@ -54,6 +62,7 @@ const ENTITY_LABELS: Record<string, string> = {
   building: "Building",
   customer: "Customer",
   quote: "Quote",
+  deficiency: "Deficiency",
   company: "Company",
 };
 

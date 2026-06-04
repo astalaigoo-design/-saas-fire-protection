@@ -5,6 +5,7 @@ import { BuildingInspectionHistoryTab } from "@/components/buildings/building-in
 import { BuildingPhotosTab } from "@/components/buildings/building-photos-tab";
 import { BuildingReportsTab } from "@/components/buildings/building-reports-tab";
 import { BuildingNotesTab } from "@/components/buildings/building-notes-tab";
+import { BuildingDeficienciesTab } from "@/components/buildings/building-deficiencies-tab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type BuildingDetailTabsProps = {
@@ -26,6 +27,13 @@ export function BuildingDetailTabs({ data }: BuildingDetailTabsProps) {
       </div>
       <TabsContent value="history" className="mt-4">
         <BuildingInspectionHistoryTab inspections={data.inspections} />
+      </TabsContent>
+      <TabsContent value="deficiencies" className="mt-4">
+        <BuildingDeficienciesTab
+          open={data.deficiencies.open}
+          verified={data.deficiencies.verified}
+          assignableStaff={data.assignableStaff}
+        />
       </TabsContent>
       <TabsContent value="photos" className="mt-4">
         <BuildingPhotosTab inspections={data.inspections} />

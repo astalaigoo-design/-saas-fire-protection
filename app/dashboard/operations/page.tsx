@@ -1,5 +1,9 @@
 import { redirect } from "next/navigation";
-import { CommandCenterView } from "@/components/operations/command-center-view";
+import {
+  CommandCenterView,
+  type CommandCenterTab,
+} from "@/components/operations/command-center-view";
+import { listAssignableStaff } from "@/lib/deficiencies/queries";
 import { listAuditEvents } from "@/lib/audit/queries";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
 import { getAutomationVisibility } from "@/lib/operations/automation-visibility";
@@ -22,8 +26,16 @@ export default async function CommandCenterPage({ searchParams }: CommandCenterP
 
   const actionFilter = firstQueryValue(searchParams.action);
   const entityFilter = firstQueryValue(searchParams.entity);
+  const tabParam = firstQueryValue(searchParams.tab);
+  const defaultTab: CommandCenterTab =
+    tabParam === "deficiencies" ||
+    tabParam === "quotes" ||
+    tabParam === "activity" ||
+    tabParam === "overview"
+      ? tabParam
+      : "overview";
 
-  const [snapshot, auditLog, automation] = await Promise.all([
+  const [snapshot, auditLog, automation, assignableStaff] = await Promise.all([
     getCommandCenterSnapshot(session),
     listAuditEvents(session, {
       action: actionFilter || undefined,
@@ -31,6 +43,7 @@ export default async function CommandCenterPage({ searchParams }: CommandCenterP
       limit: 40,
     }),
     getAutomationVisibility(session.companyId),
+    listAssignableStaff(session),
   ]);
 
   return (
@@ -39,6 +52,8 @@ export default async function CommandCenterPage({ searchParams }: CommandCenterP
       auditLog={auditLog}
       auditFilters={{ action: actionFilter, entityType: entityFilter }}
       automation={automation}
+      assignableStaff={assignableStaff}
+      defaultTab={defaultTab}
     />
   );
 }
