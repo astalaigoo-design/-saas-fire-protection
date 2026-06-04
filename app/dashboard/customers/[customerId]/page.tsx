@@ -2,7 +2,10 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CustomerBranchForm } from "@/components/customers/customer-branch-form";
 import { CustomerBuildingsSection } from "@/components/customers/customer-buildings-section";
+import { CustomerContactsSection } from "@/components/customers/customer-contacts-section";
 import { CustomerInspectionHistory } from "@/components/customers/customer-inspection-history";
+import { CustomerMergeForm } from "@/components/customers/customer-merge-form";
+import { CustomerPortalSection } from "@/components/customers/customer-portal-section";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { listBranchesForCompany } from "@/lib/branches/queries";
@@ -10,6 +13,7 @@ import { canFilterBranchesByCookie } from "@/lib/branches/scope";
 import { ensureCanManageCustomers } from "@/lib/auth/guards";
 import { canManageJobs } from "@/lib/auth/permissions";
 import { formatDate } from "@/lib/dashboard/dates";
+import { listMergeCandidateCustomers } from "@/lib/customers/duplicates";
 import {
   getCustomerById,
   getCustomerInspectionHistory,
@@ -18,27 +22,41 @@ import { getDashboardSession } from "@/lib/dashboard/session";
 
 type CustomerDetailPageProps = {
   params: { customerId: string };
+  searchParams?: Record<string, string | string[] | undefined>;
 };
 
-export default async function CustomerDetailPage({ params }: CustomerDetailPageProps) {
+export default async function CustomerDetailPage({
+  params,
+  searchParams,
+}: CustomerDetailPageProps) {
   const session = await getDashboardSession();
   if (!session) redirect("/sign-in");
   ensureCanManageCustomers(session.role);
 
-  const [customer, inspections, branches] = await Promise.all([
+  const [customer, inspections, branches, mergeCandidates] = await Promise.all([
     getCustomerById(session, params.customerId),
     getCustomerInspectionHistory(session, params.customerId),
     canFilterBranchesByCookie(session)
       ? listBranchesForCompany(session.companyId)
       : Promise.resolve([]),
+    listMergeCandidateCustomers(session, params.customerId),
   ]);
 
   if (!customer) notFound();
 
   const canManageCustomerBranch = canFilterBranchesByCookie(session);
+  const showMergedBanner = searchParams?.merged === "1";
 
   return (
     <div className="space-y-8">
+      {showMergedBanner ? (
+        <p
+          role="status"
+          className="rounded-lg border border-emerald-900/50 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200"
+        >
+          Duplicate customer merged — buildings and contacts are now on this account.
+        </p>
+      ) : null}
       <header className="space-y-4">
         <Link
           href="/dashboard/customers"
@@ -98,6 +116,20 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
           </div>
         </section>
       ) : null}
+
+      <CustomerContactsSection customer={customer} />
+
+      <CustomerPortalSection
+        customerId={customer.id}
+        portalToken={customer.portalToken}
+        portalEnabledAt={customer.portalEnabledAt?.toISOString() ?? null}
+      />
+
+      <CustomerMergeForm
+        customerId={customer.id}
+        customerName={customer.name}
+        candidates={mergeCandidates}
+      />
 
       <section aria-labelledby="buildings-heading">
         <h2 id="buildings-heading" className="mb-4 font-heading text-lg font-semibold text-foreground">

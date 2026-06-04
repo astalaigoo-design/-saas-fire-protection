@@ -6,6 +6,7 @@ import { isRedirectError } from "next/dist/client/components/redirect";
 import { canManageCustomers } from "@/lib/auth/permissions";
 import { requireWritableTenant } from "@/lib/billing/guards";
 import { writeAuditEvent } from "@/lib/audit/write-event";
+import { CustomerContactRole } from "@prisma/client";
 import { createCustomerSchema } from "@/lib/customers/schemas";
 import { reassignCustomerBranchSchema } from "@/lib/customers/reassign-branch-schema";
 import { getDefaultBranchId } from "@/lib/branches/default-branch";
@@ -89,6 +90,18 @@ export async function createCustomer(
         name: parsed.data.name,
         email: parsed.data.email ?? null,
         phone: parsed.data.phone ?? null,
+        ...(parsed.data.email || parsed.data.phone
+          ? {
+              contacts: {
+                create: {
+                  name: parsed.data.name,
+                  email: parsed.data.email ?? null,
+                  phone: parsed.data.phone ?? null,
+                  role: CustomerContactRole.billing,
+                },
+              },
+            }
+          : {}),
       },
     });
 

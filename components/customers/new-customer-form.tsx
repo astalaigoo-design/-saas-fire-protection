@@ -63,6 +63,11 @@ export function NewCustomerForm({ branches, defaultBranchId }: NewCustomerFormPr
             />
           </div>
 
+          <p className="text-sm text-muted-foreground">
+            After saving, add billing and on-site contacts on the customer profile. Enable a
+            read-only portal link for your client to view compliance PDFs.
+          </p>
+
           <div className="space-y-2">
             <Label htmlFor="customer-email">Email</Label>
             <Input

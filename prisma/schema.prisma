@@ -87,6 +87,11 @@ enum SubscriptionStatus {
 }
 
 /// Corrective-action lifecycle for a failed checklist item.
+enum CustomerContactRole {
+  billing
+  site
+}
+
 enum DeficiencyStatus {
   open
   owned
@@ -194,10 +199,15 @@ model Customer {
   email String?
   phone String?
 
+  /// Secret link for read-only customer portal (reports & sites).
+  portalToken     String?   @unique
+  portalEnabledAt DateTime?
+
   branchId String
   branch   Branch @relation(fields: [branchId], references: [id], onDelete: Restrict)
 
   buildings Building[]
+  contacts  CustomerContact[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -205,6 +215,25 @@ model Customer {
   @@index([companyId])
   @@index([branchId])
   @@map("customers")
+}
+
+/// Billing or on-site contact for a customer account.
+model CustomerContact {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  name  String
+  email String?
+  phone String?
+  role  CustomerContactRole
+  notes String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerId, role])
+  @@map("customer_contacts")
 }
 
 /// Physical site inspected (belongs to a customer).

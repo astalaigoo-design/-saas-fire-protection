@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { CustomerDuplicatesBanner } from "@/components/customers/customer-duplicates-banner";
 import { CustomerList } from "@/components/customers/customer-list";
 import { CustomerSearchForm } from "@/components/customers/customer-search-form";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -8,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { listBranchesForCompany } from "@/lib/branches/queries";
 import { canFilterBranchesByCookie } from "@/lib/branches/scope";
 import { ensureCanManageCustomers } from "@/lib/auth/guards";
+import { findDuplicateCustomerGroups } from "@/lib/customers/duplicates";
 import { listCustomers } from "@/lib/customers/queries";
 import { parseCustomerSearchParams } from "@/lib/customers/schemas";
 import { getDashboardSession } from "@/lib/dashboard/session";
@@ -23,11 +25,12 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
 
   const filters = parseCustomerSearchParams(searchParams);
   const canReassignBranch = canFilterBranchesByCookie(session);
-  const [customers, branches] = await Promise.all([
+  const [customers, branches, duplicateGroups] = await Promise.all([
     listCustomers(session, filters),
     canReassignBranch
       ? listBranchesForCompany(session.companyId)
       : Promise.resolve([]),
+    findDuplicateCustomerGroups(session),
   ]);
 
   const description = [
@@ -67,6 +70,9 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
       />
 
       <CustomerSearchForm params={filters} />
+
+      <CustomerDuplicatesBanner groups={duplicateGroups} />
+
       <CustomerList
         customers={customers}
         branches={branches}

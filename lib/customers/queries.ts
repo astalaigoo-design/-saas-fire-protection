@@ -57,6 +57,17 @@ function buildWhere(
         { email: { contains: q, mode: "insensitive" } },
         { phone: { contains: q, mode: "insensitive" } },
         {
+          contacts: {
+            some: {
+              OR: [
+                { name: { contains: q, mode: "insensitive" } },
+                { email: { contains: q, mode: "insensitive" } },
+                { phone: { contains: q, mode: "insensitive" } },
+              ],
+            },
+          },
+        },
+        {
           buildings: {
             some: {
               OR: [
@@ -112,8 +123,21 @@ const customerDetailSelect = {
   phone: true,
   branchId: true,
   branch: { select: { name: true } },
+  portalToken: true,
+  portalEnabledAt: true,
   createdAt: true,
   updatedAt: true,
+  contacts: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      role: true,
+      notes: true,
+    },
+    orderBy: [{ role: "asc" as const }, { name: "asc" as const }],
+  },
   buildings: {
     select: {
       id: true,

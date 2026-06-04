@@ -16,3 +16,7 @@ export function publicReportUrl(shareToken: string): string {
 export function publicQuoteUrl(shareToken: string): string {
   return `${getAppOrigin()}/q/${shareToken}`;
 }
+
+export function publicCustomerPortalUrl(portalToken: string): string {
+  return `${getAppOrigin()}/portal/${portalToken}`;
+}
