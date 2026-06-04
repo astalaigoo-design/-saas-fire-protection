@@ -59,6 +59,11 @@ const checks = [
           WHERE table_schema = 'public' AND table_name = 'building_assets'`,
   },
   {
+    label: "inspection_asset_checks",
+    sql: `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'inspection_asset_checks'`,
+  },
+  {
     label: "users.phone",
     sql: `SELECT 1 FROM information_schema.columns
           WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'phone'`,

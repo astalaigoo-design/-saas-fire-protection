@@ -166,6 +166,7 @@ The inspection should appear on **Inspections**, **Calendar**, and **Dashboard â
    - URL shape: `https://getflareflow.com/inspect/<inspectionId>`
 2. On a phone or narrow browser window:
    - Mark each checklist item **Pass**, **Fail**, or **N/A**.
+   - If the building has an **equipment register**, mark each item **Pass**, **Fail**, or **N/A** (failed items need a note). **Pass** stamps last service on submit.
    - For **Fail**, enter a short failure note (required).
    - Optional: **Add photo** per item.
 3. Scroll down â†’ **Sign** in the signature area.

@@ -266,11 +266,35 @@ model BuildingAsset {
   notes          String?   @db.Text
   active         Boolean   @default(true)
 
+  inspectionChecks InspectionAssetCheck[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([buildingId, active])
   @@map("building_assets")
+}
+
+/// Technician result for one register item during a field inspection.
+model InspectionAssetCheck {
+  id             String     @id @default(cuid())
+  inspectionId   String
+  inspection     Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+  buildingAssetId String
+  buildingAsset  BuildingAsset @relation(fields: [buildingAssetId], references: [id], onDelete: Cascade)
+
+  result    InspectionItemResult @default(pending)
+  notes     String?              @db.Text
+  /// Set on submit when marked pass — also stamps BuildingAsset.lastServiceAt.
+  servicedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([inspectionId, buildingAssetId])
+  @@index([inspectionId])
+  @@index([buildingAssetId])
+  @@map("inspection_asset_checks")
 }
 
 /// Timestamped note on a building (site history).
@@ -373,6 +397,9 @@ model Inspection {
 
   deficienciesOpened   Deficiency[] @relation("DeficiencySourceInspection")
   deficienciesVerified Deficiency[] @relation("DeficiencyVerifiedInspection")
+
+  /// Per-asset pass/fail and service stamp for this visit (building equipment register).
+  assetChecks InspectionAssetCheck[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -9,6 +9,7 @@ export type InspectActionResponse =
 export type OfflineMutationType =
   | "inspection.start"
   | "checklist.update"
+  | "asset.update"
   | "photo.upload"
   | "photo.delete"
   | "inspection.submit";
@@ -17,6 +18,11 @@ export type OfflineMutationPayloadMap = {
   "inspection.start": {};
   "checklist.update": {
     itemId: string;
+    result: InspectionItemResult;
+    notes?: string;
+  };
+  "asset.update": {
+    assetCheckId: string;
     result: InspectionItemResult;
     notes?: string;
   };

@@ -57,6 +57,23 @@ export async function apiBulkMarkSectionNa(
   >;
 }
 
+export async function apiUpdateInspectionAssetCheck(
+  inspectionId: string,
+  input: { assetCheckId: string; result: string; notes?: string },
+  idempotencyKey?: string,
+): Promise<InspectActionResponse> {
+  const response = await fetch(`/api/inspect/${inspectionId}/assets`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "content-type": "application/json",
+      ...(idempotencyKey ? { "x-idempotency-key": idempotencyKey } : {}),
+    },
+    body: JSON.stringify(input),
+  });
+  return parseJsonResponse(response);
+}
+
 export async function apiUpdateChecklistItem(
   inspectionId: string,
   input: { itemId: string; result: string; notes?: string },

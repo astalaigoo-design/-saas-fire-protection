@@ -19,6 +19,18 @@ export const updateChecklistItemSchema = z.object({
     .transform((value) => (value === "" ? undefined : value)),
 });
 
+export const updateInspectionAssetCheckSchema = z.object({
+  inspectionId: z.string().trim().min(1),
+  assetCheckId: z.string().trim().min(1),
+  result: checklistItemResultSchema,
+  notes: z
+    .string()
+    .trim()
+    .max(2000)
+    .optional()
+    .transform((value) => (value === "" ? undefined : value)),
+});
+
 export const bulkMarkSectionNaSchema = z.object({
   inspectionId: z.string().trim().min(1),
   sectionKey: z.enum(["nfpa-10", "nfpa-25", "nfpa-72", "nfpa-96", "nfpa-101", "other"]),

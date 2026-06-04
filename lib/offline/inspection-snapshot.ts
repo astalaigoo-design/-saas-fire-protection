@@ -11,6 +11,7 @@ export function isInspectionFormData(value: unknown): value is InspectionFormDat
   if (typeof value.status !== "string") return false;
   if (!Array.isArray(value.items)) return false;
   if (!Array.isArray(value.photos)) return false;
+  if (value.assetChecks !== undefined && !Array.isArray(value.assetChecks)) return false;
   if (!isRecord(value.building)) return false;
   if (!isRecord(value.inspectionType)) return false;
   return typeof value.inspectionType.name === "string";
@@ -30,6 +31,7 @@ export function mergeInspectionWithCache(
     status: cached.status !== "scheduled" ? cached.status : server.status,
     signatureData: cached.signatureData ?? server.signatureData,
     items: cached.items,
+    assetChecks: cached.assetChecks ?? server.assetChecks,
     photos: cached.photos,
   };
 }

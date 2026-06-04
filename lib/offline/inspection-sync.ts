@@ -8,6 +8,7 @@ import {
   apiStartInspection,
   apiSubmitInspection,
   apiUpdateChecklistItem,
+  apiUpdateInspectionAssetCheck,
   apiUploadPhoto,
 } from "@/lib/offline/inspect-api";
 import type {
@@ -31,6 +32,18 @@ async function sendMutation(mutation: OfflineMutation): Promise<InspectActionRes
         mutation.inspectionId,
         {
           itemId: payload.itemId,
+          result: payload.result,
+          notes: payload.notes,
+        },
+        mutation.idempotencyKey,
+      );
+    }
+    case "asset.update": {
+      const payload = mutation.payload as OfflineMutationPayloadMap["asset.update"];
+      return apiUpdateInspectionAssetCheck(
+        mutation.inspectionId,
+        {
+          assetCheckId: payload.assetCheckId,
           result: payload.result,
           notes: payload.notes,
         },

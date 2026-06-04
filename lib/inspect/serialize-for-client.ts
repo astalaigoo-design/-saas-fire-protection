@@ -30,11 +30,22 @@ export function hydrateInspectionFormData(
         ? data.signedAt
         : new Date(data.signedAt);
 
+  const assetChecks = (data.assetChecks ?? []).map((check) => ({
+    ...check,
+    servicedAt:
+      check.servicedAt == null
+        ? null
+        : check.servicedAt instanceof Date
+          ? check.servicedAt
+          : new Date(check.servicedAt),
+  }));
+
   return {
     ...data,
     scheduledAt,
     completedAt,
     signedAt,
+    assetChecks,
   };
 }
 
@@ -59,5 +70,9 @@ export function serializeInspectionForClient(
       inspection.signatureData.length > MAX_PHOTO_URL_LENGTH
         ? null
         : inspection.signatureData,
+    assetChecks: inspection.assetChecks.map((check) => ({
+      ...check,
+      servicedAt: check.servicedAt?.toISOString() ?? null,
+    })),
   };
 }

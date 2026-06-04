@@ -5,10 +5,12 @@ import {
   inspectionWhereFromScope,
 } from "@/lib/branches/scope";
 import type { DashboardSession } from "@/lib/dashboard/session";
+import { ensureInspectionAssetChecks } from "@/lib/inspect/ensure-asset-checks";
 import { prisma } from "@/lib/prisma";
 
 const inspectionFormSelect = {
   id: true,
+  buildingId: true,
   status: true,
   scheduledAt: true,
   completedAt: true,
@@ -57,7 +59,7 @@ export async function getInspectionForForm(
   inspectionId: string,
 ): Promise<InspectionFormData | null> {
   const scope = branchScopeFromSession(session);
-  return prisma.inspection.findFirst({
+  const inspection = await prisma.inspection.findFirst({
     where: {
       id: inspectionId,
       ...inspectionWhereFromScope(scope, session.companyId),
@@ -67,4 +69,16 @@ export async function getInspectionForForm(
     },
     select: inspectionFormSelect,
   });
+
+  if (!inspection) return null;
+
+  if (!isInspectionLocked(inspection)) {
+    await ensureInspectionAssetChecks(inspection.id, inspection.buildingId);
+    return prisma.inspection.findFirst({
+      where: { id: inspectionId },
+      select: inspectionFormSelect,
+    });
+  }
+
+  return inspection;
 }

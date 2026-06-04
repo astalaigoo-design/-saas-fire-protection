@@ -15,10 +15,13 @@ import { requireWritableTenant } from "@/lib/billing/guards";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { isInspectionLocked } from "@/lib/inspect/queries";
 import { getPendingItemIdsInSection } from "@/lib/inspect/checklist-sections";
+import { applyAssetServiceStampOnSubmit } from "@/lib/inspect/apply-asset-service-stamp";
+import { ensureInspectionAssetChecks } from "@/lib/inspect/ensure-asset-checks";
 import {
   bulkMarkSectionNaSchema,
   submitInspectionSchema,
   updateChecklistItemSchema,
+  updateInspectionAssetCheckSchema,
   uploadPhotoSchema,
 } from "@/lib/inspect/schemas";
 import { isSupabaseStorageConfigured } from "@/lib/supabase/env";
@@ -50,7 +53,7 @@ export type BulkSectionNaResult =
   | { ok: false; error: string };
 
 type EditableInspection = Prisma.InspectionGetPayload<{
-  include: { items: true };
+  include: { items: true; assetChecks: true };
 }>;
 
 type LoadEditableResult =
@@ -70,7 +73,7 @@ async function loadEditableInspection(
         ? {}
         : { assignedToUserId: session.appUserId }),
     },
-    include: { items: true },
+    include: { items: true, assetChecks: true },
   });
 
   if (!inspection) {
@@ -100,10 +103,55 @@ export async function startInspection(
       where: { id: inspectionId },
       data: { status: InspectionStatus.in_progress },
     });
+    await ensureInspectionAssetChecks(inspectionId, loaded.inspection.buildingId);
     await syncBuildingComplianceStatus(loaded.inspection.buildingId);
     revalidatePath(`/inspect/${inspectionId}`);
   }
 
+  return { ok: true };
+}
+
+export async function updateInspectionAssetCheck(
+  input: unknown,
+): Promise<InspectActionResult> {
+  const session = await getDashboardSession();
+  if (!session) return { ok: false, error: "You must be signed in." };
+
+  const tenant = await requireWritableTenant(session);
+  if (!tenant.ok) return { ok: false, error: tenant.error };
+
+  const parsed = updateInspectionAssetCheckSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  const loaded = await loadEditableInspection(parsed.data.inspectionId, session);
+  if (!loaded.ok) return { ok: false, error: loaded.error };
+
+  const check = await prisma.inspectionAssetCheck.findFirst({
+    where: {
+      id: parsed.data.assetCheckId,
+      inspectionId: parsed.data.inspectionId,
+    },
+  });
+  if (!check) return { ok: false, error: "Equipment item not found." };
+
+  if (
+    parsed.data.result === InspectionItemResult.fail &&
+    !parsed.data.notes?.trim()
+  ) {
+    return { ok: false, error: "Add a note when marking equipment as failed." };
+  }
+
+  await prisma.inspectionAssetCheck.update({
+    where: { id: check.id },
+    data: {
+      result: parsed.data.result,
+      notes: parsed.data.notes ?? null,
+    },
+  });
+
+  revalidatePath(`/inspect/${parsed.data.inspectionId}`);
   return { ok: true };
 }
 
@@ -333,6 +381,25 @@ export async function submitInspection(
     (item) => item.result === InspectionItemResult.fail,
   );
 
+  const pendingAssets = loaded.inspection.assetChecks.filter(
+    (check) => check.result === InspectionItemResult.pending,
+  );
+  if (pendingAssets.length > 0) {
+    return {
+      ok: false,
+      error: `Mark every equipment item (${pendingAssets.length} remaining).`,
+    };
+  }
+
+  const failedAssetsWithoutNotes = loaded.inspection.assetChecks.filter(
+    (check) =>
+      check.result === InspectionItemResult.fail &&
+      (!check.notes || check.notes.trim() === ""),
+  );
+  if (failedAssetsWithoutNotes.length > 0) {
+    return { ok: false, error: "Every failed equipment item needs a note." };
+  }
+
   const now = new Date();
   await prisma.inspection.update({
     where: { id: parsed.data.inspectionId },
@@ -357,6 +424,15 @@ export async function submitInspection(
   });
 
   await syncBuildingComplianceStatus(loaded.inspection.buildingId);
+
+  try {
+    await applyAssetServiceStampOnSubmit({
+      inspectionId: parsed.data.inspectionId,
+      completedAt: now,
+    });
+  } catch (error) {
+    captureServerActionError("applyAssetServiceStampOnSubmit", error);
+  }
 
   try {
     await verifyDeficienciesAfterInspectionSubmit({

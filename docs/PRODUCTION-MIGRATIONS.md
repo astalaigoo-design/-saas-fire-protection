@@ -55,6 +55,7 @@ Only run baseline once per database; do not repeat on a healthy `_prisma_migrati
 | `20260605120000_add_staff_notifications` | In-app notification bell; technician assign alerts |
 | `20260606120000_add_deficiencies` | Deficiencies workflow, command center tab, building deficiencies |
 | `20260607120000_add_building_assets` | **Equipment** tab on building detail (`building_assets` table) |
+| `20260609130000_add_inspection_asset_checks` | Field **Equipment register** on `/inspect/...` (per-asset pass/fail + service stamp) |
 | `20260608120000_user_phone_day_of_sms` | Technician mobile + Twilio SMS + day-of cron |
 
 If a migration is missing, typical symptoms:

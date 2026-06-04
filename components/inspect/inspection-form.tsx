@@ -7,6 +7,10 @@ import { useEffect, useState, useTransition } from "react";
 import { BuildingHeader } from "@/components/inspect/building-header";
 import { PreJobBriefCard } from "@/components/inspect/pre-job-brief-card";
 import { ChecklistCarousel } from "@/components/inspect/checklist-carousel";
+import {
+  EquipmentRegisterSection,
+  type AssetCheckState,
+} from "@/components/inspect/equipment-register-section";
 import { PhotoUploadSection } from "@/components/inspect/photo-upload-section";
 import { DownloadReportButton } from "@/components/inspect/download-report-button";
 import { OfflineBadge } from "@/components/inspect/offline-badge";
@@ -67,6 +71,15 @@ export function InspectionForm({
       description: item.description,
       result: item.result,
       notes: item.notes,
+    })),
+  );
+  const [assetChecks, setAssetChecks] = useState<AssetCheckState[]>(() =>
+    inspection.assetChecks.map((check) => ({
+      id: check.id,
+      result: check.result,
+      notes: check.notes,
+      servicedAt: check.servicedAt,
+      asset: check.buildingAsset,
     })),
   );
   const [signature, setSignature] = useState<string | null>(
@@ -137,6 +150,17 @@ export function InspectionForm({
       return { ...serverItem, result: local.result, notes: local.notes };
     });
 
+    const mergedAssetChecks = inspection.assetChecks.map((serverCheck) => {
+      const local = assetChecks.find((row) => row.id === serverCheck.id);
+      if (!local) return serverCheck;
+      return {
+        ...serverCheck,
+        result: local.result,
+        notes: local.notes,
+        servicedAt: local.servicedAt,
+      };
+    });
+
     const mergedPhotos = photos.map((photo, index) => {
       const existing = inspection.photos.find((row) => row.id === photo.id);
       if (existing) {
@@ -160,7 +184,7 @@ export function InspectionForm({
       },
       updatedAt: Date.now(),
     });
-  }, [inspection, items, photos, signature]);
+  }, [inspection, items, assetChecks, photos, signature]);
 
   useEffect(() => {
     if (!locked && inspection.status === "scheduled") {
@@ -204,6 +228,13 @@ export function InspectionForm({
     (item) =>
       item.result !== InspectionItemResult.fail || Boolean(item.notes?.trim()),
   );
+  const allAssetsComplete =
+    assetChecks.length === 0 ||
+    assetChecks.every((check) => check.result !== InspectionItemResult.pending);
+  const assetFailNotesValid = assetChecks.every(
+    (check) =>
+      check.result !== InspectionItemResult.fail || Boolean(check.notes?.trim()),
+  );
 
   const handleDone = () => {
     if (formLocked || readOnly) return;
@@ -215,6 +246,14 @@ export function InspectionForm({
     }
     if (!failNotesValid) {
       setSubmitError("Every failed item needs a note.");
+      return;
+    }
+    if (!allAssetsComplete) {
+      setSubmitError("Mark every equipment item in the register before finishing.");
+      return;
+    }
+    if (!assetFailNotesValid) {
+      setSubmitError("Every failed equipment item needs a note.");
       return;
     }
     if (!signature) {
@@ -287,6 +326,13 @@ export function InspectionForm({
           onPhotoAdded={handlePhotoAdded}
         />
 
+        <EquipmentRegisterSection
+          inspectionId={inspection.id}
+          assetChecks={assetChecks}
+          locked={locked}
+          onAssetChecksChange={setAssetChecks}
+        />
+
         {locked && photos.length > 0 ? (
           <PhotoUploadSection
             inspectionId={inspection.id}
@@ -306,6 +352,9 @@ export function InspectionForm({
                 {submittedOffline
                   ? "Inspection saved on this device. It will sync when you are back online."
                   : "Inspection submitted and locked."}
+                {assetChecks.length > 0
+                  ? " Equipment service dates updated for passed items."
+                  : null}
               </p>
             </div>
 
