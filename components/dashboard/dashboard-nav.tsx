@@ -62,7 +62,18 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function DashboardNav({ items, className }: DashboardNavProps) {
+function NavBadge({ count }: { count: number }) {
+  return (
+    <span
+      className="ml-auto flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-semibold leading-none text-destructive-foreground"
+      aria-hidden
+    >
+      {count > 9 ? "9+" : count}
+    </span>
+  );
+}
+
+export function DashboardNav({ items, className, badges }: DashboardNavProps) {
   const pathname = usePathname();
 
   return (
@@ -70,6 +81,7 @@ export function DashboardNav({ items, className }: DashboardNavProps) {
       {items.map((item) => {
         const active = isActive(pathname, item.href);
         const Icon = navIcons[item.icon];
+        const badge = badges?.[item.href] ?? 0;
         return (
           <Link
             key={item.href}
@@ -84,6 +96,7 @@ export function DashboardNav({ items, className }: DashboardNavProps) {
           >
             <Icon className="size-4 shrink-0" aria-hidden />
             {item.label}
+            {badge > 0 ? <NavBadge count={badge} /> : null}
           </Link>
         );
       })}

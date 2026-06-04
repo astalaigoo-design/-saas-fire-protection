@@ -154,6 +154,11 @@ export async function deleteCustomerContact(
   return { ok: true };
 }
 
+/** Single-argument form action for native `<form action={…}>`. */
+export async function submitDeleteCustomerContact(formData: FormData): Promise<void> {
+  await deleteCustomerContact(undefined, formData);
+}
+
 export async function seedBillingContactFromAccountAction(
   _prev: CustomerContactActionResult | undefined,
   formData: FormData,

@@ -311,6 +311,13 @@ export async function sendDraftQuote(
     },
   });
 
+  try {
+    const { emitQuoteUpdatedWebhook } = await import("@/lib/integrations/emit");
+    await emitQuoteUpdatedWebhook(session.companyId, quote.id);
+  } catch (error) {
+    console.error("emitQuoteUpdatedWebhook failed", error);
+  }
+
   revalidatePath("/dashboard/quotes");
   revalidatePath("/dashboard/reports");
   revalidatePath("/dashboard/operations");
@@ -365,6 +372,13 @@ async function transitionQuoteStatus(
       actorUserId: session.appUserId,
     });
     revalidatePath("/dashboard/jobs");
+  }
+
+  try {
+    const { emitQuoteUpdatedWebhook } = await import("@/lib/integrations/emit");
+    await emitQuoteUpdatedWebhook(session.companyId, quote.id);
+  } catch (error) {
+    console.error("emitQuoteUpdatedWebhook failed", error);
   }
 
   revalidatePath("/dashboard/quotes");

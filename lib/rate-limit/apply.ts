@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getClientIp } from "@/lib/rate-limit/client-ip";
 import {
+  apiV1Limiter,
   isRateLimitDisabled,
   publicPdfLimiter,
   webhookClerkLimiter,
@@ -52,6 +53,13 @@ export async function applyRateLimit(request: Request): Promise<NextResponse | n
 
   if (pathname === "/api/webhooks/paddle") {
     const result = await webhookPaddleLimiter().limit("endpoint");
+    if (!result.success) return tooManyRequests(result);
+    return null;
+  }
+
+  if (pathname.startsWith("/api/v1/")) {
+    const ip = getClientIp(request);
+    const result = await apiV1Limiter().limit(`ip:${ip}`);
     if (!result.success) return tooManyRequests(result);
     return null;
   }

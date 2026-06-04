@@ -83,6 +83,13 @@ export async function createDeficienciesFromFailedItems(input: {
         label: item.label,
       },
     });
+
+    try {
+      const { emitDeficiencyCreatedWebhook } = await import("@/lib/integrations/emit");
+      await emitDeficiencyCreatedWebhook(input.companyId, row.id);
+    } catch (error) {
+      console.error("emitDeficiencyCreatedWebhook failed", error);
+    }
   }
 
   return created;

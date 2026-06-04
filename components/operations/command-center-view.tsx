@@ -133,6 +133,7 @@ export function CommandCenterView({
   automation,
   assignableStaff,
   quotePipeline,
+  outboundChannels,
   defaultTab,
 }: CommandCenterViewProps) {
   const overdueTotal =

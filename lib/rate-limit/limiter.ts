@@ -80,3 +80,9 @@ export function webhookPaddleLimiter(): RateLimiter {
   const limit = envInt("RATE_LIMIT_WEBHOOK_PADDLE_PER_MIN", 300);
   return createLimiter("webhook-paddle", limit, "1 m");
 }
+
+/** Company REST API (`/api/v1/*`) — per API key prefix hash bucket via auth layer; fallback per IP here. */
+export function apiV1Limiter(): RateLimiter {
+  const limit = envInt("RATE_LIMIT_API_V1_PER_MIN", 120);
+  return createLimiter("api-v1", limit, "1 m");
+}

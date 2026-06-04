@@ -10,6 +10,8 @@ import { BranchesSettingsSection } from "@/components/dashboard/branches-setting
 import { OutboundEmailSettingsSection } from "@/components/dashboard/outbound-email-settings-section";
 import { TechnicianAlertsSettingsSection } from "@/components/dashboard/technician-alerts-settings-section";
 import { TeamInviteSection } from "@/components/dashboard/team-invite-section";
+import { IntegrationsSettingsSection } from "@/components/dashboard/integrations-settings-section";
+import { getIntegrationsSettingsData } from "@/lib/integrations/queries";
 import { listBranchesForCompany } from "@/lib/branches/queries";
 import { ensureCanManageOrgSettings } from "@/lib/auth/guards";
 import { getInspectionTypePacksData } from "@/lib/companies/inspection-type-queries";
@@ -25,13 +27,14 @@ export default async function OrgSettingsPage() {
   if (!session) redirect("/sign-in");
   ensureCanManageOrgSettings(session.role);
 
-  const [company, team, inspectionTypePacks, checklistTemplates, branches] =
+  const [company, team, inspectionTypePacks, checklistTemplates, branches, integrations] =
     await Promise.all([
       getCompanyProfile(session),
       getTeamManagementData(session),
       getInspectionTypePacksData(session),
       getChecklistTemplatesEditorData(session),
       listBranchesForCompany(session.companyId),
+      getIntegrationsSettingsData(session.companyId),
     ]);
   if (!company) redirect("/dashboard");
 
@@ -76,6 +79,8 @@ export default async function OrgSettingsPage() {
           Open billing
         </Link>
       </section>
+
+      <IntegrationsSettingsSection data={integrations} />
 
       <CompanySettingsForm company={company} />
     </div>

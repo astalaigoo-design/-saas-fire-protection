@@ -99,6 +99,14 @@ enum DeficiencyStatus {
   verified
 }
 
+/// Outbound integration events (CMMS / accounting webhooks).
+enum IntegrationWebhookEvent {
+  inspection_completed
+  report_finalized
+  quote_updated
+  deficiency_created
+}
+
 // --- Core tenant -----------------------------------------------------------
 
 /// Fire inspection company (tenant).
@@ -130,11 +138,52 @@ model Company {
   auditEvents         AuditEvent[]
   staffNotifications  StaffNotification[]
   deficiencies        Deficiency[]
+  apiKeys             CompanyApiKey[]
+  webhookEndpoints    CompanyWebhookEndpoint[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("companies")
+}
+
+/// Company-scoped API key for read-only REST (`/api/v1/*`).
+model CompanyApiKey {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  label     String  @default("API key")
+  /// First segment shown in UI, e.g. `ff_live_ab12`.
+  keyPrefix String
+  keyHash   String  @unique
+  active    Boolean @default(true)
+  lastUsedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([companyId])
+  @@map("company_api_keys")
+}
+
+/// HTTPS endpoint that receives signed outbound webhooks for a company.
+model CompanyWebhookEndpoint {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  label  String  @default("Webhook")
+  url    String
+  /// HMAC secret (shown once on create); used for `X-Flareflow-Signature`.
+  secret String
+  events IntegrationWebhookEvent[]
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId])
+  @@map("company_webhook_endpoints")
 }
 
 /// Office / region under a company; customers belong to one branch.

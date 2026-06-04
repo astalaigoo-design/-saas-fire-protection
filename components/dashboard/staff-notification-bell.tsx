@@ -38,7 +38,13 @@ function formatRelativeTime(date: Date): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export function StaffNotificationBell({ feed }: StaffNotificationBellProps) {
+export function StaffNotificationBell({
+  feed,
+  role,
+  variant = "dashboard",
+}: StaffNotificationBellProps) {
+  const isField = variant === "field";
+  const isTechnician = role === "technician";
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();

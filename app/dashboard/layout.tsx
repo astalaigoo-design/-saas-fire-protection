@@ -14,7 +14,7 @@ import { getCompanyBillingSnapshot } from "@/lib/billing/queries";
 import { getDashboardNavItems } from "@/lib/dashboard/nav-items";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { getTechnicianHomeHref } from "@/lib/inspect/resume-job";
-import { canManageOrgSettings } from "@/lib/auth/permissions";
+import { canManageJobs } from "@/lib/auth/permissions";
 import { canViewStaffNotifications } from "@/lib/notifications/scope";
 import { getStaffNotificationsFeed } from "@/lib/notifications/queries";
 import { getOutboundChannelsStatus } from "@/lib/outbound/channels";
@@ -52,6 +52,10 @@ export default async function DashboardLayout({
     notificationFeed.unreadCount > 0
       ? { [homeHref]: notificationFeed.unreadCount }
       : undefined;
+
+  const outboundChannels = canManageJobs(session.role)
+    ? getOutboundChannelsStatus()
+    : null;
 
   return (
     <div className="min-h-screen bg-background text-foreground lg:flex">

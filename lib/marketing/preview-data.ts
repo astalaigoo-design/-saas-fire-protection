@@ -6,6 +6,7 @@ import type { InspectionFormData } from "@/lib/inspect/queries";
 
 export const marketingInspectionPreview = {
   id: "marketing-preview-inspection",
+  buildingId: "marketing-preview-building",
   status: InspectionStatus.in_progress,
   scheduledAt: new Date("2026-06-01T09:00:00Z"),
   completedAt: null,
@@ -30,25 +31,29 @@ export const marketingInspectionPreview = {
       sortOrder: 1,
       result: InspectionItemResult.pass,
       notes: null,
+      linkedTagNumber: null,
     },
     {
       id: "item-2",
       label: "Gauges in operable range",
       description: "NFPA 25 (2023) §5.2.4 — Dry pipe gauges readable and in range.",
       sortOrder: 2,
-      result: null,
+      result: InspectionItemResult.pending,
       notes: null,
+      linkedTagNumber: null,
     },
     {
       id: "item-3",
       label: "Alarm devices free of damage",
       description: "NFPA 25 (2023) §5.2.5 — No physical damage or corrosion.",
       sortOrder: 3,
-      result: null,
+      result: InspectionItemResult.pending,
       notes: null,
+      linkedTagNumber: null,
     },
   ],
   photos: [],
+  assetChecks: [],
 } as InspectionFormData;
 
 export const marketingCommandCenterPreview: CommandCenterSnapshot = {

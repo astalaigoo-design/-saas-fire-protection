@@ -139,7 +139,17 @@ export function BuildingAssetsTab({
                 Equipment added to the register.
               </p>
             ) : null}
-            <BuildingAssetFormFields idPrefix="new-asset" defaults={assetFormDefaults} />
+            <BuildingAssetFormFields
+              idPrefix="new-asset"
+              defaults={
+                assetFormDefaults
+                  ? {
+                      ...assetFormDefaults,
+                      assetType: assetFormDefaults.assetType ?? undefined,
+                    }
+                  : undefined
+              }
+            />
             <AddAssetButton />
           </form>
         </CardContent>

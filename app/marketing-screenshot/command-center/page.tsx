@@ -5,6 +5,7 @@ import {
   marketingCommandCenterPreview,
   marketingQuotePipelineMetrics,
 } from "@/lib/marketing/preview-data";
+import { getOutboundChannelsStatus } from "@/lib/outbound/channels";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -30,6 +31,7 @@ export default function MarketingCommandCenterPage() {
             { id: "user-admin", name: "Alex Morgan", role: "admin" },
           ]}
           quotePipeline={marketingQuotePipelineMetrics}
+          outboundChannels={getOutboundChannelsStatus()}
           defaultTab="quotes"
         />
       </div>

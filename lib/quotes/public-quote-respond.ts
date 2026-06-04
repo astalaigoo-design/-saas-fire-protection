@@ -93,6 +93,12 @@ export async function respondToPublicQuote(
       entityId: quote.id,
       metadata: { source: "public_link", buildingLabel: building },
     });
+    try {
+      const { emitQuoteUpdatedWebhook } = await import("@/lib/integrations/emit");
+      await emitQuoteUpdatedWebhook(quote.companyId, quote.id);
+    } catch (error) {
+      console.error("emitQuoteUpdatedWebhook failed", error);
+    }
     const schedule = await tryScheduleReinspectionAfterQuoteAccept({
       companyId: quote.companyId,
       quoteId: quote.id,
@@ -139,6 +145,12 @@ export async function respondToPublicQuote(
       entityId: quote.id,
       metadata: { source: "public_link", buildingLabel: building },
     });
+    try {
+      const { emitQuoteUpdatedWebhook } = await import("@/lib/integrations/emit");
+      await emitQuoteUpdatedWebhook(quote.companyId, quote.id);
+    } catch (error) {
+      console.error("emitQuoteUpdatedWebhook failed", error);
+    }
     await notifyCompany(quote, "declined", { buildingLabel: building, quoteTitle });
     revalidateAfterQuoteResponse(quote.shareToken);
     return {

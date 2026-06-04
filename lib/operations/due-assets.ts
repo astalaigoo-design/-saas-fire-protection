@@ -142,7 +142,7 @@ export function groupDueAssetsByType(rows: DueAssetRow[]): {
     byType.set(row.assetType, list);
   }
 
-  return [...byType.entries()]
+  return Array.from(byType.entries())
     .map(([assetType, typeRows]) => ({
       assetType,
       assetTypeLabel: typeRows[0]?.assetTypeLabel ?? assetTypeLabel(assetType),

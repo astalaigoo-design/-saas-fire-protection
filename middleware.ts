@@ -54,6 +54,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/public/quotes/(.*)",
   "/api/webhooks/clerk",
   "/api/webhooks/paddle",
+  "/api/v1/(.*)",
   "/api/cron/due-reminders",
   "/api/cron/trial-ending-reminders",
   "/api/cron/cleanup-idempotency",

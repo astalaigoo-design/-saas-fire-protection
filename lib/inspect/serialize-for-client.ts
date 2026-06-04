@@ -5,11 +5,16 @@ const MAX_PHOTO_URL_LENGTH = 500_000;
 /** JSON-safe inspection payload for Server Component → Client Component boundaries. */
 export type ClientInspectionFormData = Omit<
   InspectionFormData,
-  "scheduledAt" | "completedAt" | "signedAt"
+  "scheduledAt" | "completedAt" | "signedAt" | "assetChecks"
 > & {
   scheduledAt: string;
   completedAt: string | null;
   signedAt: string | null;
+  assetChecks: Array<
+    Omit<InspectionFormData["assetChecks"][number], "servicedAt"> & {
+      servicedAt: string | null;
+    }
+  >;
 };
 
 export function hydrateInspectionFormData(

@@ -49,7 +49,7 @@ async function loadImportContext(companyId: string) {
     prisma.branch.findMany({
       where: { companyId },
       orderBy: [{ isDefault: "desc" }, { name: "asc" }],
-      select: { id: true, name: true, isDefault: true },
+      select: { id: true, name: true, isDefault: true, isImportDefault: true },
     }),
     prisma.customer.findMany({
       where: { companyId },

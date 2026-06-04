@@ -63,7 +63,7 @@ export function CustomerPortalSection({
             </a>
           </div>
           <p className="text-xs text-muted-foreground">
-            Enabled {enabledAt.toLocaleDateString()}. Disable to invalidate the link.
+            Enabled {new Date(enabledAt).toLocaleDateString()}. Disable to invalidate the link.
           </p>
           <Button
             type="button"

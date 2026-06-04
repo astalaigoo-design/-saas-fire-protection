@@ -440,6 +440,13 @@ export async function submitInspection(
     },
   });
 
+  try {
+    const { emitInspectionCompletedWebhook } = await import("@/lib/integrations/emit");
+    await emitInspectionCompletedWebhook(session.companyId, parsed.data.inspectionId);
+  } catch (error) {
+    captureServerActionError("emitInspectionCompletedWebhook", error);
+  }
+
   await syncBuildingComplianceStatus(loaded.inspection.buildingId);
 
   try {

@@ -307,7 +307,7 @@ export async function runAssetImport(input: unknown): Promise<AssetImportResult>
             buildingId,
             tagNumber: row.tagNumber,
             location: row.location,
-            assetType: row.assetType,
+            assetType: row.assetType!,
           }),
         );
 
@@ -328,10 +328,10 @@ export async function runAssetImport(input: unknown): Promise<AssetImportResult>
       return { count, customerIds };
     });
 
-    for (const buildingId of new Set(readyRows.map((r) => r.buildingId!))) {
+    for (const buildingId of Array.from(new Set(readyRows.map((r) => r.buildingId!)))) {
       revalidatePath(`/dashboard/buildings/${buildingId}`);
     }
-    for (const customerId of createdAssets.customerIds) {
+    for (const customerId of Array.from(createdAssets.customerIds)) {
       revalidatePath(`/dashboard/customers/${customerId}`);
     }
     revalidatePath("/dashboard/buildings");

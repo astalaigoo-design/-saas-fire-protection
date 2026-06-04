@@ -177,7 +177,7 @@ export function InspectionCalendar({
     clearMessages();
     startTransition(async () => {
       const result = await bulkRescheduleInspections({
-        inspectionIds: [...selectedIds],
+        inspectionIds: Array.from(selectedIds),
         targetDate: bulkTargetDate,
       });
       if (!result.ok) {
@@ -371,7 +371,9 @@ export function InspectionCalendar({
                   onDragLeave={() => {
                     if (dragOverDateKey === cell.dateKey) setDragOverDateKey(null);
                   }}
-                  onDrop={(event) => handleDropOnDay(event, cell.dateKey)}
+                  onDrop={(event) => {
+                    if (cell.dateKey) handleDropOnDay(event, cell.dateKey);
+                  }}
                 >
                   <button
                     type="button"

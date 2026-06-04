@@ -32,7 +32,10 @@ export default async function MyJobsPage() {
 
   const catalogJobs = jobs.map(toJobCatalogEntry);
 
-  const serverResumeJobId = pickPromotedResumeJobId(catalogJobs, null);
+  const serverResumeJobId = pickPromotedResumeJobId(
+    catalogJobs.map((job) => ({ ...job, status: job.status ?? "scheduled" })),
+    null,
+  );
 
   return (
     <div className="space-y-6">

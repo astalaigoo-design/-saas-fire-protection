@@ -93,5 +93,17 @@ export async function generateComplianceReport(
 
   const shareToken = await ensureReportShareToken(report.id);
 
+  try {
+    const { emitReportFinalizedWebhook } = await import("@/lib/integrations/emit");
+    await emitReportFinalizedWebhook({
+      companyId: session.companyId,
+      reportId: report.id,
+      inspectionId,
+      shareToken,
+    });
+  } catch (error) {
+    console.error("emitReportFinalizedWebhook failed", error);
+  }
+
   return { buffer, reportId: report.id, filename, shareToken };
 }

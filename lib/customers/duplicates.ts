@@ -47,13 +47,13 @@ export async function findDuplicateCustomerGroups(
 
   const groups: DuplicateCustomerGroup[] = [];
 
-  for (const [key, list] of byName) {
+  for (const [key, list] of Array.from(byName.entries())) {
     if (list.length > 1) {
       groups.push({ reason: "name", key, customers: list });
     }
   }
 
-  for (const [key, list] of byEmail) {
+  for (const [key, list] of Array.from(byEmail.entries())) {
     if (list.length > 1) {
       const ids = new Set(list.map((c) => c.id));
       const alreadyCovered = groups.some(

@@ -112,6 +112,7 @@ export async function updateBranchDefaults(
       error: "Service interval must be a whole number between 1 and 60 months.",
     };
   }
+  const defaultServiceIntervalMonths = parsed.data.defaultServiceIntervalMonths;
 
   const branch = await prisma.branch.findFirst({
     where: { id: parsed.data.branchId, companyId: session.companyId },
@@ -131,7 +132,7 @@ export async function updateBranchDefaults(
       where: { id: branch.id },
       data: {
         defaultAssetType: parsed.data.defaultAssetType,
-        defaultServiceIntervalMonths: parsed.data.defaultServiceIntervalMonths,
+        defaultServiceIntervalMonths,
         isImportDefault: parsed.data.isImportDefault,
       },
     });

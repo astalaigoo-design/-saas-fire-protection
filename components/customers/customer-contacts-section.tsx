@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   createCustomerContact,
-  deleteCustomerContact,
+  submitDeleteCustomerContact,
   seedBillingContactFromAccountAction,
   type CustomerContactActionResult,
 } from "@/lib/customers/contact-actions";
@@ -94,7 +94,7 @@ export function CustomerContactsSection({ customer }: CustomerContactsSectionPro
                     <p className="mt-2 text-xs text-muted-foreground">{contact.notes}</p>
                   ) : null}
                 </div>
-                <form action={deleteCustomerContact}>
+                <form action={submitDeleteCustomerContact}>
                   <input type="hidden" name="contactId" value={contact.id} />
                   <Button type="submit" variant="ghost" size="sm" className="min-h-9 text-destructive">
                     Remove

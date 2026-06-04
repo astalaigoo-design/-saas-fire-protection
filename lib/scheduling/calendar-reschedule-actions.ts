@@ -84,7 +84,7 @@ export async function bulkRescheduleInspections(input: {
   }
 
   const scope = branchScopeFromSession(session);
-  const uniqueIds = [...new Set(parsed.data.inspectionIds)];
+  const uniqueIds = Array.from(new Set(parsed.data.inspectionIds));
   const rows = await prisma.inspection.findMany({
     where: {
       id: { in: uniqueIds },

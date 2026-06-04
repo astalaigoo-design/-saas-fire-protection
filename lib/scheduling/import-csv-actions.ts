@@ -268,7 +268,7 @@ export async function runScheduleImport(input: unknown): Promise<ScheduleImportR
   }
 
   const checklistByTypeId = new Map<string, Awaited<ReturnType<typeof resolveInspectionChecklistCreateInputs>>>();
-  for (const typeId of new Set(readyRows.map((r) => r.inspectionTypeId!))) {
+  for (const typeId of Array.from(new Set(readyRows.map((r) => r.inspectionTypeId!)))) {
     checklistByTypeId.set(typeId, await resolveInspectionChecklistCreateInputs(typeId));
   }
 
@@ -342,7 +342,7 @@ export async function runScheduleImport(input: unknown): Promise<ScheduleImportR
       return { scheduledRows, scheduledVisits };
     });
 
-    for (const buildingId of buildingIds) {
+    for (const buildingId of Array.from(buildingIds)) {
       await syncBuildingComplianceStatus(buildingId);
     }
 
