@@ -3,16 +3,16 @@
 import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
 import {
-  runBuildingImport,
-  type BuildingImportPreviewResult,
-  type BuildingImportCommitResult,
-} from "@/lib/buildings/import-csv-actions";
-import { BUILDING_IMPORT_MAX_ROWS } from "@/lib/buildings/import-csv-schemas";
+  runCustomerImport,
+  type CustomerImportPreviewResult,
+  type CustomerImportCommitResult,
+} from "@/lib/customers/import-csv-actions";
+import { CUSTOMER_IMPORT_MAX_ROWS } from "@/lib/customers/import-csv-schemas";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-type BuildingImportFormProps = {
+type CustomerImportFormProps = {
   branchHint: string;
 };
 
@@ -22,13 +22,13 @@ const statusClass: Record<string, string> = {
   duplicate: "text-amber-400",
 };
 
-export function BuildingImportForm({ branchHint }: BuildingImportFormProps) {
+export function CustomerImportForm({ branchHint }: CustomerImportFormProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [csvText, setCsvText] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [preview, setPreview] = useState<BuildingImportPreviewResult | null>(null);
-  const [commitResult, setCommitResult] = useState<BuildingImportCommitResult | null>(null);
+  const [preview, setPreview] = useState<CustomerImportPreviewResult | null>(null);
+  const [commitResult, setCommitResult] = useState<CustomerImportCommitResult | null>(null);
   const [isPending, startTransition] = useTransition();
 
   async function readSelectedFile(): Promise<string | null> {
@@ -54,7 +54,7 @@ export function BuildingImportForm({ branchHint }: BuildingImportFormProps) {
     startTransition(async () => {
       const text = csvText ?? (await readSelectedFile());
       if (!text) return;
-      const result = await runBuildingImport({ mode: "preview", csv: text });
+      const result = await runCustomerImport({ mode: "preview", csv: text });
       if (!result.ok) {
         setError(result.error);
         return;
@@ -71,7 +71,7 @@ export function BuildingImportForm({ branchHint }: BuildingImportFormProps) {
     }
     setError(null);
     startTransition(async () => {
-      const result = await runBuildingImport({ mode: "commit", csv: csvText });
+      const result = await runCustomerImport({ mode: "commit", csv: csvText });
       if (!result.ok) {
         setError(result.error);
         return;
@@ -87,23 +87,18 @@ export function BuildingImportForm({ branchHint }: BuildingImportFormProps) {
       <Card className="mx-auto max-w-3xl">
         <CardContent className="space-y-6 pt-6">
           <p className="text-sm text-muted-foreground">
-            Upload a spreadsheet with one row per building. Include a{" "}
-            <strong className="font-medium text-foreground">branch</strong> column when you
-            have multiple offices ({branchHint}). Repeat the same customer name on multiple rows
-            to add many sites under one property manager — up to {BUILDING_IMPORT_MAX_ROWS} rows
-            per file.{" "}
-            <Link
-              href="/dashboard/customers/import"
-              className="font-medium text-primary underline-offset-4 hover:underline"
-            >
-              Import customers
+            Load property managers and facility owners before adding sites. Include a{" "}
+            <strong className="font-medium text-foreground">branch</strong> column when you have
+            multiple offices ({branchHint}). Then use{" "}
+            <Link href="/dashboard/buildings/import" className="font-medium text-primary underline-offset-4 hover:underline">
+              Import buildings
             </Link>{" "}
-            first if your roster is not in FlareFlow yet.
+            to bulk-add sites — up to {CUSTOMER_IMPORT_MAX_ROWS} customers per file.
           </p>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <a
-              href="/api/dashboard/buildings/import-template"
+              href="/api/dashboard/customers/import-template"
               className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-11")}
             >
               Download template
@@ -144,7 +139,7 @@ export function BuildingImportForm({ branchHint }: BuildingImportFormProps) {
               {isPending && !preview ? "Checking…" : "Preview import"}
             </button>
             <Link
-              href="/dashboard/buildings"
+              href="/dashboard/customers"
               className={cn(buttonVariants({ variant: "ghost", size: "lg" }), "min-h-11")}
             >
               Cancel
@@ -165,12 +160,8 @@ export function BuildingImportForm({ branchHint }: BuildingImportFormProps) {
               role="status"
               className="rounded-lg border border-emerald-900/50 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200"
             >
-              Imported {commitResult.createdBuildings} building
-              {commitResult.createdBuildings === 1 ? "" : "s"}
-              {commitResult.createdCustomers > 0
-                ? ` and ${commitResult.createdCustomers} new customer${commitResult.createdCustomers === 1 ? "" : "s"}`
-                : ""}
-              .
+              Imported {commitResult.createdCustomers} customer
+              {commitResult.createdCustomers === 1 ? "" : "s"}.
             </p>
           ) : null}
         </CardContent>
@@ -183,9 +174,6 @@ export function BuildingImportForm({ branchHint }: BuildingImportFormProps) {
               {preview.summary.ready} ready · {preview.summary.errors} error
               {preview.summary.errors === 1 ? "" : "s"} · {preview.summary.duplicates} duplicate
               {preview.summary.duplicates === 1 ? "" : "s"}
-              {preview.summary.newCustomers > 0
-                ? ` · ${preview.summary.newCustomers} new customer${preview.summary.newCustomers === 1 ? "" : "s"}`
-                : ""}
             </p>
             <button
               type="button"
@@ -193,35 +181,35 @@ export function BuildingImportForm({ branchHint }: BuildingImportFormProps) {
               onClick={handleCommit}
               className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-5 disabled:opacity-60")}
             >
-              {isPending ? "Importing…" : `Import ${preview.summary.ready} buildings`}
+              {isPending ? "Importing…" : `Import ${preview.summary.ready} customers`}
             </button>
           </div>
 
           <div className="overflow-x-auto rounded-xl border border-border">
-            <table className="w-full min-w-[640px] text-left text-sm">
+            <table className="w-full min-w-[560px] text-left text-sm">
               <thead className="border-b border-border bg-muted/40 text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2 font-medium">Row</th>
                   <th className="px-3 py-2 font-medium">Status</th>
                   <th className="px-3 py-2 font-medium">Branch</th>
                   <th className="px-3 py-2 font-medium">Customer</th>
-                  <th className="px-3 py-2 font-medium">Site</th>
+                  <th className="px-3 py-2 font-medium">Email</th>
                   <th className="px-3 py-2 font-medium">Notes</th>
                 </tr>
               </thead>
               <tbody>
                 {preview.rows.map((row) => (
-                  <tr key={`${row.line}-${row.customer}-${row.site}`} className="border-b border-border/60">
+                  <tr
+                    key={`${row.line}-${row.customer}-${row.branch}`}
+                    className="border-b border-border/60"
+                  >
                     <td className="px-3 py-2 tabular-nums text-muted-foreground">{row.line}</td>
                     <td className={cn("px-3 py-2 capitalize", statusClass[row.status])}>
                       {row.status}
                     </td>
                     <td className="px-3 py-2">{row.branch}</td>
-                    <td className="px-3 py-2">{row.customer}</td>
-                    <td className="px-3 py-2">
-                      <span className="block font-medium text-foreground">{row.site}</span>
-                      <span className="block text-xs text-muted-foreground">{row.address}</span>
-                    </td>
+                    <td className="px-3 py-2 font-medium text-foreground">{row.customer}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{row.email}</td>
                     <td className="px-3 py-2 text-muted-foreground">{row.detail}</td>
                   </tr>
                 ))}

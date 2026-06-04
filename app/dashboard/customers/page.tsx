@@ -45,6 +45,12 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
         actions={
           <div className="flex flex-wrap gap-2">
             <Link
+              href="/dashboard/customers/import"
+              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-11 px-5")}
+            >
+              Import CSV
+            </Link>
+            <Link
               href="/dashboard/buildings/import"
               className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-11 px-5")}
             >

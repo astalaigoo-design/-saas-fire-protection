@@ -109,8 +109,8 @@ npm run db:verify-schema
 
 See [PRODUCTION-MIGRATIONS.md](./PRODUCTION-MIGRATIONS.md) if anything is `MISSING` (e.g. `building_assets` for equipment, `branches` for multi-location).
 
-2. Continue with the field checklist: [PILOT.md](./PILOT.md) (customer or CSV → **Import CSV** / add building → optional **Equipment** tab → schedule → inspect). The dashboard **Get started** card mirrors this order.
+2. Continue with the field checklist: [PILOT.md](./PILOT.md) (**Import customers** or new customer → **Import buildings** / add building → optional **Equipment** → schedule → inspect). The dashboard **Get started** card mirrors this order.
 
 3. After each production deploy, run [PRODUCTION-SMOKE-TEST.md](./PRODUCTION-SMOKE-TEST.md).
 
-Owner nav should include **Organization** (branches, checklist templates, outbound email), **Buildings → Import CSV**, building **Equipment** tab, **Billing** (read-only for admins), and full job/customer access.
+Owner nav should include **Organization** (branches, checklist templates, outbound email), **Customers → Import CSV**, **Buildings → Import CSV**, building **Equipment** tab, **Billing** (read-only for admins), and full job/customer access.

@@ -94,10 +94,17 @@ export async function getOnboardingProgress(
       done: Boolean(company?.logoUrl?.trim()),
     },
     {
-      id: "customer",
-      title: "Add your first customer",
+      id: "import-customers",
+      title: "Import customers from CSV",
       description:
-        "Property owner or facility. CSV import (next step) can create customers from your spreadsheet too.",
+        "Property managers and facility owners — branch, name, optional email and phone. Best before bulk building import.",
+      href: "/dashboard/customers/import",
+      done: customerCount > 0 || buildingCount > 0,
+    },
+    {
+      id: "customer",
+      title: "Or add a single customer",
+      description: "One account at a time from Customers → New customer.",
       href: "/dashboard/customers/new",
       done: customerCount > 0 || buildingCount > 0,
     },

@@ -67,7 +67,7 @@ function formatAddress(row: BuildingImportRow): string {
   return `${row.addressLine1}${line2}, ${row.city}, ${row.region} ${row.postalCode}`;
 }
 
-function resolveBranchId(input: {
+export function resolveBranchId(input: {
   branchInput: string;
   branches: BranchRow[];
   defaultBranchId: string;

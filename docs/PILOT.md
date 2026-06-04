@@ -76,16 +76,23 @@ Or step-by-step: `npm run create-company -- "Your Fire Inspection LLC" <clerk_us
 
 ---
 
-## 2. Add one real customer
+## 2. Add customers (CSV import or one-by-one)
 
-1. **Dashboard** → **New customer** (or **Customers** → **New customer**).
-2. Fill in:
-   - **Name** — client business name (e.g. `Acme Property Group`).
-   - **Email** — real inbox (used for compliance PDF and quote email when Resend is configured).
-   - **Phone** — optional.
-3. Save.
+### Multi-account — Import customers CSV (recommended for PM portfolios)
 
-You should see the customer on **Customers**.
+1. **Customers** → **Import CSV** (`/dashboard/customers/import`).
+2. **Download template** — columns: `branch`, `customer`, optional `email`, `phone`.
+3. Upload → **Preview import** (branch column resolves to Organization branches) → **Import N customers**.
+4. Duplicates (same name in branch) show as **duplicate** in preview — fix the file or skip those rows.
+
+Then import buildings (§3) so each row’s `customer` name matches an account already in FlareFlow.
+
+### Single customer — New customer
+
+1. **Customers** → **New customer**.
+2. Fill in name, email (for compliance PDF / quotes when Resend is on), optional phone → Save.
+
+Building CSV import can still **create customers** from the building file if you skip this step — use customer import when you want the roster separate from sites.
 
 ---
 
@@ -100,7 +107,7 @@ Most property managers onboard **many sites at once**. The dashboard checklist m
 3. Fill rows (one building per row; repeat the same `customer` name across rows for one portfolio).
 4. Upload → review preview → confirm import.
 
-CSV can **create customers** from the spreadsheet, so you can skip **§2 Add a customer** when the file already lists property owners.
+Building CSV can still **create customers** when names are new — prefer **§2 Import customers** when you are loading dozens of property managers first.
 
 Requires migration `20260602120000_add_branches` if you use the `branch` column (defaults to **Main** when omitted).
 
