@@ -51,6 +51,9 @@ function subjectFor(input: SendTechnicianJobEmailInput): string {
   if (input.kind === "unassigned") {
     return `Job reassigned — ${site}`;
   }
+  if (input.occurrenceNote) {
+    return `Recurring jobs scheduled — ${site}`;
+  }
   return `New job assigned — ${site}`;
 }
 

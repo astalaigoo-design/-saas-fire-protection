@@ -25,8 +25,9 @@ export function TechnicianAlertsSettingsSection({
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
         When you assign, reschedule, or reassign a job, the current and previous technicians are
-        notified through the channels below. Pilots still miss jobs if they only rely on email —
-        encourage My jobs and the in-app bell.
+        notified through the channels below. Recurring series send one assign alert for the first
+        date (with a note); later dates appear on My jobs without duplicate emails. Pilots still
+        miss jobs if they only rely on email — encourage My jobs and the in-app bell.
       </p>
 
       <ul className="mt-4 space-y-3 text-sm">

@@ -166,6 +166,7 @@ export async function scheduleJobFromAcceptedQuote(input: {
       companyId: input.companyId,
       inspectionId: created.id,
       kind: "assigned",
+      bypassRecurringSeriesGuard: true,
     });
   }
 

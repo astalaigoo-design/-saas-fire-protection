@@ -120,6 +120,7 @@ export async function autoScheduleFollowUpInspection(input: {
       companyId: input.companyId,
       inspectionId: created.id,
       kind: "assigned",
+      bypassRecurringSeriesGuard: true,
     });
   }
 

@@ -105,6 +105,7 @@ export async function autoScheduleNextInspection(input: {
       companyId: input.companyId,
       inspectionId: created.id,
       kind: "assigned",
+      bypassRecurringSeriesGuard: true,
     });
   }
 

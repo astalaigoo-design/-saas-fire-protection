@@ -165,6 +165,7 @@ export async function updateInspectionJob(
         companyId: session.companyId,
         inspectionId: before.id,
         kind: "assigned",
+        bypassRecurringSeriesGuard: true,
       });
     } else if (scheduleChanged) {
       await notifyTechnicianForInspection({

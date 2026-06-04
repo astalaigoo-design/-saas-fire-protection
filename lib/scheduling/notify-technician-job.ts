@@ -5,6 +5,7 @@ import { normalizeSmsPhone } from "@/lib/sms/normalize-phone";
 import { sendTechnicianJobSms } from "@/lib/sms/send-technician-job-sms";
 import { createStaffNotification } from "@/lib/notifications/create";
 import { prisma } from "@/lib/prisma";
+import { resolveRecurringAssignNotify } from "@/lib/scheduling/recurring-assign-notify";
 
 const inspectionNotifySelect = {
   id: true,
@@ -26,6 +27,10 @@ export async function notifyTechnicianForInspection(input: {
   kind: TechnicianJobEmailKind;
   previousScheduledAt?: Date | null;
   occurrenceNote?: string | null;
+  /** Skip first-only guard (calendar assign/reschedule, auto-schedule, quotes). */
+  bypassRecurringSeriesGuard?: boolean;
+  /** Known series size when batch-scheduling (avoids extra query). */
+  knownSeriesOccurrenceCount?: number;
 }): Promise<void> {
   const inspection = await prisma.inspection.findFirst({
     where: { id: input.inspectionId, companyId: input.companyId },
@@ -35,6 +40,17 @@ export async function notifyTechnicianForInspection(input: {
   if (!inspection?.assignedToUserId || !inspection.assignedTo) return;
   if (inspection.assignedTo.role !== UserRole.technician) return;
   if (!inspection.assignedTo.active) return;
+
+  let occurrenceNote = input.occurrenceNote ?? null;
+  if (input.kind === "assigned" && !input.bypassRecurringSeriesGuard) {
+    const decision = await resolveRecurringAssignNotify({
+      companyId: input.companyId,
+      inspectionId: input.inspectionId,
+      knownOccurrenceCount: input.knownSeriesOccurrenceCount,
+    });
+    if (!decision.notify) return;
+    occurrenceNote = occurrenceNote ?? decision.occurrenceNote;
+  }
 
   const siteLabel = buildingLabel(inspection.building);
   const whenLabel = inspection.scheduledAt.toLocaleString("en-US", {
@@ -46,11 +62,15 @@ export async function notifyTechnicianForInspection(input: {
   });
 
   const inAppTitle =
-    input.kind === "rescheduled" ? "Job rescheduled" : "New job assigned to you";
+    input.kind === "rescheduled"
+      ? "Job rescheduled"
+      : occurrenceNote
+        ? "Recurring jobs scheduled"
+        : "New job assigned to you";
   const inAppBody =
     input.kind === "rescheduled"
       ? `${inspection.inspectionType.name} at ${siteLabel} — now ${whenLabel}.`
-      : `${inspection.inspectionType.name} at ${siteLabel} — ${whenLabel}.${input.occurrenceNote ? ` ${input.occurrenceNote}` : ""}`;
+      : `${inspection.inspectionType.name} at ${siteLabel} — ${whenLabel}.${occurrenceNote ? ` ${occurrenceNote}` : ""}`;
 
   await createStaffNotification({
     companyId: input.companyId,
@@ -75,7 +95,7 @@ export async function notifyTechnicianForInspection(input: {
       scheduledAt: inspection.scheduledAt,
       previousScheduledAt: input.previousScheduledAt,
       inspectionId: inspection.id,
-      occurrenceNote: input.occurrenceNote,
+      occurrenceNote,
     });
 
     if (!result.ok) {
@@ -110,6 +130,7 @@ export async function notifyTechnicianForInspection(input: {
     scheduledAt: inspection.scheduledAt,
     inspectionId: inspection.id,
     companyName: inspection.company.name,
+    occurrenceNote: input.kind === "assigned" ? occurrenceNote : null,
   });
 
   if (!sms.ok) {

@@ -61,15 +61,11 @@ export async function notifyInspectionScheduled(input: {
   });
 
   if (inspection.assignedTo?.id) {
-    const occurrenceNote =
-      input.occurrenceCount > 1
-        ? `${input.occurrenceCount} recurring visits were scheduled; this email is for the first.`
-        : null;
     await notifyTechnicianForInspection({
       companyId: input.companyId,
       inspectionId: inspection.id,
       kind: "assigned",
-      occurrenceNote,
+      knownSeriesOccurrenceCount: input.occurrenceCount,
     });
   }
 }

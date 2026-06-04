@@ -28,6 +28,7 @@ function buildBody(input: {
   inspectionId: string;
   companyName?: string;
   newAssigneeName?: string | null;
+  occurrenceNote?: string | null;
 }): string {
   const when = formatWhen(input.scheduledAt);
   const jobUrl = `${getAppOrigin()}/inspect/${encodeURIComponent(input.inspectionId)}`;
@@ -54,6 +55,12 @@ function buildBody(input: {
     );
   }
 
+  if (input.kind === "assigned" && input.occurrenceNote) {
+    return truncateBody(
+      `Recurring jobs (${input.occurrenceNote}) ${input.inspectionTypeName} at ${input.buildingLabel} — first visit ${when}. ${jobUrl}`,
+    );
+  }
+
   return truncateBody(
     `New job: ${input.inspectionTypeName} at ${input.buildingLabel} — ${when}. ${jobUrl}`,
   );
@@ -72,6 +79,7 @@ export async function sendTechnicianJobSms(input: {
   inspectionId: string;
   companyName?: string;
   newAssigneeName?: string | null;
+  occurrenceNote?: string | null;
 }): Promise<SendTechnicianJobSmsResult> {
   if (!isSmsConfigured()) {
     return { ok: false, error: "SMS is not configured." };
