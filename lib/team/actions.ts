@@ -1,8 +1,10 @@
 "use server";
 
+import { clerkClient } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { canManageOrgSettings } from "@/lib/auth/permissions";
 import { createTeamInvitation } from "@/lib/clerk/create-team-invitation";
+import { getPendingInvitation } from "@/lib/clerk/get-pending-invitation";
 import { syncClerkPublicMetadata } from "@/lib/clerk/sync-public-metadata";
 import { getDefaultBranchId } from "@/lib/branches/default-branch";
 import { requiresAssignedBranch } from "@/lib/branches/user-branch";
@@ -13,6 +15,12 @@ import {
   inviteTeamMemberSchema,
   isInvitableTeamRole,
 } from "@/lib/team/invite-schemas";
+import {
+  readInviteBranchId,
+  readInviteCompanyId,
+  readInviteRole,
+} from "@/lib/team/invite-metadata";
+import { reassignPendingInviteBranchSchema } from "@/lib/team/reassign-pending-invite-schema";
 import { reassignTeamMemberBranchSchema } from "@/lib/team/reassign-branch-schema";
 
 export type InviteTeamMemberState =
@@ -176,4 +184,84 @@ export async function reassignTeamMemberBranch(
   revalidatePath("/dashboard/settings");
   revalidatePath("/dashboard");
   return { ok: true, branchName: branch.name };
+}
+
+export type ReassignPendingInviteBranchState =
+  | { ok: true; branchName: string; email: string }
+  | { ok: false; error: string };
+
+export async function reassignPendingInviteBranch(
+  _prev: ReassignPendingInviteBranchState | undefined,
+  formData: FormData,
+): Promise<ReassignPendingInviteBranchState> {
+  const session = await getDashboardSession();
+  if (!session) {
+    return { ok: false, error: "You must be signed in." };
+  }
+  if (!canManageOrgSettings(session.role)) {
+    return { ok: false, error: "Only the owner can change pending invitation branches." };
+  }
+
+  const parsed = reassignPendingInviteBranchSchema.safeParse({
+    invitationId: formData.get("invitationId"),
+    branchId: formData.get("branchId"),
+  });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  const invite = await getPendingInvitation(parsed.data.invitationId);
+  if (!invite) {
+    return { ok: false, error: "Pending invitation not found." };
+  }
+
+  if (readInviteCompanyId(invite.publicMetadata) !== session.companyId) {
+    return { ok: false, error: "Pending invitation not found." };
+  }
+
+  const role = readInviteRole(invite.publicMetadata);
+  if (role === "owner") {
+    return { ok: false, error: "Owners are company-wide and are not assigned to a branch." };
+  }
+
+  const invitableRole = isInvitableTeamRole(role) ? role : "technician";
+
+  const branch = await prisma.branch.findFirst({
+    where: { id: parsed.data.branchId, companyId: session.companyId },
+    select: { id: true, name: true },
+  });
+  if (!branch) {
+    return { ok: false, error: "Choose a valid branch." };
+  }
+
+  const currentBranchId =
+    readInviteBranchId(invite.publicMetadata) ?? (await getDefaultBranchId(session.companyId));
+  if (currentBranchId === branch.id) {
+    return { ok: true, branchName: branch.name, email: invite.emailAddress };
+  }
+
+  try {
+    const client = await clerkClient();
+    await client.invitations.revokeInvitation(parsed.data.invitationId);
+
+    const recreated = await createTeamInvitation({
+      emailAddress: invite.emailAddress,
+      role: invitableRole,
+      companyId: session.companyId,
+      branchId: branch.id,
+    });
+
+    if (!recreated.ok) {
+      return { ok: false, error: recreated.error };
+    }
+  } catch (error) {
+    captureServerActionError("reassignPendingInviteBranch", error);
+    return {
+      ok: false,
+      error: "Could not update the invitation branch. Try sending a new invite.",
+    };
+  }
+
+  revalidatePath("/dashboard/settings");
+  return { ok: true, branchName: branch.name, email: invite.emailAddress };
 }

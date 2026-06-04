@@ -5,6 +5,7 @@ import {
   inviteTeamMember,
   type InviteTeamMemberState,
 } from "@/lib/team/actions";
+import { PendingInviteBranchForm } from "@/components/dashboard/pending-invite-branch-form";
 import { TeamMemberBranchForm } from "@/components/dashboard/team-member-branch-form";
 import type { BranchListItem } from "@/lib/branches/queries";
 import type { PendingTeamInviteRow, TeamMemberRow } from "@/lib/team/queries";
@@ -59,8 +60,8 @@ export function TeamInviteSection({ members, pendingInvites, branches }: TeamInv
           Team
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Invite field technicians or admins, then reassign branch access for existing members
-          below.
+          Invite field technicians or admins, then change branch assignments for current members
+          or pending invites below.
         </p>
       </div>
 
@@ -164,20 +165,36 @@ export function TeamInviteSection({ members, pendingInvites, branches }: TeamInv
       {pendingInvites.length > 0 ? (
         <div className="rounded-xl border border-dashed border-border p-4">
           <h3 className="text-sm font-medium text-foreground">Pending invitations</h3>
-          <ul className="mt-3 space-y-2">
+          <p className="mt-1 text-xs text-muted-foreground">
+            Adjust branch before they accept. Saving sends a new invite email with the updated
+            branch.
+          </p>
+          <ul className="mt-3 divide-y divide-border">
             {pendingInvites.map((invite) => (
               <li
                 key={invite.id}
-                className="flex flex-col gap-0.5 text-sm sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0"
               >
-                <span className="text-foreground">{invite.emailAddress}</span>
-                <span className="text-muted-foreground">
-                  {roleLabel(invite.role)} · invited{" "}
-                  {invite.createdAt.toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </span>
+                <div className="flex flex-col gap-0.5 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{invite.emailAddress}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {roleLabel(invite.role)} · invited{" "}
+                      {invite.createdAt.toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                      })}
+                      {invite.branchName && branches.length === 0
+                        ? ` · ${invite.branchName}`
+                        : null}
+                    </p>
+                  </div>
+                  {branches.length > 0 ? (
+                    <div className="sm:min-w-[14rem]">
+                      <PendingInviteBranchForm invite={invite} branches={branches} />
+                    </div>
+                  ) : null}
+                </div>
               </li>
             ))}
           </ul>
