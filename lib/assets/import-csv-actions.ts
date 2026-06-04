@@ -267,6 +267,7 @@ export async function runAssetImport(input: unknown): Promise<AssetImportResult>
             buildingId,
             assetType: row.assetType,
             tagNumber: row.tagNumber ?? null,
+            barcodeValue: row.barcodeValue ?? null,
             location: row.location,
             manufacturer: row.manufacturer ?? null,
             model: row.model ?? null,

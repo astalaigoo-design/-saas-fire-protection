@@ -8,6 +8,7 @@ const buildingAssetSelect = {
   buildingId: true,
   assetType: true,
   tagNumber: true,
+  barcodeValue: true,
   location: true,
   manufacturer: true,
   model: true,

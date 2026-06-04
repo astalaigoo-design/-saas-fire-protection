@@ -80,6 +80,7 @@ export async function createBuildingAsset(
         buildingId: building.id,
         assetType: parsed.data.assetType,
         tagNumber: parsed.data.tagNumber || null,
+        barcodeValue: parsed.data.barcodeValue || null,
         location: parsed.data.location,
         manufacturer: parsed.data.manufacturer || null,
         model: parsed.data.model || null,
@@ -150,6 +151,7 @@ export async function updateBuildingAsset(
       data: {
         assetType: parsed.data.assetType,
         tagNumber: parsed.data.tagNumber || null,
+        barcodeValue: parsed.data.barcodeValue || null,
         location: parsed.data.location,
         manufacturer: parsed.data.manufacturer || null,
         model: parsed.data.model || null,

@@ -2,10 +2,16 @@
 
 import { InspectionItemResult } from "@prisma/client";
 import type { AssetType } from "@prisma/client";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { BarcodeScannerSheet } from "@/components/scan/barcode-scanner-sheet";
 import { OfflineBadge } from "@/components/inspect/offline-badge";
+import { Button } from "@/components/ui/button";
 import { assetTypeLabel } from "@/lib/assets/constants";
 import { buildingAssetLabel } from "@/lib/assets/format";
+import {
+  buildAssetScanIndex,
+  findAssetIdByScanValue,
+} from "@/lib/assets/scan-match";
 import { enqueueOfflineMutation } from "@/lib/offline/indexeddb";
 import { apiUpdateInspectionAssetCheck } from "@/lib/offline/inspect-api";
 import { formatDate } from "@/lib/dashboard/dates";
@@ -19,6 +25,7 @@ export type AssetCheckState = {
     id: string;
     assetType: AssetType;
     tagNumber: string | null;
+    barcodeValue: string | null;
     location: string;
     manufacturer: string | null;
     model: string | null;
@@ -47,11 +54,13 @@ function AssetCheckCard({
   inspectionId,
   check,
   locked,
+  highlighted,
   onUpdated,
 }: {
   inspectionId: string;
   check: AssetCheckState;
   locked: boolean;
+  highlighted: boolean;
   onUpdated: (check: AssetCheckState) => void;
 }) {
   const [failNote, setFailNote] = useState(check.notes ?? "");
@@ -114,7 +123,14 @@ function AssetCheckCard({
   });
 
   return (
-    <article className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4">
+    <article
+      id={`asset-check-${check.id}`}
+      className={`scroll-mt-24 rounded-2xl border bg-slate-900/80 p-4 ${
+        highlighted
+          ? "border-amber-400 ring-2 ring-amber-400/60"
+          : "border-slate-800"
+      }`}
+    >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="font-medium text-white">{label}</p>
@@ -219,11 +235,47 @@ export function EquipmentRegisterSection({
   locked,
   onAssetChecksChange,
 }: EquipmentRegisterSectionProps) {
+  const [scanOpen, setScanOpen] = useState(false);
+  const [scanMessage, setScanMessage] = useState<string | null>(null);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+
+  const scanIndex = useMemo(
+    () =>
+      buildAssetScanIndex(
+        assetChecks.map((check) => ({
+          id: check.asset.id,
+          tagNumber: check.asset.tagNumber,
+          barcodeValue: check.asset.barcodeValue,
+        })),
+      ),
+    [assetChecks],
+  );
+
   if (assetChecks.length === 0) return null;
 
   const pendingCount = assetChecks.filter(
     (c) => c.result === InspectionItemResult.pending,
   ).length;
+
+  const handleScan = (value: string) => {
+    const assetId = findAssetIdByScanValue(value, scanIndex);
+    if (!assetId) {
+      setScanMessage(`No register item matches “${value.trim()}”.`);
+      return;
+    }
+    const check = assetChecks.find((row) => row.asset.id === assetId);
+    if (!check) {
+      setScanMessage("Matched asset is not on this inspection.");
+      return;
+    }
+    setScanMessage(null);
+    setHighlightedId(check.id);
+    document.getElementById(`asset-check-${check.id}`)?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+    window.setTimeout(() => setHighlightedId(null), 4000);
+  };
 
   return (
     <section className="space-y-4 px-4" aria-labelledby="equipment-register-heading">
@@ -237,7 +289,30 @@ export function EquipmentRegisterSection({
             ? ` ${pendingCount} remaining.`
             : null}
         </p>
+        {!locked ? (
+          <div className="mt-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11 w-full border-slate-600 bg-slate-900 text-white sm:w-auto"
+              onClick={() => setScanOpen(true)}
+            >
+              Scan QR / barcode
+            </Button>
+          </div>
+        ) : null}
+        {scanMessage ? (
+          <p className="mt-2 text-sm text-amber-200" role="status">
+            {scanMessage}
+          </p>
+        ) : null}
       </div>
+
+      <BarcodeScannerSheet
+        open={scanOpen}
+        onClose={() => setScanOpen(false)}
+        onScan={handleScan}
+      />
       <ul className="space-y-3">
         {assetChecks.map((check) => (
           <li key={check.id}>
@@ -245,6 +320,7 @@ export function EquipmentRegisterSection({
               inspectionId={inspectionId}
               check={check}
               locked={locked}
+              highlighted={highlightedId === check.id}
               onUpdated={(updated) => {
                 onAssetChecksChange(
                   assetChecks.map((row) => (row.id === updated.id ? updated : row)),

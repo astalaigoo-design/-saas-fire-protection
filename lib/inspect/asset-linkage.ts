@@ -1,4 +1,9 @@
 import { InspectionItemResult } from "@prisma/client";
+import {
+  buildAssetScanIndex,
+  normalizeScanValue,
+  type BuildingAssetScanRow,
+} from "@/lib/assets/scan-match";
 import { ensureInspectionAssetChecks } from "@/lib/inspect/ensure-asset-checks";
 import { prisma } from "@/lib/prisma";
 
@@ -9,25 +14,13 @@ export type ChecklistAssetLinkSource = {
   notes: string | null;
 };
 
-export type BuildingAssetTagRow = {
-  id: string;
-  tagNumber: string | null;
-};
-
-/** Normalize equipment tag for lookup (trim + lowercase). */
+/** @deprecated Use normalizeScanValue from lib/assets/scan-match. */
 export function normalizeEquipmentTag(tag: string): string {
-  return tag.trim().toLowerCase();
+  return normalizeScanValue(tag);
 }
 
-export function buildAssetTagIndex(assets: BuildingAssetTagRow[]): Map<string, string> {
-  const index = new Map<string, string>();
-  for (const asset of assets) {
-    const tag = asset.tagNumber?.trim();
-    if (!tag) continue;
-    const key = normalizeEquipmentTag(tag);
-    if (!index.has(key)) index.set(key, asset.id);
-  }
-  return index;
+export function buildAssetTagIndex(assets: BuildingAssetScanRow[]): Map<string, string> {
+  return buildAssetScanIndex(assets);
 }
 
 function escapeRegExp(value: string): string {
@@ -100,7 +93,7 @@ export async function syncAssetChecksFromChecklistPasses(input: {
 }): Promise<void> {
   const assets = await prisma.buildingAsset.findMany({
     where: { buildingId: input.buildingId, active: true },
-    select: { id: true, tagNumber: true },
+    select: { id: true, tagNumber: true, barcodeValue: true },
   });
   if (assets.length === 0) return;
 
@@ -163,7 +156,7 @@ export async function applyInspectionAssetLinkageOnSubmit(input: {
     }),
     prisma.buildingAsset.findMany({
       where: { buildingId: inspection.buildingId, active: true },
-      select: { id: true, tagNumber: true },
+      select: { id: true, tagNumber: true, barcodeValue: true },
     }),
   ]);
 

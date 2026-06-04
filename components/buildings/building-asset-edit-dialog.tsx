@@ -62,6 +62,7 @@ export function BuildingAssetEditDialog({ asset }: BuildingAssetEditDialogProps)
             defaults={{
               assetType: asset.assetType,
               tagNumber: asset.tagNumber,
+              barcodeValue: asset.barcodeValue,
               location: asset.location,
               manufacturer: asset.manufacturer,
               model: asset.model,

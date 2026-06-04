@@ -1,3 +1,6 @@
+"use client";
+
+import { BuildingAssetTagFields } from "@/components/buildings/building-asset-tag-fields";
 import { ASSET_TYPES } from "@/lib/assets/constants";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +13,7 @@ type BuildingAssetFormFieldsProps = {
   defaults?: {
     assetType?: AssetType;
     tagNumber?: string | null;
+    barcodeValue?: string | null;
     location?: string;
     manufacturer?: string | null;
     model?: string | null;
@@ -42,30 +46,24 @@ export function BuildingAssetFormFields({ idPrefix, defaults }: BuildingAssetFor
         </select>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor={`${idPrefix}-tagNumber`}>Tag / asset ID</Label>
-          <Input
-            id={`${idPrefix}-tagNumber`}
-            name="tagNumber"
-            defaultValue={defaults?.tagNumber ?? ""}
-            placeholder="e.g. FE-1042"
-            className="min-h-11"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor={`${idPrefix}-location`}>
-            Location on site <span className="text-primary">*</span>
-          </Label>
-          <Input
-            id={`${idPrefix}-location`}
-            name="location"
-            required
-            defaultValue={defaults?.location ?? ""}
-            placeholder="2nd floor · east stair"
-            className="min-h-11"
-          />
-        </div>
+      <BuildingAssetTagFields
+        idPrefix={idPrefix}
+        defaultTagNumber={defaults?.tagNumber ?? ""}
+        defaultBarcodeValue={defaults?.barcodeValue ?? ""}
+      />
+
+      <div className="space-y-2">
+        <Label htmlFor={`${idPrefix}-location`}>
+          Location on site <span className="text-primary">*</span>
+        </Label>
+        <Input
+          id={`${idPrefix}-location`}
+          name="location"
+          required
+          defaultValue={defaults?.location ?? ""}
+          placeholder="2nd floor · east stair"
+          className="min-h-11"
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">

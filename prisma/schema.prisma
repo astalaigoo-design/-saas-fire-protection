@@ -256,6 +256,8 @@ model BuildingAsset {
   assetType AssetType
   /// Extinguisher tag / asset ID on site.
   tagNumber String?
+  /// Raw QR/barcode payload on the physical label (often same as tagNumber).
+  barcodeValue String?
   /// Where on site (floor, room, panel location).
   location  String
   manufacturer String?

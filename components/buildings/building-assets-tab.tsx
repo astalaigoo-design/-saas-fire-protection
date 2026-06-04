@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useFormState, useFormStatus } from "react-dom";
+import { AssetQrLabelDialog } from "@/components/scan/asset-qr-label-dialog";
 import {
   createBuildingAsset,
   retireBuildingAsset,
@@ -40,6 +42,25 @@ function RetireButton() {
     >
       {pending ? "Removing…" : "Remove"}
     </Button>
+  );
+}
+
+function AssetQrLabelButton({ asset }: { asset: BuildingAssetRow }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="min-h-10"
+        onClick={() => setOpen(true)}
+      >
+        QR label
+      </Button>
+      <AssetQrLabelDialog open={open} onClose={() => setOpen(false)} asset={asset} />
+    </>
   );
 }
 
@@ -135,6 +156,7 @@ export function BuildingAssetsTab({ buildingId, assets }: BuildingAssetsTabProps
                         </p>
                       </div>
                       <div className="flex shrink-0 flex-wrap gap-2">
+                        <AssetQrLabelButton asset={asset} />
                         <BuildingAssetEditDialog asset={asset} />
                         <RetireAssetForm assetId={asset.id} buildingId={buildingId} />
                       </div>
@@ -157,6 +179,12 @@ export function BuildingAssetsTab({ buildingId, assets }: BuildingAssetsTabProps
                         <dt className="text-muted-foreground">Tag</dt>
                         <dd className="mt-0.5 font-medium text-foreground">
                           {asset.tagNumber?.trim() || "—"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">Barcode</dt>
+                        <dd className="mt-0.5 break-all font-medium text-foreground">
+                          {asset.barcodeValue?.trim() || "—"}
                         </dd>
                       </div>
                       <div>

@@ -16,6 +16,7 @@ const assetFieldsSchema = z.object({
   buildingId: z.string().cuid("Invalid building."),
   assetType: z.nativeEnum(AssetType),
   tagNumber: z.string().trim().max(80).optional().or(z.literal("")),
+  barcodeValue: z.string().trim().max(200).optional().or(z.literal("")),
   location: z.string().trim().min(1, "Location is required").max(200),
   manufacturer: z.string().trim().max(120).optional().or(z.literal("")),
   model: z.string().trim().max(120).optional().or(z.literal("")),
