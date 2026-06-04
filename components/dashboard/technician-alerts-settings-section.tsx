@@ -36,7 +36,8 @@ export function TechnicianAlertsSettingsSection({
           <div>
             <p className="font-medium text-foreground">In-app bell</p>
             <p className="text-muted-foreground">
-              Targeted notification on My jobs and the dashboard header. Works without Resend.
+              Targeted alerts on My jobs, the header, and field checklists (top-right bell). Works
+              without Resend — encourage technicians to check it before email.
             </p>
           </div>
         </li>

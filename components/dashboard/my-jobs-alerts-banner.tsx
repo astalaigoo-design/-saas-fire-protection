@@ -31,13 +31,13 @@ export function MyJobsAlertsBanner({ alerts }: MyJobsAlertsBannerProps) {
         ) : null}
         {more > 0 ? (
           <span className="text-xs text-muted-foreground">
-            +{more} more unread — use the bell in the header
+            +{more} more unread — open the bell (top right, or on a job checklist)
           </span>
         ) : null}
       </div>
       <p className="mt-2 text-xs text-muted-foreground">
-        You also get email when Resend is on and your account has an email on file, plus SMS when
-        Twilio is on and your mobile is saved below.
+        The in-app bell is usually fastest — it works on My jobs and while you are on a checklist.
+        Email and SMS are backups when your contact info is on file below.
       </p>
     </div>
   );

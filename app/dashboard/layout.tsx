@@ -14,6 +14,8 @@ import { getCompanyBillingSnapshot } from "@/lib/billing/queries";
 import { getDashboardNavItems } from "@/lib/dashboard/nav-items";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { getTechnicianHomeHref } from "@/lib/inspect/resume-job";
+import { canViewStaffNotifications } from "@/lib/notifications/scope";
+import { getStaffNotificationsFeed } from "@/lib/notifications/queries";
 
 export const metadata: Metadata = DASHBOARD_ROBOTS_METADATA;
 
@@ -29,14 +31,24 @@ export default async function DashboardLayout({
     redirect("/sign-in");
   }
 
-  const [navItems, billing, branchSwitcher] = await Promise.all([
+  const [navItems, billing, branchSwitcher, notificationFeed] = await Promise.all([
     Promise.resolve(getDashboardNavItems(session.role)),
     getCompanyBillingSnapshot(session, session.email),
     getBranchSwitcherData(session),
+    canViewStaffNotifications(session.role)
+      ? getStaffNotificationsFeed(session)
+      : Promise.resolve(null),
   ]);
 
   const homeHref =
     session.role === "technician" ? getTechnicianHomeHref() : "/dashboard";
+
+  const navBadges =
+    session.role === "technician" &&
+    notificationFeed &&
+    notificationFeed.unreadCount > 0
+      ? { [homeHref]: notificationFeed.unreadCount }
+      : undefined;
 
   return (
     <div className="min-h-screen bg-background text-foreground lg:flex">
@@ -48,7 +60,7 @@ export default async function DashboardLayout({
           >
             <BrandLogo logoClassName="size-9" />
           </Link>
-          <DashboardNav items={navItems} />
+          <DashboardNav items={navItems} badges={navBadges} />
         </div>
       </aside>
 
@@ -69,11 +81,14 @@ export default async function DashboardLayout({
                   label={branchSwitcher.label}
                 />
               ) : null}
-              <DashboardHeaderActions session={session} />
+              <DashboardHeaderActions
+                session={session}
+                notificationFeed={notificationFeed}
+              />
             </div>
           </div>
           <div className="px-4 pb-3">
-            <DashboardNavMobile items={navItems} />
+            <DashboardNavMobile items={navItems} badges={navBadges} />
           </div>
         </header>
 
@@ -86,7 +101,10 @@ export default async function DashboardLayout({
                 label={branchSwitcher.label}
               />
             ) : null}
-            <DashboardHeaderActions session={session} />
+            <DashboardHeaderActions
+              session={session}
+              notificationFeed={notificationFeed}
+            />
           </div>
         </header>
 

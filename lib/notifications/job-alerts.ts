@@ -1,7 +1,7 @@
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { prisma } from "@/lib/prisma";
 
-const JOB_ALERT_TYPES = [
+export const JOB_ALERT_NOTIFICATION_TYPES = [
   "inspection.assigned",
   "inspection.rescheduled",
   "inspection.unassigned",
@@ -26,7 +26,7 @@ export async function getUnreadJobAssignmentAlerts(
     where: {
       companyId: session.companyId,
       targetUserId: session.appUserId,
-      type: { in: [...JOB_ALERT_TYPES] },
+      type: { in: [...JOB_ALERT_NOTIFICATION_TYPES] },
       reads: { none: { userId: session.appUserId } },
     },
     orderBy: { createdAt: "desc" },

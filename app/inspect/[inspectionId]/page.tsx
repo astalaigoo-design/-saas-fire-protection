@@ -5,6 +5,7 @@ import { getInspectSession } from "@/lib/inspect/access";
 import { serializeInspectionForClient } from "@/lib/inspect/serialize-for-client";
 import { getPreJobBriefForInspection, serializePreJobBrief } from "@/lib/inspect/pre-job-brief";
 import { getInspectionForForm } from "@/lib/inspect/queries";
+import { markJobAlertsReadForInspection } from "@/lib/notifications/mark-job-alerts-read";
 
 type InspectPageProps = {
   params: { inspectionId: string };
@@ -20,6 +21,10 @@ export default async function InspectPage({ params }: InspectPageProps) {
     getPreJobBriefForInspection(session, params.inspectionId),
   ]);
   if (!inspection) notFound();
+
+  if (session.role === "technician") {
+    await markJobAlertsReadForInspection(params.inspectionId);
+  }
 
   return (
     <InspectionFormShell

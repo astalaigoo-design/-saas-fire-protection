@@ -38,6 +38,8 @@ export type DashboardNavItem = {
 type DashboardNavProps = {
   items: DashboardNavItem[];
   className?: string;
+  /** Unread counts keyed by nav href (e.g. My jobs for technicians). */
+  badges?: Record<string, number>;
 };
 
 const navIcons: Record<DashboardNavIcon, LucideIcon> = {
@@ -90,7 +92,7 @@ export function DashboardNav({ items, className }: DashboardNavProps) {
 }
 
 /** Compact horizontal nav for small screens. */
-export function DashboardNavMobile({ items }: DashboardNavProps) {
+export function DashboardNavMobile({ items, badges }: DashboardNavProps) {
   const pathname = usePathname();
 
   return (
@@ -101,6 +103,7 @@ export function DashboardNavMobile({ items }: DashboardNavProps) {
       {items.map((item) => {
         const active = isActive(pathname, item.href);
         const Icon = navIcons[item.icon];
+        const badge = badges?.[item.href] ?? 0;
         return (
           <Link
             key={item.href}
@@ -115,6 +118,7 @@ export function DashboardNavMobile({ items }: DashboardNavProps) {
           >
             <Icon className="size-4 shrink-0" aria-hidden />
             {item.label}
+            {badge > 0 ? <NavBadge count={badge} /> : null}
           </Link>
         );
       })}

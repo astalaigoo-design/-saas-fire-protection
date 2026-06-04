@@ -30,13 +30,7 @@ export default async function MyJobsPage() {
     }),
   ]);
 
-  const catalogJobs = jobs.map((job) => ({
-    inspectionId: job.id,
-    label: buildingLabel(job.building),
-    subtitle: `${job.building.customer.name} · ${job.inspectionType.name}`,
-    scheduledAt: job.scheduledAt.toISOString(),
-    status: job.status as "scheduled" | "in_progress",
-  }));
+  const catalogJobs = jobs.map(toJobCatalogEntry);
 
   const serverResumeJobId = pickPromotedResumeJobId(catalogJobs, null);
 
@@ -44,7 +38,11 @@ export default async function MyJobsPage() {
     <div className="space-y-6">
       <PageHeader
         title="My jobs"
-        description="Search by site, customer, or address. Open a job for the checklist, or use Directions without leaving the app."
+        description={
+          jobAlerts.length > 0
+            ? "New assign or schedule updates below — also check the notification bell (top right)."
+            : "Search by site, customer, or address. Open a job for the checklist, or use Directions without leaving the app."
+        }
       />
 
       <MyJobsAlertsBanner alerts={jobAlerts} />

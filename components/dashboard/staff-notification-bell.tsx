@@ -16,10 +16,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { AppRole } from "@/lib/auth/roles";
 import { cn } from "@/lib/utils";
 
 type StaffNotificationBellProps = {
   feed: StaffNotificationsFeed;
+  role?: AppRole;
+  /** Dark field inspect chrome vs dashboard header. */
+  variant?: "dashboard" | "field";
 };
 
 function formatRelativeTime(date: Date): string {
@@ -65,6 +69,8 @@ export function StaffNotificationBell({ feed }: StaffNotificationBellProps) {
         className={cn(
           buttonVariants({ variant: "outline", size: "icon" }),
           "relative min-h-10 min-w-10 shrink-0",
+          isField &&
+            "border-slate-600 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white",
         )}
         aria-label={
           feed.unreadCount > 0
@@ -75,7 +81,10 @@ export function StaffNotificationBell({ feed }: StaffNotificationBellProps) {
         <BellIcon className="size-5" />
         {feed.unreadCount > 0 ? (
           <span
-            className="absolute -right-0.5 -top-0.5 flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-destructive-foreground"
+            className={cn(
+              "absolute -right-0.5 -top-0.5 flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-destructive-foreground",
+              isTechnician && "animate-pulse",
+            )}
             aria-hidden
           >
             {feed.unreadCount > 9 ? "9+" : feed.unreadCount}
@@ -99,7 +108,9 @@ export function StaffNotificationBell({ feed }: StaffNotificationBellProps) {
         <DropdownMenuSeparator />
         {feed.items.length === 0 ? (
           <p className="px-2 py-4 text-center text-sm text-muted-foreground">
-            No notifications yet.
+            {isTechnician
+              ? "No job alerts yet. New assigns and schedule changes appear here — often faster than email or SMS."
+              : "No notifications yet."}
           </p>
         ) : (
           feed.items.map((item) => (
@@ -128,10 +139,10 @@ export function StaffNotificationBell({ feed }: StaffNotificationBellProps) {
           onSelect={(event) => {
             event.preventDefault();
             setOpen(false);
-            router.push("/dashboard/operations");
+            router.push(isTechnician ? "/dashboard/my-jobs" : "/dashboard/operations");
           }}
         >
-          View activity log
+          {isTechnician ? "View all on My jobs" : "View activity log"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
