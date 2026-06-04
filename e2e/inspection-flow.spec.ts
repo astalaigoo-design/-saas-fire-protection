@@ -57,7 +57,7 @@ test.describe("Inspection pilot flow", () => {
     await page.getByRole("button", { name: "Done" }).click();
     await page.getByText("Inspection submitted and locked.").waitFor({ timeout: 90_000 });
 
-    await page.goto("/dashboard/reports");
+    await page.goto("/dashboard/quotes");
     const publicReportLink = page.getByTestId("public-report-link").first();
     await publicReportLink.waitFor({ timeout: 60_000 });
     const reportHref = await publicReportLink.getAttribute("href");
@@ -72,7 +72,7 @@ test.describe("Inspection pilot flow", () => {
     expect(pdfResponse.status()).toBe(200);
     expect(pdfResponse.headers()["content-type"]).toContain("application/pdf");
 
-    await page.goto("/dashboard/reports");
+    await page.goto("/dashboard/quotes");
     await expect(page.getByRole("heading", { name: "Draft repair quotes" })).toBeVisible();
     await expect(page.getByText("No draft quotes yet")).toHaveCount(0);
 
@@ -131,7 +131,7 @@ test.describe("Inspection pilot flow", () => {
     });
     expect(acceptApiResponse.status()).toBe(400);
 
-    await page.goto("/dashboard/reports");
+    await page.goto("/dashboard/quotes");
     await expect(page.getByRole("heading", { name: "Accepted quotes" })).toBeVisible();
     await expect(page.getByText(customerName)).toBeVisible();
 

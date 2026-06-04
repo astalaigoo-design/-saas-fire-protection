@@ -452,6 +452,7 @@ export async function submitInspection(
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/jobs");
   revalidatePath("/dashboard/operations");
+  revalidatePath("/dashboard/quotes");
   revalidatePath("/dashboard/reports");
   return { ok: true, reportEmail };
 }

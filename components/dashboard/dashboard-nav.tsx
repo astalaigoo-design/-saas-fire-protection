@@ -8,6 +8,7 @@ import {
   Calendar,
   ClipboardList,
   FileText,
+  Receipt,
   CreditCard,
   LayoutDashboard,
   Settings,
@@ -24,6 +25,7 @@ export type DashboardNavIcon =
   | "clipboard-list"
   | "calendar"
   | "file-text"
+  | "receipt"
   | "credit-card"
   | "settings";
 
@@ -46,6 +48,7 @@ const navIcons: Record<DashboardNavIcon, LucideIcon> = {
   "clipboard-list": ClipboardList,
   calendar: Calendar,
   "file-text": FileText,
+  receipt: Receipt,
   "credit-card": CreditCard,
   settings: Settings,
 };

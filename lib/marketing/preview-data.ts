@@ -1,5 +1,6 @@
 import { InspectionItemResult, InspectionStatus } from "@prisma/client";
 import type { CommandCenterSnapshot } from "@/lib/operations/queries";
+import type { QuotePipelineMetrics } from "@/lib/quotes/pipeline";
 import type { AutomationVisibility } from "@/lib/operations/automation-visibility";
 import type { InspectionFormData } from "@/lib/inspect/queries";
 
@@ -132,6 +133,23 @@ export const marketingCommandCenterPreview: CommandCenterSnapshot = {
     openDeficiencies: 1,
     pendingQuotes: 1,
     reportsSentThisMonth: 3,
+  },
+};
+
+export const marketingQuotePipelineMetrics: QuotePipelineMetrics = {
+  openPipelineCents: 213_000,
+  draftCents: 124_000,
+  sentCents: 89_000,
+  acceptedCents: 45_000,
+  conversionPercent: 67,
+  counts: {
+    all: 4,
+    draft: 1,
+    awaiting: 1,
+    awaitingChanges: 0,
+    accepted: 2,
+    acceptedNeedsSchedule: 1,
+    declined: 1,
   },
 };
 

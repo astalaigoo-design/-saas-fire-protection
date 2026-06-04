@@ -59,6 +59,7 @@ export async function scheduleJobFromQuoteAction(
       return { ok: false, error: result.error };
     }
 
+    revalidatePath("/dashboard/quotes");
     revalidatePath("/dashboard/reports");
     revalidatePath("/dashboard/jobs");
     revalidatePath("/dashboard/operations");

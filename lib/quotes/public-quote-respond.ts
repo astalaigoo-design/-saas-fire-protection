@@ -191,7 +191,8 @@ export async function respondToPublicQuote(
 
 function revalidateAfterQuoteResponse(shareToken: string): void {
   revalidatePath(`/q/${shareToken}`);
-  revalidatePath("/dashboard/reports");
+  revalidatePath("/dashboard/quotes");
+  revalidatePath("/dashboard/operations");
   revalidatePath("/dashboard/operations");
 }
 

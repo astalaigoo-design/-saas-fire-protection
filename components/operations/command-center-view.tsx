@@ -11,6 +11,8 @@ import { formatDate } from "@/lib/dashboard/dates";
 import { AutomationPanel } from "@/components/operations/automation-panel";
 import { AuditLogFeed } from "@/components/operations/audit-log-feed";
 import { CommandCenterDeficienciesTab } from "@/components/operations/command-center-deficiencies-tab";
+import { CommandCenterQuotesTab } from "@/components/operations/command-center-quotes-tab";
+import type { QuotePipelineMetrics } from "@/lib/quotes/pipeline";
 import type { AuditLogPage } from "@/lib/audit/queries";
 import type { AutomationVisibility } from "@/lib/operations/automation-visibility";
 import type { CommandCenterSnapshot } from "@/lib/operations/queries";
@@ -18,13 +20,6 @@ import type { DueInspectionRow } from "@/lib/operations/due-inspections";
 import { OperationsExportButtons } from "@/components/operations/operations-export-buttons";
 import { DUE_REMINDER_DAYS } from "@/lib/scheduling/recurrence-policy";
 import { cn } from "@/lib/utils";
-
-function formatCurrency(cents: number, currency: string): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-  }).format(cents / 100);
-}
 
 function DueStatusBadge({ status }: { status: DueInspectionRow["status"] }) {
   const styles = {
@@ -117,6 +112,7 @@ type CommandCenterViewProps = {
   auditFilters: { action: string; entityType: string };
   automation: AutomationVisibility;
   assignableStaff: AssignableStaff[];
+  quotePipeline: QuotePipelineMetrics;
   defaultTab: CommandCenterTab;
 };
 
@@ -126,6 +122,7 @@ export function CommandCenterView({
   auditFilters,
   automation,
   assignableStaff,
+  quotePipeline,
   defaultTab,
 }: CommandCenterViewProps) {
   const overdueTotal =
@@ -157,7 +154,20 @@ export function CommandCenterView({
           <StatCard label="Overdue / not started" value={overdueTotal} />
           <StatCard label="Due in 14 days" value={snapshot.dueTotals.dueSoon} />
           <StatCard label="Open deficiencies" value={snapshot.summary.openDeficiencies} />
-          <StatCard label="Quotes to approve" value={snapshot.summary.pendingQuotes} />
+          <StatCard
+            label="Open quote pipeline"
+            value={0}
+            displayValue={
+              quotePipeline.openPipelineCents > 0
+                ? new Intl.NumberFormat("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                    maximumFractionDigits: 0,
+                  }).format(quotePipeline.openPipelineCents / 100)
+                : "$0"
+            }
+            hint={`${snapshot.summary.pendingQuotes} drafts`}
+          />
           <StatCard label="Reports sent (month)" value={snapshot.summary.reportsSentThisMonth} />
         </div>
       </section>
@@ -224,84 +234,10 @@ export function CommandCenterView({
         </TabsContent>
 
         <TabsContent value="quotes" className="mt-6">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <section aria-labelledby="quotes-heading" className="space-y-3">
-              <h2
-                id="quotes-heading"
-                className="font-heading text-lg font-semibold text-foreground"
-              >
-                Quotes pending approval
-              </h2>
-              {snapshot.pendingQuotes.length === 0 ? (
-                <EmptyState
-                  title="No draft quotes"
-                  description="Draft repair quotes from failed inspections wait here for your review before sending."
-                />
-              ) : (
-                <ul className="space-y-3">
-                  {snapshot.pendingQuotes.map((quote) => (
-                    <li key={quote.id}>
-                      <Card>
-                        <CardContent className="space-y-2 pt-4">
-                          <p className="font-medium text-foreground">
-                            {quote.title ?? "Repair quote"}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {quote.buildingLabel} · {quote.customerName}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {quote.lineItemCount} line item
-                            {quote.lineItemCount === 1 ? "" : "s"} ·{" "}
-                            {formatCurrency(quote.totalCents, quote.currency)} · Draft
-                          </p>
-                          <Link
-                            href="/dashboard/reports"
-                            className={cn(buttonVariants({ size: "sm" }))}
-                          >
-                            Review & send
-                          </Link>
-                        </CardContent>
-                      </Card>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            <section aria-labelledby="reports-heading" className="space-y-3">
-              <h2
-                id="reports-heading"
-                className="font-heading text-lg font-semibold text-foreground"
-              >
-                Reports sent this month
-              </h2>
-              {snapshot.reportsSentThisMonth.length === 0 ? (
-                <EmptyState
-                  title="No reports sent yet this month"
-                  description="Compliance PDFs emailed to customers after inspection submit appear here."
-                />
-              ) : (
-                <ul className="space-y-3">
-                  {snapshot.reportsSentThisMonth.map((report) => (
-                    <li key={report.id}>
-                      <Card>
-                        <CardContent className="space-y-2 pt-4">
-                          <p className="font-medium text-foreground">{report.title}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {report.buildingLabel} · {report.customerName}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Sent {formatDate(report.sentAt)}
-                            {report.sentTo ? ` to ${report.sentTo}` : ""}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          </div>
+          <CommandCenterQuotesTab
+            metrics={quotePipeline}
+            pendingQuotes={snapshot.pendingQuotes}
+          />
         </TabsContent>
 
         <TabsContent value="activity" className="mt-6 space-y-8">

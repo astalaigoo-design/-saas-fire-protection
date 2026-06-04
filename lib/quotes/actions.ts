@@ -142,6 +142,7 @@ export async function updateDraftQuoteLineItems(
     }),
   ]);
 
+  revalidatePath("/dashboard/quotes");
   revalidatePath("/dashboard/reports");
   return { ok: true };
 }
@@ -310,6 +311,7 @@ export async function sendDraftQuote(
     },
   });
 
+  revalidatePath("/dashboard/quotes");
   revalidatePath("/dashboard/reports");
   revalidatePath("/dashboard/operations");
   return { ok: true, sentTo: customerEmail, publicUrl };
@@ -365,6 +367,7 @@ async function transitionQuoteStatus(
     revalidatePath("/dashboard/jobs");
   }
 
+  revalidatePath("/dashboard/quotes");
   revalidatePath("/dashboard/reports");
 }
 

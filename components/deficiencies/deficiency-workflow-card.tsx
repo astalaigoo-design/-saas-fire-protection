@@ -104,7 +104,7 @@ export function DeficiencyWorkflowCard({
 
       <div className="flex flex-wrap gap-2">
         <Link
-          href="/dashboard/reports"
+          href="/dashboard/quotes"
           className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
         >
           {deficiency.quoteId ? "Review quote" : "Create quote"}

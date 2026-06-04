@@ -193,7 +193,7 @@ export function auditEventHref(event: AuditEventForDisplay): string | null {
     case "customer":
       return `/dashboard/customers/${event.entityId}`;
     case "quote":
-      return "/dashboard/reports";
+      return "/dashboard/quotes";
     case "deficiency":
       return "/dashboard/operations?tab=deficiencies";
     case "company":

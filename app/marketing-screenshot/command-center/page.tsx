@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { CommandCenterView } from "@/components/operations/command-center-view";
-import { marketingCommandCenterPreview, marketingAutomationPreview } from "@/lib/marketing/preview-data";
+import {
+  marketingAutomationPreview,
+  marketingCommandCenterPreview,
+  marketingQuotePipelineMetrics,
+} from "@/lib/marketing/preview-data";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -25,7 +29,8 @@ export default function MarketingCommandCenterPage() {
             { id: "user-tech", name: "Jordan Lee", role: "technician" },
             { id: "user-admin", name: "Alex Morgan", role: "admin" },
           ]}
-          defaultTab="deficiencies"
+          quotePipeline={marketingQuotePipelineMetrics}
+          defaultTab="quotes"
         />
       </div>
     </main>

@@ -4,6 +4,8 @@ import {
   type CommandCenterTab,
 } from "@/components/operations/command-center-view";
 import { listAssignableStaff } from "@/lib/deficiencies/queries";
+import { listCompanyQuotesSafe } from "@/lib/dashboard/queries";
+import { computeQuotePipelineMetrics } from "@/lib/quotes/pipeline";
 import { listAuditEvents } from "@/lib/audit/queries";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
 import { getAutomationVisibility } from "@/lib/operations/automation-visibility";
@@ -35,7 +37,7 @@ export default async function CommandCenterPage({ searchParams }: CommandCenterP
       ? tabParam
       : "overview";
 
-  const [snapshot, auditLog, automation, assignableStaff] = await Promise.all([
+  const [snapshot, auditLog, automation, assignableStaff, quoteList] = await Promise.all([
     getCommandCenterSnapshot(session),
     listAuditEvents(session, {
       action: actionFilter || undefined,
@@ -44,7 +46,10 @@ export default async function CommandCenterPage({ searchParams }: CommandCenterP
     }),
     getAutomationVisibility(session.companyId),
     listAssignableStaff(session),
+    listCompanyQuotesSafe(session),
   ]);
+
+  const quotePipeline = computeQuotePipelineMetrics(quoteList.quotes);
 
   return (
     <CommandCenterView
@@ -53,6 +58,7 @@ export default async function CommandCenterPage({ searchParams }: CommandCenterP
       auditFilters={{ action: actionFilter, entityType: entityFilter }}
       automation={automation}
       assignableStaff={assignableStaff}
+      quotePipeline={quotePipeline}
       defaultTab={defaultTab}
     />
   );

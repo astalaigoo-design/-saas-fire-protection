@@ -35,6 +35,7 @@ export function getDashboardNavItems(role: AppRole): DashboardNavItem[] {
       { href: "/dashboard/operations", label: "Command center", icon: "activity" },
       { href: "/dashboard/inspections", label: "Inspections", icon: "clipboard-list" },
       { href: "/dashboard/jobs", label: "Calendar", icon: "calendar" },
+      { href: "/dashboard/quotes", label: "Quotes", icon: "receipt" },
       { href: "/dashboard/reports", label: "Reports", icon: "file-text" },
     );
   }
