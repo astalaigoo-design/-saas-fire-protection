@@ -55,6 +55,7 @@ export default async function OrgSettingsPage() {
         members={team.members}
         pendingInvites={team.pendingInvites}
         branches={branches}
+        outboundEmailConfigured={getOutboundEmailStatus().configured}
       />
 
       <InspectionTypePacksSection packs={inspectionTypePacks.packs} />

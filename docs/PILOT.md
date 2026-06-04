@@ -89,36 +89,34 @@ You should see the customer on **Customers**.
 
 ---
 
-## 3. Add one building
+## 3. Add buildings (CSV import or one-by-one)
 
-1. **Customers** → open the customer you just created.
-2. Add a building (or **Buildings** → **New building** and select that customer).
-3. Fill in:
-   - **Name** — e.g. `Main campus` or street name.
-   - **Address** — full address (city, state, ZIP).
-   - **Building type / fire district / notes** — optional.
-4. Save.
+Most property managers onboard **many sites at once**. The dashboard checklist matches that path.
 
-Confirm the building appears on the customer detail page and **Buildings** list.
-
-### Optional — bulk import many buildings (CSV)
-
-Use when the pilot has a spreadsheet of sites instead of typing each building.
+### Multi-site — Import CSV (recommended)
 
 1. **Buildings** → **Import CSV** (`/dashboard/buildings/import`).
 2. **Download template** — columns include `branch`, `customer`, `building_name`, address fields, optional `customer_email` / `customer_phone`.
-3. Fill rows (one building per row; same customer name repeats across rows).
+3. Fill rows (one building per row; repeat the same `customer` name across rows for one portfolio).
 4. Upload → review preview → confirm import.
+
+CSV can **create customers** from the spreadsheet, so you can skip **§2 Add a customer** when the file already lists property owners.
 
 Requires migration `20260602120000_add_branches` if you use the `branch` column (defaults to **Main** when omitted).
 
-### Optional — equipment register on a building
+### Single site — Add one building
 
-Track extinguishers, panels, emergency lights, etc. per site (not required for the minimal pilot).
+1. **Customers** → open the customer you created (or **Customers** → **New customer** first).
+2. **Buildings** → **Add building** (or add from the customer page).
+3. Fill in name, full address, optional building type / fire district / notes → Save.
 
-1. Open the building → **Equipment** tab.
+Confirm the site appears on the customer detail page and **Buildings** list.
+
+### Equipment register (optional, common for PM pilots)
+
+1. Open a building → **Equipment** tab (or use the onboarding link with `?tab=assets`).
 2. **Add equipment** — type, location (required), tag #, manufacturer, service dates, notes.
-3. Save; repeat for a few assets if you want to demo the register.
+3. Save; repeat for a few assets to demo the register.
 
 Requires migration `20260607120000_add_building_assets` on production (`npm run db:migrate:deploy`).
 

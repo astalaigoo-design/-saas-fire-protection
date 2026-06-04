@@ -8,11 +8,33 @@ import { canManageJobs } from "@/lib/auth/permissions";
 import { getBuildingDetailPageData } from "@/lib/buildings/queries";
 import { getDashboardSession } from "@/lib/dashboard/session";
 
+const BUILDING_TAB_VALUES = [
+  "history",
+  "assets",
+  "deficiencies",
+  "photos",
+  "reports",
+  "notes",
+] as const;
+
+type BuildingTabValue = (typeof BUILDING_TAB_VALUES)[number];
+
+function resolveBuildingTab(tab: string | undefined): BuildingTabValue {
+  if (tab && BUILDING_TAB_VALUES.includes(tab as BuildingTabValue)) {
+    return tab as BuildingTabValue;
+  }
+  return "history";
+}
+
 type BuildingDetailPageProps = {
   params: { buildingId: string };
+  searchParams?: { tab?: string };
 };
 
-export default async function BuildingDetailPage({ params }: BuildingDetailPageProps) {
+export default async function BuildingDetailPage({
+  params,
+  searchParams,
+}: BuildingDetailPageProps) {
   const session = await getDashboardSession();
   if (!session) redirect("/sign-in");
   ensureCanManageCustomers(session.role);
@@ -29,7 +51,7 @@ export default async function BuildingDetailPage({ params }: BuildingDetailPageP
         canSchedule={canManageJobs(session.role)}
         reportableInspections={data.inspections}
       />
-      <BuildingDetailTabs data={data} />
+      <BuildingDetailTabs data={data} defaultTab={resolveBuildingTab(searchParams?.tab)} />
     </div>
   );
 }

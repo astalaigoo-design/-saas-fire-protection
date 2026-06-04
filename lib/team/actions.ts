@@ -9,6 +9,7 @@ import { syncClerkPublicMetadata } from "@/lib/clerk/sync-public-metadata";
 import { getDefaultBranchId } from "@/lib/branches/default-branch";
 import { requiresAssignedBranch } from "@/lib/branches/user-branch";
 import { getDashboardSession } from "@/lib/dashboard/session";
+import { getPrimaryEmailFromClerkUser } from "@/lib/clerk/primary-email";
 import { captureServerActionError } from "@/lib/monitoring/capture";
 import { prisma } from "@/lib/prisma";
 import {
@@ -268,6 +269,57 @@ export async function reassignPendingInviteBranch(
 
   revalidatePath("/dashboard/settings");
   return { ok: true, branchName: branch.name, email: invite.emailAddress };
+}
+
+export type SyncTeamMemberEmailState =
+  | { ok: true; email: string }
+  | { ok: false; error: string };
+
+/** Pull primary sign-in email from Clerk into User.email (fixes missed webhooks). */
+export async function syncTeamMemberEmailFromClerk(
+  _prev: SyncTeamMemberEmailState | undefined,
+  formData: FormData,
+): Promise<SyncTeamMemberEmailState> {
+  const session = await getDashboardSession();
+  if (!session) return { ok: false, error: "You must be signed in." };
+  if (!canManageOrgSettings(session.role)) {
+    return { ok: false, error: "Only the owner can sync team emails." };
+  }
+
+  const userId = String(formData.get("userId") ?? "").trim();
+  if (!userId) return { ok: false, error: "Team member not found." };
+
+  const member = await prisma.user.findFirst({
+    where: { id: userId, companyId: session.companyId, active: true },
+    select: { id: true, role: true, clerkUserId: true },
+  });
+  if (!member) return { ok: false, error: "Team member not found." };
+  if (member.role !== "technician") {
+    return { ok: false, error: "Job alert email sync applies to technicians only." };
+  }
+
+  try {
+    const client = await clerkClient();
+    const clerkUser = await client.users.getUser(member.clerkUserId);
+    const email = getPrimaryEmailFromClerkUser(clerkUser);
+    if (!email) {
+      return {
+        ok: false,
+        error: "No primary email on their sign-in account. They must add one in Clerk first.",
+      };
+    }
+
+    await prisma.user.update({
+      where: { id: member.id },
+      data: { email },
+    });
+
+    revalidatePath("/dashboard/settings");
+    return { ok: true, email };
+  } catch (error) {
+    captureServerActionError("syncTeamMemberEmailFromClerk", error);
+    return { ok: false, error: "Could not sync email from sign-in account. Try again." };
+  }
 }
 
 export type UpdateTeamMemberPhoneState =

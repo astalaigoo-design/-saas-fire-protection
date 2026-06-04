@@ -14,7 +14,13 @@ export type OnboardingStep = {
   description: string;
   href: string;
   done: boolean;
+  /** Shown in checklist but not required for "complete" (e.g. equipment register). */
+  optional?: boolean;
 };
+
+export function requiredOnboardingSteps(steps: OnboardingStep[]): OnboardingStep[] {
+  return steps.filter((step) => !step.optional);
+}
 
 export type OnboardingProgress = {
   steps: OnboardingStep[];
@@ -37,9 +43,11 @@ export async function getOnboardingProgress(
     company,
     customerCount,
     buildingCount,
+    equipmentCount,
     scheduledInspectionCount,
     fieldInspectionCount,
     fieldInspection,
+    sampleBuilding,
   ] = await Promise.all([
     prisma.company.findFirst({
       where: { id: session.companyId },
@@ -47,6 +55,9 @@ export async function getOnboardingProgress(
     }),
     prisma.customer.count({ where: customerWhere }),
     prisma.building.count({ where: buildingWhere }),
+    prisma.buildingAsset.count({
+      where: { active: true, building: buildingWhere },
+    }),
     prisma.inspection.count({ where: inspectionWhere }),
     prisma.inspection.count({
       where: {
@@ -62,9 +73,17 @@ export async function getOnboardingProgress(
       orderBy: { scheduledAt: "asc" },
       select: { id: true },
     }),
+    prisma.building.findFirst({
+      where: buildingWhere,
+      orderBy: { createdAt: "asc" },
+      select: { id: true },
+    }),
   ]);
 
   const fieldInspectionId = fieldInspection?.id ?? null;
+  const equipmentBuildingHref = sampleBuilding
+    ? `/dashboard/buildings/${sampleBuilding.id}?tab=assets`
+    : "/dashboard/buildings";
 
   const steps: OnboardingStep[] = [
     {
@@ -77,16 +96,35 @@ export async function getOnboardingProgress(
     {
       id: "customer",
       title: "Add your first customer",
-      description: "The property owner or facility you inspect for.",
+      description:
+        "Property owner or facility. CSV import (next step) can create customers from your spreadsheet too.",
       href: "/dashboard/customers/new",
-      done: customerCount > 0,
+      done: customerCount > 0 || buildingCount > 0,
+    },
+    {
+      id: "import-csv",
+      title: "Import buildings from CSV",
+      description:
+        "Best for multi-site portfolios: download the template, one row per site (customer + address columns).",
+      href: "/dashboard/buildings/import",
+      done: buildingCount > 0,
     },
     {
       id: "building",
-      title: "Add a building or site",
-      description: "Each customer can have one or more locations.",
+      title: "Or add a single building",
+      description:
+        "One site at a time from Buildings → Add building, or from the customer profile.",
       href: "/dashboard/buildings/new",
       done: buildingCount > 0,
+    },
+    {
+      id: "equipment",
+      title: "Register equipment on a site",
+      description:
+        "Open a building → Equipment tab — extinguishers, panels, emergency lights, service dates.",
+      href: equipmentBuildingHref,
+      done: equipmentCount > 0,
+      optional: true,
     },
     {
       id: "schedule",
@@ -105,13 +143,14 @@ export async function getOnboardingProgress(
     },
   ];
 
-  const completedCount = steps.filter((step) => step.done).length;
+  const required = requiredOnboardingSteps(steps);
+  const completedCount = required.filter((step) => step.done).length;
 
   return {
     steps,
     completedCount,
-    totalCount: steps.length,
-    isComplete: completedCount === steps.length,
+    totalCount: required.length,
+    isComplete: completedCount === required.length,
     fieldInspectionId,
   };
 }

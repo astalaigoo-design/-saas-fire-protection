@@ -13,16 +13,17 @@ export function OnboardingChecklist({ progress }: OnboardingChecklistProps) {
   if (progress.isComplete) return null;
 
   const percent = Math.round((progress.completedCount / progress.totalCount) * 100);
-  const nextStep = progress.steps.find((step) => !step.done);
+  const nextStep = progress.steps.find((step) => !step.done && !step.optional);
 
   return (
     <Card className="border-primary/25 bg-gradient-to-br from-primary/5 via-card to-card shadow-sm">
       <CardHeader className="gap-3 border-b border-border/60 pb-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <CardTitle className="font-heading text-xl">Get started in 5 minutes</CardTitle>
+            <CardTitle className="font-heading text-xl">Get started</CardTitle>
             <CardDescription>
-              Set up your workspace once — then schedule, inspect, and send compliance reports.
+              Multi-site teams usually import a CSV, then schedule. Single-site? Add one building and
+              skip optional equipment.
             </CardDescription>
           </div>
           <p className="shrink-0 text-sm font-medium tabular-nums text-primary">
@@ -78,7 +79,12 @@ export function OnboardingChecklist({ progress }: OnboardingChecklistProps) {
                     >
                       {index + 1}. {step.title}
                     </span>
-                    {!step.done && step.id === nextStep?.id ? (
+                    {step.optional ? (
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                        Optional
+                      </span>
+                    ) : null}
+                    {!step.done && !step.optional && step.id === nextStep?.id ? (
                       <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                         Next
                       </span>

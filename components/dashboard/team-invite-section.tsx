@@ -7,7 +7,9 @@ import {
 } from "@/lib/team/actions";
 import { PendingInviteBranchForm } from "@/components/dashboard/pending-invite-branch-form";
 import { TeamMemberBranchForm } from "@/components/dashboard/team-member-branch-form";
+import { TeamMemberContactStatus } from "@/components/dashboard/team-member-contact-status";
 import { TeamMemberPhoneForm } from "@/components/dashboard/team-member-phone-form";
+import { technicianContactGaps } from "@/lib/notifications/technician-contact";
 import type { BranchListItem } from "@/lib/branches/queries";
 import type { PendingTeamInviteRow, TeamMemberRow } from "@/lib/team/queries";
 import { INVITABLE_TEAM_ROLES } from "@/lib/team/invite-schemas";
@@ -19,6 +21,7 @@ type TeamInviteSectionProps = {
   members: TeamMemberRow[];
   pendingInvites: PendingTeamInviteRow[];
   branches: BranchListItem[];
+  outboundEmailConfigured: boolean;
 };
 
 function roleLabel(role: string): string {
@@ -43,8 +46,16 @@ function InviteSubmitButton() {
   );
 }
 
-export function TeamInviteSection({ members, pendingInvites, branches }: TeamInviteSectionProps) {
+export function TeamInviteSection({
+  members,
+  pendingInvites,
+  branches,
+  outboundEmailConfigured,
+}: TeamInviteSectionProps) {
   const defaultBranchId = branches.find((b) => b.isDefault)?.id ?? branches[0]?.id ?? "";
+  const techniciansMissingContact = members.filter(
+    (m) => technicianContactGaps(m).length > 0,
+  ).length;
   const [state, formAction] = useFormState<InviteTeamMemberState | undefined, FormData>(
     inviteTeamMember,
     undefined,
@@ -62,7 +73,8 @@ export function TeamInviteSection({ members, pendingInvites, branches }: TeamInv
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Invite technicians or admins, then use the branch dropdown in Current team to move someone
-          after they join (updates their account and access).
+          after they join. Technicians need an email on file for job emails (invite address or Clerk
+          sign-in) and a mobile for SMS.
         </p>
       </div>
 
@@ -140,8 +152,15 @@ export function TeamInviteSection({ members, pendingInvites, branches }: TeamInv
           <h3 className="text-sm font-medium text-foreground">Current team</h3>
           <p className="mt-1 text-xs text-muted-foreground">
             Fix a wrong-branch invite: pick a new branch for each admin or technician, then Save.
-            Owners stay company-wide.
+            Owners stay company-wide. Check job alert contact for each technician — missing email is
+            the most common reason assign emails do not send.
           </p>
+          {techniciansMissingContact > 0 ? (
+            <p role="status" className="mt-2 text-xs font-medium text-amber-800 dark:text-amber-200">
+              {techniciansMissingContact} technician
+              {techniciansMissingContact === 1 ? "" : "s"} missing email and/or mobile for job alerts.
+            </p>
+          ) : null}
           <div className="mt-3 hidden border-b border-border pb-2 text-xs font-medium text-muted-foreground sm:grid sm:grid-cols-[1fr_14rem] sm:gap-3">
             <span>Member</span>
             <span className="text-right">Branch</span>
@@ -167,6 +186,10 @@ export function TeamInviteSection({ members, pendingInvites, branches }: TeamInv
                       Branch
                     </p>
                     <TeamMemberBranchForm member={member} branches={branches} />
+                    <TeamMemberContactStatus
+                      member={member}
+                      outboundEmailConfigured={outboundEmailConfigured}
+                    />
                     <TeamMemberPhoneForm member={member} />
                   </div>
                 </div>

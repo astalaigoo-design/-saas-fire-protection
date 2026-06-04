@@ -64,30 +64,29 @@ export async function notifyTechnicianForInspection(input: {
   });
 
   const email = inspection.assignedTo.email?.trim();
-  if (!email) {
-    console.warn("notifyTechnicianForInspection: assignee has no email", {
+  if (email) {
+    const result = await sendTechnicianJobEmail({
+      to: email,
+      technicianName: inspection.assignedTo.name,
+      companyName: inspection.company.name,
+      kind: input.kind,
+      inspectionTypeName: inspection.inspectionType.name,
+      buildingLabel: siteLabel,
+      scheduledAt: inspection.scheduledAt,
+      previousScheduledAt: input.previousScheduledAt,
+      inspectionId: inspection.id,
+      occurrenceNote: input.occurrenceNote,
+    });
+
+    if (!result.ok) {
+      console.error("sendTechnicianJobEmail failed", result.error, {
+        inspectionId: inspection.id,
+      });
+    }
+  } else {
+    console.warn("notifyTechnicianForInspection: assignee has no email — skipping job email", {
       inspectionId: inspection.id,
       userId: inspection.assignedTo.id,
-    });
-    return;
-  }
-
-  const result = await sendTechnicianJobEmail({
-    to: email,
-    technicianName: inspection.assignedTo.name,
-    companyName: inspection.company.name,
-    kind: input.kind,
-    inspectionTypeName: inspection.inspectionType.name,
-    buildingLabel: siteLabel,
-    scheduledAt: inspection.scheduledAt,
-    previousScheduledAt: input.previousScheduledAt,
-    inspectionId: inspection.id,
-    occurrenceNote: input.occurrenceNote,
-  });
-
-  if (!result.ok) {
-    console.error("sendTechnicianJobEmail failed", result.error, {
-      inspectionId: inspection.id,
     });
   }
 

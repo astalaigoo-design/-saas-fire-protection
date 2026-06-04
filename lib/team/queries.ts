@@ -11,6 +11,7 @@ import {
 
 export type TeamMemberRow = {
   id: string;
+  clerkUserId: string;
   name: string | null;
   email: string | null;
   phone: string | null;
@@ -33,6 +34,7 @@ export async function listTeamMembers(session: DashboardSession): Promise<TeamMe
     where: { companyId: session.companyId, active: true },
     select: {
       id: true,
+      clerkUserId: true,
       name: true,
       email: true,
       phone: true,
@@ -44,6 +46,7 @@ export async function listTeamMembers(session: DashboardSession): Promise<TeamMe
   });
   return rows.map((row) => ({
     id: row.id,
+    clerkUserId: row.clerkUserId,
     name: row.name,
     email: row.email,
     phone: row.phone,

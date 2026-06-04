@@ -4,7 +4,9 @@ import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { MyJobsAlertsBanner } from "@/components/dashboard/my-jobs-alerts-banner";
+import { MyJobsContactBanner } from "@/components/dashboard/my-jobs-contact-banner";
 import { MyPhoneForm } from "@/components/dashboard/my-phone-form";
+import { getOutboundEmailStatus } from "@/lib/email/env";
 import { getSmsConfigStatus } from "@/lib/sms/env";
 import { getMyAssignedInspections } from "@/lib/inspect/my-jobs";
 import { getUnreadJobAssignmentAlerts } from "@/lib/notifications/job-alerts";
@@ -18,13 +20,14 @@ export default async function MyJobsPage() {
   if (!session) redirect("/sign-in");
   if (session.role !== "technician") redirect("/dashboard/jobs");
 
+  const emailStatus = getOutboundEmailStatus();
   const [jobs, jobAlerts, smsStatus, me] = await Promise.all([
     getMyAssignedInspections(session),
     getUnreadJobAssignmentAlerts(session),
     Promise.resolve(getSmsConfigStatus()),
     prisma.user.findUnique({
       where: { id: session.appUserId },
-      select: { phone: true },
+      select: { email: true, phone: true },
     }),
   ]);
 
@@ -46,6 +49,11 @@ export default async function MyJobsPage() {
       />
 
       <MyJobsAlertsBanner alerts={jobAlerts} />
+
+      <MyJobsContactBanner
+        email={me?.email ?? session.email}
+        outboundEmailConfigured={emailStatus.configured}
+      />
 
       <MyPhoneForm currentPhone={me?.phone ?? null} smsConfigured={smsStatus.configured} />
 

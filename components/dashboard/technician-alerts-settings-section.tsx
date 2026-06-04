@@ -45,7 +45,7 @@ export function TechnicianAlertsSettingsSection({
             <p className="font-medium text-foreground">Email (Resend)</p>
             <p className="text-muted-foreground">
               {emailStatus.configured
-                ? "Assign/reschedule emails send when the technician has an email on file."
+                ? "Assign/reschedule emails send only when User.email is set — check Organization → Team (job alert contact). Invite email or Clerk sign-in sync."
                 : "Disabled until outbound email is configured above."}
             </p>
           </div>

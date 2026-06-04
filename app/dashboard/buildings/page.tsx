@@ -44,7 +44,7 @@ export default async function BuildingsPage() {
       {buildings.length === 0 ? (
         <EmptyState
           title="No buildings yet"
-          description="Add buildings from a customer profile."
+          description="Import a CSV for many sites, add one building, or create sites from a customer profile."
         />
       ) : (
         <ul className="space-y-3">

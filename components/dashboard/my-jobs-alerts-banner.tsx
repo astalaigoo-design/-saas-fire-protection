@@ -36,8 +36,8 @@ export function MyJobsAlertsBanner({ alerts }: MyJobsAlertsBannerProps) {
         ) : null}
       </div>
       <p className="mt-2 text-xs text-muted-foreground">
-        You also get email (when Resend is on) and SMS (when Twilio is on and your mobile is saved
-        below).
+        You also get email when Resend is on and your account has an email on file, plus SMS when
+        Twilio is on and your mobile is saved below.
       </p>
     </div>
   );

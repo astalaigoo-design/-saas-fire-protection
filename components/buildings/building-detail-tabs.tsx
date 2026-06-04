@@ -11,13 +11,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type BuildingDetailTabsProps = {
   data: BuildingDetailPageData;
+  defaultTab?: "history" | "assets" | "deficiencies" | "photos" | "reports" | "notes";
 };
 
-export function BuildingDetailTabs({ data }: BuildingDetailTabsProps) {
+export function BuildingDetailTabs({ data, defaultTab = "history" }: BuildingDetailTabsProps) {
   const photoCount = data.inspections.reduce((n, i) => n + i.photos.length, 0);
 
   return (
-    <Tabs defaultValue="history" className="w-full">
+    <Tabs defaultValue={defaultTab} className="w-full">
       <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
         <TabsList variant="line" className="min-w-max">
           <TabsTrigger value="history">Inspection history</TabsTrigger>
