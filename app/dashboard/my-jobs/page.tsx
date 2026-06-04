@@ -3,7 +3,12 @@ import { ContinueInspectionHero } from "@/components/dashboard/continue-inspecti
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { getDashboardSession } from "@/lib/dashboard/session";
+import { MyJobsAlertsBanner } from "@/components/dashboard/my-jobs-alerts-banner";
+import { MyPhoneForm } from "@/components/dashboard/my-phone-form";
+import { getSmsConfigStatus } from "@/lib/sms/env";
 import { getMyAssignedInspections } from "@/lib/inspect/my-jobs";
+import { getUnreadJobAssignmentAlerts } from "@/lib/notifications/job-alerts";
+import { prisma } from "@/lib/prisma";
 import { pickPromotedResumeJobId } from "@/lib/inspect/resume-job";
 import { CacheRouteOnVisit } from "@/components/offline/cache-route-on-visit";
 import { buildingLabel } from "@/lib/customers/format";
@@ -13,7 +18,15 @@ export default async function MyJobsPage() {
   if (!session) redirect("/sign-in");
   if (session.role !== "technician") redirect("/dashboard/jobs");
 
-  const jobs = await getMyAssignedInspections(session);
+  const [jobs, jobAlerts, smsStatus, me] = await Promise.all([
+    getMyAssignedInspections(session),
+    getUnreadJobAssignmentAlerts(session),
+    Promise.resolve(getSmsConfigStatus()),
+    prisma.user.findUnique({
+      where: { id: session.appUserId },
+      select: { phone: true },
+    }),
+  ]);
 
   const catalogJobs = jobs.map((job) => ({
     inspectionId: job.id,
@@ -31,6 +44,10 @@ export default async function MyJobsPage() {
         title="My jobs"
         description="Continue an in-progress inspection or pick a job below."
       />
+
+      <MyJobsAlertsBanner alerts={jobAlerts} />
+
+      <MyPhoneForm currentPhone={me?.phone ?? null} smsConfigured={smsStatus.configured} />
 
       <CacheRouteOnVisit path="/dashboard/my-jobs" />
       <ContinueInspectionHero jobs={catalogJobs} serverResumeJobId={serverResumeJobId} />

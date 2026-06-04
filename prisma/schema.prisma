@@ -159,6 +159,8 @@ model User {
   /// Clerk user id (`user_...`) — unique per company.
   clerkUserId String
   email       String?
+  /// E.164 preferred, e.g. +15551234567 — used for technician job SMS (Twilio).
+  phone       String?
   name        String?
   role        UserRole
   active      Boolean   @default(true)
@@ -344,6 +346,9 @@ model Inspection {
   scheduledAt DateTime
   completedAt DateTime?
   status      InspectionStatus @default(scheduled)
+
+  /// Set when the day-of technician SMS cron successfully sends (one per job per day).
+  technicianDayOfSmsSentAt DateTime?
 
   notes String? @db.Text
 

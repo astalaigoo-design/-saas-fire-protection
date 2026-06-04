@@ -1,6 +1,8 @@
 import { UserRole } from "@prisma/client";
 import { buildingLabel } from "@/lib/customers/format";
 import { sendTechnicianJobEmail, type TechnicianJobEmailKind } from "@/lib/email/send-technician-job-email";
+import { normalizeSmsPhone } from "@/lib/sms/normalize-phone";
+import { sendTechnicianJobSms } from "@/lib/sms/send-technician-job-sms";
 import { createStaffNotification } from "@/lib/notifications/create";
 import { prisma } from "@/lib/prisma";
 
@@ -9,7 +11,7 @@ const inspectionNotifySelect = {
   scheduledAt: true,
   assignedToUserId: true,
   assignedTo: {
-    select: { id: true, name: true, email: true, role: true, active: true },
+    select: { id: true, name: true, email: true, phone: true, role: true, active: true },
   },
   inspectionType: { select: { name: true } },
   company: { select: { name: true } },
@@ -85,6 +87,34 @@ export async function notifyTechnicianForInspection(input: {
 
   if (!result.ok) {
     console.error("sendTechnicianJobEmail failed", result.error, {
+      inspectionId: inspection.id,
+    });
+  }
+
+  const phoneRaw = inspection.assignedTo.phone?.trim();
+  if (!phoneRaw) return;
+
+  const toE164 = normalizeSmsPhone(phoneRaw);
+  if (!toE164) {
+    console.warn("notifyTechnicianForInspection: invalid technician phone", {
+      inspectionId: inspection.id,
+      userId: inspection.assignedTo.id,
+    });
+    return;
+  }
+
+  const sms = await sendTechnicianJobSms({
+    toE164,
+    kind: input.kind,
+    inspectionTypeName: inspection.inspectionType.name,
+    buildingLabel: siteLabel,
+    scheduledAt: inspection.scheduledAt,
+    inspectionId: inspection.id,
+    companyName: inspection.company.name,
+  });
+
+  if (!sms.ok) {
+    console.error("sendTechnicianJobSms failed", sms.error, {
       inspectionId: inspection.id,
     });
   }

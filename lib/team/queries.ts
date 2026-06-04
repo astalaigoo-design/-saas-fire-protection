@@ -13,6 +13,7 @@ export type TeamMemberRow = {
   id: string;
   name: string | null;
   email: string | null;
+  phone: string | null;
   role: UserRole;
   branchId: string | null;
   branchName: string | null;
@@ -34,6 +35,7 @@ export async function listTeamMembers(session: DashboardSession): Promise<TeamMe
       id: true,
       name: true,
       email: true,
+      phone: true,
       role: true,
       branchId: true,
       branch: { select: { name: true } },
@@ -44,6 +46,7 @@ export async function listTeamMembers(session: DashboardSession): Promise<TeamMe
     id: row.id,
     name: row.name,
     email: row.email,
+    phone: row.phone,
     role: row.role,
     branchId: row.branchId,
     branchName: row.branch?.name ?? (row.role === "owner" ? "All locations" : null),

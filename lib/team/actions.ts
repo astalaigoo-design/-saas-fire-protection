@@ -22,6 +22,10 @@ import {
 } from "@/lib/team/invite-metadata";
 import { reassignPendingInviteBranchSchema } from "@/lib/team/reassign-pending-invite-schema";
 import { reassignTeamMemberBranchSchema } from "@/lib/team/reassign-branch-schema";
+import {
+  updateMyPhoneSchema,
+  updateTeamMemberPhoneSchema,
+} from "@/lib/team/phone-schema";
 
 export type InviteTeamMemberState =
   | { ok: true; email: string }
@@ -264,4 +268,81 @@ export async function reassignPendingInviteBranch(
 
   revalidatePath("/dashboard/settings");
   return { ok: true, branchName: branch.name, email: invite.emailAddress };
+}
+
+export type UpdateTeamMemberPhoneState =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export async function updateTeamMemberPhone(
+  _prev: UpdateTeamMemberPhoneState | undefined,
+  formData: FormData,
+): Promise<UpdateTeamMemberPhoneState> {
+  const session = await getDashboardSession();
+  if (!session) return { ok: false, error: "You must be signed in." };
+  if (!canManageOrgSettings(session.role)) {
+    return { ok: false, error: "Only the owner can update team phone numbers." };
+  }
+
+  const parsed = updateTeamMemberPhoneSchema.safeParse({
+    userId: formData.get("userId"),
+    phone: formData.get("phone"),
+  });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid phone." };
+  }
+
+  const member = await prisma.user.findFirst({
+    where: { id: parsed.data.userId, companyId: session.companyId, active: true },
+    select: { id: true, role: true },
+  });
+  if (!member) return { ok: false, error: "Team member not found." };
+  if (member.role !== "technician") {
+    return { ok: false, error: "SMS alerts apply to technicians only." };
+  }
+
+  try {
+    await prisma.user.update({
+      where: { id: member.id },
+      data: { phone: parsed.data.phone },
+    });
+    revalidatePath("/dashboard/settings");
+    revalidatePath("/dashboard/my-jobs");
+    return { ok: true };
+  } catch (error) {
+    captureServerActionError("updateTeamMemberPhone", error);
+    return { ok: false, error: "Could not save phone number." };
+  }
+}
+
+export type UpdateMyPhoneState = { ok: true } | { ok: false; error: string };
+
+export async function updateMyTechnicianPhone(
+  _prev: UpdateMyPhoneState | undefined,
+  formData: FormData,
+): Promise<UpdateMyPhoneState> {
+  const session = await getDashboardSession();
+  if (!session) return { ok: false, error: "You must be signed in." };
+  if (session.role !== "technician") {
+    return { ok: false, error: "Only technicians can update this field here." };
+  }
+
+  const parsed = updateMyPhoneSchema.safeParse({
+    phone: formData.get("phone"),
+  });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid phone." };
+  }
+
+  try {
+    await prisma.user.update({
+      where: { id: session.appUserId },
+      data: { phone: parsed.data.phone },
+    });
+    revalidatePath("/dashboard/my-jobs");
+    return { ok: true };
+  } catch (error) {
+    captureServerActionError("updateMyTechnicianPhone", error);
+    return { ok: false, error: "Could not save phone number." };
+  }
 }

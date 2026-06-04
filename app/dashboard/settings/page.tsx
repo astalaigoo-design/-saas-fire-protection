@@ -8,6 +8,7 @@ import { ChecklistTemplatesSection } from "@/components/dashboard/checklist-temp
 import { InspectionTypePacksSection } from "@/components/dashboard/inspection-type-packs-section";
 import { BranchesSettingsSection } from "@/components/dashboard/branches-settings-section";
 import { OutboundEmailSettingsSection } from "@/components/dashboard/outbound-email-settings-section";
+import { TechnicianAlertsSettingsSection } from "@/components/dashboard/technician-alerts-settings-section";
 import { TeamInviteSection } from "@/components/dashboard/team-invite-section";
 import { listBranchesForCompany } from "@/lib/branches/queries";
 import { ensureCanManageOrgSettings } from "@/lib/auth/guards";
@@ -16,6 +17,7 @@ import { getChecklistTemplatesEditorData } from "@/lib/inspections/checklist-tem
 import { getCompanyProfile } from "@/lib/companies/queries";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { getOutboundEmailStatus } from "@/lib/email/env";
+import { getSmsConfigStatus } from "@/lib/sms/env";
 import { getTeamManagementData } from "@/lib/team/queries";
 
 export default async function OrgSettingsPage() {
@@ -43,6 +45,11 @@ export default async function OrgSettingsPage() {
       <BranchesSettingsSection branches={branches} />
 
       <OutboundEmailSettingsSection status={getOutboundEmailStatus()} />
+
+      <TechnicianAlertsSettingsSection
+        emailStatus={getOutboundEmailStatus()}
+        smsStatus={getSmsConfigStatus()}
+      />
 
       <TeamInviteSection
         members={team.members}

@@ -7,6 +7,7 @@ import {
 } from "@/lib/team/actions";
 import { PendingInviteBranchForm } from "@/components/dashboard/pending-invite-branch-form";
 import { TeamMemberBranchForm } from "@/components/dashboard/team-member-branch-form";
+import { TeamMemberPhoneForm } from "@/components/dashboard/team-member-phone-form";
 import type { BranchListItem } from "@/lib/branches/queries";
 import type { PendingTeamInviteRow, TeamMemberRow } from "@/lib/team/queries";
 import { INVITABLE_TEAM_ROLES } from "@/lib/team/invite-schemas";
@@ -166,6 +167,7 @@ export function TeamInviteSection({ members, pendingInvites, branches }: TeamInv
                       Branch
                     </p>
                     <TeamMemberBranchForm member={member} branches={branches} />
+                    <TeamMemberPhoneForm member={member} />
                   </div>
                 </div>
               </li>
