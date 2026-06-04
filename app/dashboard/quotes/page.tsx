@@ -8,7 +8,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
 import { listCompanyQuotesSafe } from "@/lib/dashboard/queries";
+import { OutboundEmailInlineNotice } from "@/components/dashboard/outbound-email-inline-notice";
 import { getDashboardSession } from "@/lib/dashboard/session";
+import { getOutboundChannelsStatus } from "@/lib/outbound/channels";
 import {
   computeQuotePipelineMetrics,
   filterQuotesByStage,
@@ -69,6 +71,8 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
           </Link>
         }
       />
+
+      <OutboundEmailInlineNotice channels={getOutboundChannelsStatus()} context="quotes" />
 
       {!schemaReady ? (
         <p

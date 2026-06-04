@@ -11,6 +11,7 @@ import { ensureCanManageJobs } from "@/lib/auth/guards";
 import { getAutomationVisibility } from "@/lib/operations/automation-visibility";
 import { getCommandCenterSnapshot } from "@/lib/operations/queries";
 import { getDashboardSession } from "@/lib/dashboard/session";
+import { getOutboundChannelsStatus } from "@/lib/outbound/channels";
 
 type CommandCenterPageProps = {
   searchParams: Record<string, string | string[] | undefined>;
@@ -60,6 +61,7 @@ export default async function CommandCenterPage({ searchParams }: CommandCenterP
       automation={automation}
       assignableStaff={assignableStaff}
       quotePipeline={quotePipeline}
+      outboundChannels={getOutboundChannelsStatus()}
       defaultTab={defaultTab}
     />
   );

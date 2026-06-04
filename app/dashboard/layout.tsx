@@ -14,8 +14,11 @@ import { getCompanyBillingSnapshot } from "@/lib/billing/queries";
 import { getDashboardNavItems } from "@/lib/dashboard/nav-items";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { getTechnicianHomeHref } from "@/lib/inspect/resume-job";
+import { canManageOrgSettings } from "@/lib/auth/permissions";
 import { canViewStaffNotifications } from "@/lib/notifications/scope";
 import { getStaffNotificationsFeed } from "@/lib/notifications/queries";
+import { getOutboundChannelsStatus } from "@/lib/outbound/channels";
+import { OutboundChannelsBanner } from "@/components/dashboard/outbound-channels-banner";
 
 export const metadata: Metadata = DASHBOARD_ROBOTS_METADATA;
 
@@ -110,6 +113,7 @@ export default async function DashboardLayout({
 
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 lg:px-6">
           {billing ? <TrialBanner billing={billing} role={session.role} /> : null}
+          {outboundChannels ? <OutboundChannelsBanner channels={outboundChannels} /> : null}
           {billing ? (
             <SubscriptionGate billing={billing} role={session.role}>
               {children}

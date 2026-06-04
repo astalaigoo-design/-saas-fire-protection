@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
+import { isOutboundEmailConfigured } from "@/lib/email/env";
 import {
   formatAutomationRunSummary,
   formatRecentDueReminderLine,
@@ -14,6 +15,8 @@ type AutomationPanelProps = {
 };
 
 export function AutomationPanel({ automation }: AutomationPanelProps) {
+  const emailConfigured = isOutboundEmailConfigured();
+
   return (
     <section aria-labelledby="automation-heading" className="space-y-3">
       <div>
@@ -25,6 +28,20 @@ export function AutomationPanel({ automation }: AutomationPanelProps) {
           your report email and every owner/admin address. Trial-ending notices run on a separate
           schedule.
         </p>
+        {!emailConfigured ? (
+          <p
+            role="status"
+            className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-950 dark:text-amber-100"
+          >
+            Cron runs but sends nothing until Resend is configured.{" "}
+            <Link
+              href="/dashboard/settings#outbound-email"
+              className="font-medium text-primary underline-offset-2 hover:underline"
+            >
+              Set up outbound email
+            </Link>
+          </p>
+        ) : null}
       </div>
 
       <Card>

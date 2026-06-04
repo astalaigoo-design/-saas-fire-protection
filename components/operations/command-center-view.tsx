@@ -13,6 +13,8 @@ import { AuditLogFeed } from "@/components/operations/audit-log-feed";
 import { CommandCenterDeficienciesTab } from "@/components/operations/command-center-deficiencies-tab";
 import { CommandCenterEquipmentTab } from "@/components/operations/command-center-equipment-tab";
 import { CommandCenterImportHealth } from "@/components/operations/command-center-import-health";
+import { CommandCenterOutbound } from "@/components/operations/command-center-outbound";
+import type { OutboundChannelsStatus } from "@/lib/outbound/channels";
 import { CommandCenterQuotesTab } from "@/components/operations/command-center-quotes-tab";
 import type { QuotePipelineMetrics } from "@/lib/quotes/pipeline";
 import type { AuditLogPage } from "@/lib/audit/queries";
@@ -120,6 +122,7 @@ type CommandCenterViewProps = {
   automation: AutomationVisibility;
   assignableStaff: AssignableStaff[];
   quotePipeline: QuotePipelineMetrics;
+  outboundChannels: OutboundChannelsStatus;
   defaultTab: CommandCenterTab;
 };
 
@@ -243,6 +246,7 @@ export function CommandCenterView({
         </div>
 
         <TabsContent value="overview" className="mt-6 space-y-8">
+          <CommandCenterOutbound channels={outboundChannels} />
           <CommandCenterImportHealth health={snapshot.importHealth} />
 
           <div>

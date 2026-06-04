@@ -26,7 +26,9 @@ import { formatDate } from "@/lib/dashboard/dates";
 
 import { listCompanyReportsSafe } from "@/lib/dashboard/queries";
 
+import { OutboundEmailInlineNotice } from "@/components/dashboard/outbound-email-inline-notice";
 import { getDashboardSession } from "@/lib/dashboard/session";
+import { getOutboundChannelsStatus } from "@/lib/outbound/channels";
 
 
 
@@ -87,6 +89,10 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
         }
 
       />
+
+
+
+      <OutboundEmailInlineNotice channels={getOutboundChannelsStatus()} context="reports" />
 
 
 

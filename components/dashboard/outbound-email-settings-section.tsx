@@ -1,15 +1,6 @@
 import type { OutboundEmailStatus } from "@/lib/email/env";
+import { RESEND_DEPENDENT_FEATURES, WORKS_WITHOUT_RESEND } from "@/lib/outbound/channels";
 import { cn } from "@/lib/utils";
-
-const ENABLED_WHEN_CONFIGURED = [
-  "Compliance PDFs emailed to customers after submit",
-  "Repair quotes sent to customers",
-  "Quote accept/decline alerts to owners and admins",
-  "Due inspection reminders (daily cron)",
-  "Trial ending reminders (cron)",
-  "In-app staff alerts (email copy to owners/admins)",
-  "Technician job assigned or rescheduled emails",
-] as const;
 
 type OutboundEmailSettingsSectionProps = {
   status: OutboundEmailStatus;
@@ -63,14 +54,15 @@ export function OutboundEmailSettingsSection({
         {!status.configured ? (
           <p className="mt-1">
             Without <span className="font-mono text-xs">RESEND_API_KEY</span> and{" "}
-            <span className="font-mono text-xs">REPORT_EMAIL_FROM</span>, the features
-            below are disabled. PDFs and share links still work; email delivery does not.
+            <span className="font-mono text-xs">REPORT_EMAIL_FROM</span>, the Resend-dependent
+            features below are disabled. SMS and in-app alerts are separate (see Technician job
+            alerts).
           </p>
         ) : null}
       </div>
 
       <ul className="mt-4 space-y-1.5 text-sm text-muted-foreground">
-        {ENABLED_WHEN_CONFIGURED.map((line) => (
+        {RESEND_DEPENDENT_FEATURES.map((line) => (
           <li key={line} className="flex gap-2">
             <span
               className={cn(
@@ -80,6 +72,18 @@ export function OutboundEmailSettingsSection({
               aria-hidden
             />
             <span className={status.configured ? "text-foreground" : undefined}>{line}</span>
+          </li>
+        ))}
+      </ul>
+
+      <p className="mt-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        Still works without Resend
+      </p>
+      <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+        {WORKS_WITHOUT_RESEND.map((line) => (
+          <li key={line} className="flex gap-2">
+            <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden />
+            {line}
           </li>
         ))}
       </ul>
