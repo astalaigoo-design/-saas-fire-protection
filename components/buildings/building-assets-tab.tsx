@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useFormState, useFormStatus } from "react-dom";
 import {
   createBuildingAsset,
@@ -81,7 +82,14 @@ export function BuildingAssetsTab({ buildingId, assets }: BuildingAssetsTabProps
             <h3 className="font-medium text-foreground">Add equipment</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Track extinguishers, alarm panels, and other assets with tag numbers and last
-              service dates.
+              service dates.{" "}
+              <Link
+                href="/dashboard/buildings/import-equipment"
+                className="font-medium text-primary underline-offset-4 hover:underline"
+              >
+                Import equipment CSV
+              </Link>{" "}
+              for many sites at once.
             </p>
           </div>
           <form action={createAction} className="space-y-4">

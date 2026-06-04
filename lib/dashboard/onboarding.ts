@@ -126,10 +126,10 @@ export async function getOnboardingProgress(
     },
     {
       id: "equipment",
-      title: "Register equipment on a site",
+      title: "Import equipment (CSV) or add on a site",
       description:
-        "Open a building → Equipment tab — extinguishers, panels, emergency lights, service dates.",
-      href: equipmentBuildingHref,
+        "Bulk register from Buildings → Import equipment, or open a building → Equipment tab for one-offs.",
+      href: "/dashboard/buildings/import-equipment",
       done: equipmentCount > 0,
       optional: true,
     },

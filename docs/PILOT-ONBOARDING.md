@@ -113,4 +113,4 @@ See [PRODUCTION-MIGRATIONS.md](./PRODUCTION-MIGRATIONS.md) if anything is `MISSI
 
 3. After each production deploy, run [PRODUCTION-SMOKE-TEST.md](./PRODUCTION-SMOKE-TEST.md).
 
-Owner nav should include **Organization** (branches, checklist templates, outbound email), **Customers → Import CSV**, **Buildings → Import CSV**, building **Equipment** tab, **Billing** (read-only for admins), and full job/customer access.
+Owner nav should include **Organization** (branches, checklist templates, outbound email), **Customers → Import CSV**, **Buildings → Import CSV**, **Import equipment**, building **Equipment** tab, **Billing** (read-only for admins), and full job/customer access.

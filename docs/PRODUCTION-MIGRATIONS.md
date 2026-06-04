@@ -76,6 +76,7 @@ These require migrations above — see [PILOT.md](./PILOT.md):
 
 - **Branches** — Organization → Branches; branch on customers and team
 - **CSV building import** — Buildings → **Import CSV** (`/dashboard/buildings/import`)
+- **CSV equipment import** — Buildings → **Import equipment** (`/dashboard/buildings/import-equipment`)
 - **Equipment register** — Building detail → **Equipment** tab (extinguishers, panels, etc.)
 - **Deficiencies** — Failed items → tracked deficiencies (command center)
 - **Technician SMS** — Twilio env + mobile on My jobs (optional)

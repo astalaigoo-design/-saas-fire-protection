@@ -121,9 +121,16 @@ Confirm the site appears on the customer detail page and **Buildings** list.
 
 ### Equipment register (optional, common for PM pilots)
 
-1. Open a building → **Equipment** tab (or use the onboarding link with `?tab=assets`).
+**Bulk — Import equipment CSV**
+
+1. **Buildings** → **Import equipment** (`/dashboard/buildings/import-equipment`).
+2. Template columns: `branch`, `customer`, `building_name` (or address), `asset_type`, `location`, optional tag/service dates.
+3. Preview → import (sites and customers must already exist).
+
+**Single site — Equipment tab**
+
+1. Open a building → **Equipment** tab (or `?tab=assets` from onboarding).
 2. **Add equipment** — type, location (required), tag #, manufacturer, service dates, notes.
-3. Save; repeat for a few assets to demo the register.
 
 Requires migration `20260607120000_add_building_assets` on production (`npm run db:migrate:deploy`).
 

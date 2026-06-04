@@ -26,10 +26,16 @@ export default async function BuildingsPage() {
         actions={
           <div className="flex flex-wrap gap-2">
             <Link
+              href="/dashboard/buildings/import-equipment"
+              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-11 px-5")}
+            >
+              Import equipment
+            </Link>
+            <Link
               href="/dashboard/buildings/import"
               className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-11 px-5")}
             >
-              Import CSV
+              Import buildings
             </Link>
             <Link
               href="/dashboard/buildings/new"
