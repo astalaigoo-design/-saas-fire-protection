@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { MyJobSiteActions } from "@/components/dashboard/my-job-site-actions";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
 import { InspectJobLink } from "@/components/inspect/inspect-job-link";
+import { matchesMyJobSearch } from "@/lib/inspect/my-job-search";
 import { sortTechnicianJobs, type TechnicianJobStatus } from "@/lib/inspect/resume-job";
 import { getActiveInspectionId } from "@/lib/offline/active-inspection";
 import { getJobCatalog, saveJobCatalog, type JobCatalogEntry } from "@/lib/offline/job-catalog";
@@ -27,6 +30,7 @@ export function MyJobsClient({ serverJobs, promotedJobId }: MyJobsClientProps) {
   const [jobs, setJobs] = useState<JobCatalogEntry[]>(serverJobs);
   const [offline, setOffline] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     const syncActiveId = () => setActiveId(getActiveInspectionId());
@@ -68,14 +72,18 @@ export function MyJobsClient({ serverJobs, promotedJobId }: MyJobsClientProps) {
   const highlightId = promotedJobId ?? activeId;
 
   const listJobs = useMemo(() => {
-    if (!highlightId) return jobs;
-    const promoted = jobs.find((job) => job.inspectionId === highlightId);
-    if (!promoted) return jobs;
-    return [
-      promoted,
-      ...jobs.filter((job) => job.inspectionId !== highlightId),
-    ];
-  }, [jobs, highlightId]);
+    const ordered = !highlightId
+      ? jobs
+      : (() => {
+          const promoted = jobs.find((job) => job.inspectionId === highlightId);
+          if (!promoted) return jobs;
+          return [
+            promoted,
+            ...jobs.filter((job) => job.inspectionId !== highlightId),
+          ];
+        })();
+    return ordered.filter((job) => matchesMyJobSearch(job, search));
+  }, [jobs, highlightId, search]);
 
   if (jobs.length === 0) {
     return (
@@ -113,18 +121,17 @@ export function MyJobsClient({ serverJobs, promotedJobId }: MyJobsClientProps) {
           const inProgress = job.status === "in_progress";
           return (
             <li key={job.inspectionId}>
-              <InspectJobLink
-                inspectionId={job.inspectionId}
+              <Card
                 className={cn(
-                  "block rounded-xl transition-opacity hover:opacity-95",
+                  "overflow-hidden",
+                  inProgress && "border-primary/40 bg-primary/5",
+                  isPromoted && !inProgress && "border-amber-500/30",
                   isPromoted && "ring-2 ring-primary/60 ring-offset-2 ring-offset-background",
                 )}
               >
-                <Card
-                  className={cn(
-                    inProgress && "border-primary/40 bg-primary/5",
-                    isPromoted && !inProgress && "border-amber-500/30",
-                  )}
+                <InspectJobLink
+                  inspectionId={job.inspectionId}
+                  className="block transition-opacity hover:opacity-95"
                 >
                   <CardContent>
                     <div className="flex flex-wrap items-center gap-2">
@@ -143,12 +150,21 @@ export function MyJobsClient({ serverJobs, promotedJobId }: MyJobsClientProps) {
                     <span className="mt-1 block text-sm text-muted-foreground">
                       {job.subtitle}
                     </span>
+                    {job.addressLine ? (
+                      <span className="mt-2 block text-sm text-foreground">
+                        {job.addressLine}
+                      </span>
+                    ) : null}
                     <span className="mt-2 block text-sm font-medium text-primary">
                       {formatDateTime(job.scheduledAt)}
                     </span>
                   </CardContent>
-                </Card>
-              </InspectJobLink>
+                </InspectJobLink>
+                <MyJobSiteActions
+                  mapsQuery={job.mapsQuery}
+                  addressLine={job.addressLine}
+                />
+              </Card>
             </li>
           );
         })}

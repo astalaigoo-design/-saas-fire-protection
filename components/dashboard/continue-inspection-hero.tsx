@@ -2,6 +2,7 @@
 
 import type { MouseEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { MyJobSiteActions } from "@/components/dashboard/my-job-site-actions";
 import { InspectJobLink } from "@/components/inspect/inspect-job-link";
 import { pickPromotedResumeJobId } from "@/lib/inspect/resume-job";
 import { getActiveInspectionId } from "@/lib/offline/active-inspection";
@@ -169,6 +170,17 @@ export function ContinueInspectionHero({
       <p className="mt-1 text-sm text-muted-foreground">{description}</p>
       <p className="mt-2 font-medium text-foreground">{primaryJob.label}</p>
       <p className="text-sm text-muted-foreground">{primaryJob.subtitle}</p>
+      {primaryJob.addressLine ? (
+        <p className="mt-2 text-sm text-foreground">{primaryJob.addressLine}</p>
+      ) : null}
+
+      {primaryJob.mapsQuery ? (
+        <MyJobSiteActions
+          compact
+          mapsQuery={primaryJob.mapsQuery}
+          addressLine={primaryJob.addressLine}
+        />
+      ) : null}
 
       <InspectJobLink
         inspectionId={primaryJob.inspectionId}

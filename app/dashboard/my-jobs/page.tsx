@@ -8,12 +8,11 @@ import { MyJobsContactBanner } from "@/components/dashboard/my-jobs-contact-bann
 import { MyPhoneForm } from "@/components/dashboard/my-phone-form";
 import { getOutboundEmailStatus } from "@/lib/email/env";
 import { getSmsConfigStatus } from "@/lib/sms/env";
-import { getMyAssignedInspections } from "@/lib/inspect/my-jobs";
 import { getUnreadJobAssignmentAlerts } from "@/lib/notifications/job-alerts";
 import { prisma } from "@/lib/prisma";
 import { pickPromotedResumeJobId } from "@/lib/inspect/resume-job";
 import { CacheRouteOnVisit } from "@/components/offline/cache-route-on-visit";
-import { buildingLabel } from "@/lib/customers/format";
+import { getMyAssignedInspections, toJobCatalogEntry } from "@/lib/inspect/my-jobs";
 
 export default async function MyJobsPage() {
   const session = await getDashboardSession();
@@ -45,7 +44,7 @@ export default async function MyJobsPage() {
     <div className="space-y-6">
       <PageHeader
         title="My jobs"
-        description="Continue an in-progress inspection or pick a job below."
+        description="Search by site, customer, or address. Open a job for the checklist, or use Directions without leaving the app."
       />
 
       <MyJobsAlertsBanner alerts={jobAlerts} />

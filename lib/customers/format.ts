@@ -24,6 +24,20 @@ export function buildingAddressLine(building: BuildingAddressFields): string {
 }
 
 /** Multi-line postal address for field briefs and PDFs. */
+/** Single-line address for maps search and technician job cards. */
+export function buildingMapsSearchQuery(building: BuildingFullAddressFields): string {
+  const parts = [
+    building.name?.trim() || null,
+    building.addressLine1.trim(),
+    building.addressLine2?.trim() || null,
+    `${building.city}, ${building.region} ${building.postalCode}`.trim(),
+  ].filter(Boolean) as string[];
+  if (building.country && building.country !== "US") {
+    parts.push(building.country);
+  }
+  return parts.join(", ");
+}
+
 export function formatBuildingAddress(building: BuildingFullAddressFields): string {
   const lines = [
     building.addressLine1,

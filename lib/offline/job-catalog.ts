@@ -4,6 +4,10 @@ export type JobCatalogEntry = {
   subtitle: string;
   scheduledAt: string;
   status?: "scheduled" | "in_progress";
+  /** One-line site address for search and display. */
+  addressLine?: string;
+  /** Full query for maps directions. */
+  mapsQuery?: string;
 };
 
 const JOB_CATALOG_KEY = "flareflow-job-catalog";
