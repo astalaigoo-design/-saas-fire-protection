@@ -55,7 +55,7 @@ export function CustomerList({
                   </div>
                 </div>
                 <div className="flex flex-col items-stretch gap-2 sm:items-end">
-                  {canReassignBranch && branches.length > 1 ? (
+                  {canReassignBranch && branches.length > 0 ? (
                     <div className="flex flex-col gap-1 sm:items-end">
                       <span className="text-xs font-medium text-muted-foreground">Branch</span>
                       <CustomerBranchForm

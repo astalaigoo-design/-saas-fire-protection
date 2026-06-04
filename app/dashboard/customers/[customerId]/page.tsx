@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { BranchReassignHint } from "@/components/dashboard/branch-reassign-hint";
 import { CustomerBranchForm } from "@/components/customers/customer-branch-form";
 import { CustomerBuildingsSection } from "@/components/customers/customer-buildings-section";
 import { CustomerInspectionHistory } from "@/components/customers/customer-inspection-history";
@@ -37,7 +36,6 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
   if (!customer) notFound();
 
   const canManageCustomerBranch = canFilterBranchesByCookie(session);
-  const canMoveBranch = canManageCustomerBranch && branches.length > 1;
 
   return (
     <div className="space-y-8">
@@ -59,34 +57,13 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
               {customer.email ? <span>{customer.email}</span> : null}
               {customer.phone ? <span>{customer.phone}</span> : null}
-              <span>
-                Added {formatDate(customer.createdAt)}
-              </span>
-              {!canMoveBranch && customer.branch?.name ? (
+              <span>Added {formatDate(customer.createdAt)}</span>
+              {!canManageCustomerBranch && customer.branch?.name ? (
                 <span>Branch · {customer.branch.name}</span>
               ) : null}
             </div>
           </div>
-          <div className="flex flex-col gap-3 sm:items-end">
-            {canManageCustomerBranch ? (
-              <div className="flex w-full flex-col gap-1 sm:w-auto sm:items-end">
-                <p className="text-xs font-medium text-muted-foreground">Branch</p>
-                {canMoveBranch ? (
-                  <CustomerBranchForm
-                    customerId={customer.id}
-                    branchId={customer.branchId}
-                    branches={branches}
-                  />
-                ) : (
-                  <>
-                    <span className="text-sm text-foreground">
-                      {customer.branch?.name ?? "Main"}
-                    </span>
-                    <BranchReassignHint />
-                  </>
-                )}
-              </div>
-            ) : null}
+          <div className="flex shrink-0 flex-col gap-2 sm:items-end">
             <Link
               href={`/dashboard/buildings/new?customerId=${customer.id}`}
               className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-5")}
@@ -96,6 +73,31 @@ export default async function CustomerDetailPage({ params }: CustomerDetailPageP
           </div>
         </div>
       </header>
+
+      {canManageCustomerBranch ? (
+        <section
+          aria-labelledby="customer-branch-heading"
+          className="max-w-lg rounded-xl border border-border bg-card p-4 shadow-sm"
+        >
+          <h2
+            id="customer-branch-heading"
+            className="font-heading text-base font-semibold text-foreground"
+          >
+            Branch
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Move this customer to another office or region. Buildings and jobs stay with the
+            account; dashboards and filters use the branch you choose.
+          </p>
+          <div className="mt-4">
+            <CustomerBranchForm
+              customerId={customer.id}
+              branchId={customer.branchId}
+              branches={branches}
+            />
+          </div>
+        </section>
+      ) : null}
 
       <section aria-labelledby="buildings-heading">
         <h2 id="buildings-heading" className="mb-4 font-heading text-lg font-semibold text-foreground">

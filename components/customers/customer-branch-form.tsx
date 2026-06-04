@@ -5,6 +5,7 @@ import {
   reassignCustomerBranch,
   type ReassignCustomerBranchState,
 } from "@/lib/customers/actions";
+import { BranchReassignHint } from "@/components/dashboard/branch-reassign-hint";
 import type { BranchListItem } from "@/lib/branches/queries";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,10 @@ export function CustomerBranchForm({
     FormData
   >(reassignCustomerBranch, undefined);
 
+  if (branches.length === 0) {
+    return <span className="text-sm text-muted-foreground">No branches configured</span>;
+  }
+
   return (
     <form
       key={`${customerId}-${branchId}`}
@@ -68,6 +73,7 @@ export function CustomerBranchForm({
         </select>
         <SaveBranchButton />
       </div>
+      {branches.length < 2 ? <BranchReassignHint /> : null}
       {state?.ok === false ? (
         <p role="alert" className="text-xs text-destructive">
           {state.error}
