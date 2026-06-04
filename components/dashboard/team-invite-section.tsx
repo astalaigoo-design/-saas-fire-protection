@@ -60,8 +60,8 @@ export function TeamInviteSection({ members, pendingInvites, branches }: TeamInv
           Team
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Invite field technicians or admins. Reassign branch for current members in the list below,
-          or for pending invites before they accept.
+          Invite technicians or admins, then use the branch dropdown in Current team to move someone
+          after they join (updates their account and access).
         </p>
       </div>
 
@@ -138,12 +138,17 @@ export function TeamInviteSection({ members, pendingInvites, branches }: TeamInv
         <div className="rounded-xl border border-border p-4">
           <h3 className="text-sm font-medium text-foreground">Current team</h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Each admin or technician belongs to one branch. Change assignments after they join.
+            Fix a wrong-branch invite: pick a new branch for each admin or technician, then Save.
+            Owners stay company-wide.
           </p>
-          <ul className="mt-3 divide-y divide-border">
+          <div className="mt-3 hidden border-b border-border pb-2 text-xs font-medium text-muted-foreground sm:grid sm:grid-cols-[1fr_14rem] sm:gap-3">
+            <span>Member</span>
+            <span className="text-right">Branch</span>
+          </div>
+          <ul className="divide-y divide-border sm:mt-0">
             {members.map((member) => (
               <li key={member.id} className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0">
-                <div className="flex flex-col gap-0.5 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex flex-col gap-2 sm:grid sm:grid-cols-[1fr_14rem] sm:items-start sm:gap-3">
                   <div>
                     <p className="text-sm font-medium text-foreground">
                       {member.name ?? member.email ?? "Team member"}
@@ -151,9 +156,15 @@ export function TeamInviteSection({ members, pendingInvites, branches }: TeamInv
                     <p className="text-xs text-muted-foreground">
                       {member.email ? `${member.email} · ` : ""}
                       {roleLabel(member.role)}
+                      {member.role !== "owner" && member.branchName
+                        ? ` · ${member.branchName}`
+                        : null}
                     </p>
                   </div>
                   <div className="sm:min-w-[14rem]">
+                    <p className="mb-1 text-xs font-medium text-muted-foreground sm:sr-only">
+                      Branch
+                    </p>
                     <TeamMemberBranchForm member={member} branches={branches} />
                   </div>
                 </div>
@@ -190,11 +201,12 @@ export function TeamInviteSection({ members, pendingInvites, branches }: TeamInv
                         : null}
                     </p>
                   </div>
-                  {branches.length > 0 ? (
-                    <div className="sm:min-w-[14rem]">
-                      <PendingInviteBranchForm invite={invite} branches={branches} />
-                    </div>
-                  ) : null}
+                  <div className="sm:min-w-[14rem]">
+                    <p className="mb-1 text-xs font-medium text-muted-foreground sm:sr-only">
+                      Branch
+                    </p>
+                    <PendingInviteBranchForm invite={invite} branches={branches} />
+                  </div>
                 </div>
               </li>
             ))}

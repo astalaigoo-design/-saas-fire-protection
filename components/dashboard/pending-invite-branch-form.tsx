@@ -52,15 +52,6 @@ export function PendingInviteBranchForm({ invite, branches }: PendingInviteBranc
   const currentBranchId =
     invite.branchId ?? branches.find((b) => b.isDefault)?.id ?? branches[0]?.id ?? "";
 
-  if (branches.length < 2) {
-    return (
-      <div className="flex flex-col gap-1 sm:items-end">
-        <span className="text-sm text-foreground">{invite.branchName ?? "Default branch"}</span>
-        <BranchReassignHint />
-      </div>
-    );
-  }
-
   return (
     <form
       key={`${invite.id}-${invite.branchId ?? "none"}`}
@@ -89,6 +80,7 @@ export function PendingInviteBranchForm({ invite, branches }: PendingInviteBranc
         </select>
         <SaveBranchButton />
       </div>
+      {branches.length < 2 ? <BranchReassignHint /> : null}
       {state?.ok === false ? (
         <p role="alert" className="text-xs text-destructive">
           {state.error}

@@ -41,21 +41,16 @@ export function TeamMemberBranchForm({ member, branches }: TeamMemberBranchFormP
     return <span className="text-muted-foreground">All locations</span>;
   }
 
-  const currentBranchId =
-    member.branchId ?? branches.find((b) => b.isDefault)?.id ?? branches[0]?.id ?? "";
-  const currentBranchName =
-    branches.find((b) => b.id === currentBranchId)?.name ??
-    member.branchName ??
-    "Branch";
-
-  if (branches.length < 2) {
+  if (branches.length === 0) {
     return (
-      <div className="flex flex-col gap-1 sm:items-end">
-        <span className="text-sm text-foreground">{currentBranchName}</span>
-        <BranchReassignHint />
-      </div>
+      <span className="text-xs text-muted-foreground">
+        {member.branchName ?? "Unassigned"}
+      </span>
     );
   }
+
+  const currentBranchId =
+    member.branchId ?? branches.find((b) => b.isDefault)?.id ?? branches[0]?.id ?? "";
 
   return (
     <form
@@ -85,6 +80,7 @@ export function TeamMemberBranchForm({ member, branches }: TeamMemberBranchFormP
         </select>
         <SaveBranchButton />
       </div>
+      {branches.length < 2 ? <BranchReassignHint /> : null}
       {state?.ok === false ? (
         <p role="alert" className="text-xs text-destructive">
           {state.error}
