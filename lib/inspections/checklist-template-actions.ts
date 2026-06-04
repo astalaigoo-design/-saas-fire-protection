@@ -117,6 +117,7 @@ export async function addChecklistTemplateItem(
         inspectionTypeId: typeCheck.type.id,
         label: parsed.data.label,
         description: parsed.data.description ?? null,
+        linkedTagNumber: parsed.data.linkedTagNumber ?? null,
         sortOrder: nextOrder,
         hidden: false,
       },
@@ -151,6 +152,7 @@ export async function updateChecklistTemplateItem(
       data: {
         label: parsed.data.label,
         description: parsed.data.description ?? null,
+        linkedTagNumber: parsed.data.linkedTagNumber ?? null,
       },
     });
 

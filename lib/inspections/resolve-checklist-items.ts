@@ -20,13 +20,19 @@ export async function resolveInspectionChecklistCreateInputs(
   const rows = await prisma.checklistTemplateItem.findMany({
     where: { inspectionTypeId, hidden: false },
     orderBy: { sortOrder: "asc" },
-    select: { label: true, description: true, sortOrder: true },
+    select: {
+      label: true,
+      description: true,
+      sortOrder: true,
+      linkedTagNumber: true,
+    },
   });
 
   return rows.map((row) => ({
     label: row.label,
     description: row.description ?? "",
     sortOrder: row.sortOrder,
+    linkedTagNumber: row.linkedTagNumber,
     result: InspectionItemResult.pending,
   }));
 }

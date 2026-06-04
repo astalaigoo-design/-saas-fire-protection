@@ -5,6 +5,7 @@ export type InspectionChecklistCreateInput = {
   label: string;
   description: string;
   sortOrder: number;
+  linkedTagNumber?: string | null;
   result: InspectionItemResult;
 };
 

@@ -13,6 +13,13 @@ export function OperationsExportButtons({ className }: { className?: string }) {
         Export buildings due (CSV)
       </Link>
       <Link
+        href="/api/operations/export?type=equipment-due"
+        className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-h-10")}
+        prefetch={false}
+      >
+        Export equipment due (CSV)
+      </Link>
+      <Link
         href="/api/operations/export?type=deficiencies"
         className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-h-10")}
         prefetch={false}

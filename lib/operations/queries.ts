@@ -14,6 +14,15 @@ import {
   groupDueByCadence,
   type DueInspectionRow,
 } from "@/lib/operations/due-inspections";
+import {
+  computeDueAssets,
+  countDueAssetTotals,
+  filterDueAssetsByType,
+  groupDueAssetsByType,
+  type DueAssetRow,
+  type DueAssetTotals,
+} from "@/lib/operations/due-assets";
+import { AssetType } from "@prisma/client";
 import type { DeficiencyRow } from "@/lib/deficiencies/queries";
 import { listOpenDeficiencies } from "@/lib/deficiencies/queries";
 import { prisma } from "@/lib/prisma";
@@ -52,6 +61,13 @@ export type CommandCenterSnapshot = {
     dueSoon: number;
     neverInspected: number;
   };
+  dueAssets: {
+    rows: DueAssetRow[];
+    extinguishers: DueAssetRow[];
+    byType: ReturnType<typeof groupDueAssetsByType>;
+    totals: DueAssetTotals;
+    serviceMonthLabel: string;
+  };
   deficiencies: DeficiencyRow[];
   pendingQuotes: PendingQuoteRow[];
   reportsSentThisMonth: SentReportRow[];
@@ -86,7 +102,7 @@ export async function getCommandCenterSnapshot(
     },
   });
 
-  const [buildings, inspections, inspectionTypes, deficiencies, pendingQuotes, reportsSent] =
+  const [buildings, inspections, inspectionTypes, deficiencies, pendingQuotes, reportsSent, registerAssets] =
     await Promise.all([
       prisma.building.findMany({
         where: buildingWhere,
@@ -185,6 +201,31 @@ export async function getCommandCenterSnapshot(
         orderBy: { emailedAt: "desc" },
         take: 20,
       }),
+      prisma.buildingAsset.findMany({
+        where: {
+          active: true,
+          nextServiceDue: { not: null },
+          building: buildingWhere,
+        },
+        select: {
+          id: true,
+          assetType: true,
+          tagNumber: true,
+          location: true,
+          nextServiceDue: true,
+          lastServiceAt: true,
+          building: {
+            select: {
+              id: true,
+              name: true,
+              addressLine1: true,
+              city: true,
+              customer: { select: { name: true } },
+            },
+          },
+        },
+        orderBy: [{ nextServiceDue: "asc" }, { location: "asc" }],
+      }),
     ]);
 
   const typeCodes =
@@ -195,6 +236,13 @@ export async function getCommandCenterSnapshot(
   const dueRows = computeDueInspections({ buildings, inspections, typeCodes });
   const dueByCadence = groupDueByCadence(dueRows);
   const dueTotals = countDue(dueRows);
+
+  const dueAssetRows = computeDueAssets({ assets: registerAssets });
+  const dueAssetTotals = countDueAssetTotals(dueAssetRows);
+  const serviceMonthLabel = new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    year: "numeric",
+  }).format(monthStart);
 
   const pendingQuoteRows: PendingQuoteRow[] = pendingQuotes.map((quote) => ({
     id: quote.id,
@@ -225,6 +273,13 @@ export async function getCommandCenterSnapshot(
   return {
     dueByCadence,
     dueTotals,
+    dueAssets: {
+      rows: dueAssetRows,
+      extinguishers: filterDueAssetsByType(dueAssetRows, AssetType.fire_extinguisher),
+      byType: groupDueAssetsByType(dueAssetRows),
+      totals: dueAssetTotals,
+      serviceMonthLabel,
+    },
     deficiencies,
     pendingQuotes: pendingQuoteRows,
     reportsSentThisMonth,

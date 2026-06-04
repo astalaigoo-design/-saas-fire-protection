@@ -6,7 +6,7 @@ import { generateOperationsExport } from "@/lib/operations/export-csv";
 
 export const dynamic = "force-dynamic";
 
-const EXPORT_TYPES = ["due", "deficiencies"] as const;
+const EXPORT_TYPES = ["due", "deficiencies", "equipment-due"] as const;
 type ExportType = (typeof EXPORT_TYPES)[number];
 
 function isExportType(value: string | null): value is ExportType {
@@ -30,7 +30,10 @@ export async function GET(request: Request) {
   const typeParam = new URL(request.url).searchParams.get("type");
   if (!isExportType(typeParam)) {
     return NextResponse.json(
-      { error: "Invalid export type. Use type=due or type=deficiencies." },
+      {
+        error:
+          "Invalid export type. Use type=due, type=equipment-due, or type=deficiencies.",
+      },
       { status: 400 },
     );
   }

@@ -1,8 +1,11 @@
 import { exportFilename, formatCsvDate, rowsToCsv } from "@/lib/export/csv";
 import {
+  dueAssetStatusLabelForExport,
   dueStatusLabelForExport,
+  getDueAssetsExportRows,
   getDueBuildingsExportRows,
   getFailedItemsExportRows,
+  type DueAssetExportRow,
   type DueBuildingExportRow,
   type FailedItemExportRow,
 } from "@/lib/operations/export-queries";
@@ -75,6 +78,48 @@ export function buildDueBuildingsCsv(rows: DueBuildingExportRow[]): string {
   return rowsToCsv(headers, data);
 }
 
+export function buildDueAssetsCsv(rows: DueAssetExportRow[]): string {
+  const headers = [
+    "Customer",
+    "Building name",
+    "Site label",
+    "Street address",
+    "City",
+    "State",
+    "ZIP",
+    "Country",
+    "Equipment type",
+    "Tag number",
+    "Location",
+    "Due status",
+    "Next service due",
+    "Last serviced",
+    "Asset ID",
+    "Building ID",
+  ] as const;
+
+  const data = rows.map((row) => [
+    row.customerName,
+    row.buildingName ?? "",
+    row.buildingLabel,
+    formatStreetAddress(row),
+    row.city,
+    row.region,
+    row.postalCode,
+    row.country,
+    row.assetTypeLabel,
+    row.tagNumber ?? "",
+    row.location,
+    dueAssetStatusLabelForExport(row.status),
+    formatCsvDate(row.nextServiceDue),
+    formatCsvDate(row.lastServiceAt),
+    row.assetId,
+    row.buildingId,
+  ]);
+
+  return rowsToCsv(headers, data);
+}
+
 export function buildFailedItemsCsv(rows: FailedItemExportRow[]): string {
   const headers = [
     "Customer",
@@ -123,13 +168,21 @@ export function buildFailedItemsCsv(rows: FailedItemExportRow[]): string {
 
 export async function generateOperationsExport(input: {
   session: DashboardSession;
-  type: "due" | "deficiencies";
+  type: "due" | "deficiencies" | "equipment-due";
 }): Promise<{ csv: string; filename: string }> {
   if (input.type === "due") {
     const rows = await getDueBuildingsExportRows(input.session);
     return {
       csv: buildDueBuildingsCsv(rows),
       filename: exportFilename("buildings-due"),
+    };
+  }
+
+  if (input.type === "equipment-due") {
+    const rows = await getDueAssetsExportRows(input.session);
+    return {
+      csv: buildDueAssetsCsv(rows),
+      filename: exportFilename("equipment-due"),
     };
   }
 

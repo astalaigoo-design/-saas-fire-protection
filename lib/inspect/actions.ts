@@ -15,7 +15,10 @@ import { requireWritableTenant } from "@/lib/billing/guards";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { isInspectionLocked } from "@/lib/inspect/queries";
 import { getPendingItemIdsInSection } from "@/lib/inspect/checklist-sections";
-import { applyAssetServiceStampOnSubmit } from "@/lib/inspect/apply-asset-service-stamp";
+import {
+  applyAssetServiceStampOnSubmit,
+  syncAssetChecksFromChecklistPasses,
+} from "@/lib/inspect/asset-linkage";
 import { ensureInspectionAssetChecks } from "@/lib/inspect/ensure-asset-checks";
 import {
   bulkMarkSectionNaSchema,
@@ -381,7 +384,21 @@ export async function submitInspection(
     (item) => item.result === InspectionItemResult.fail,
   );
 
-  const pendingAssets = loaded.inspection.assetChecks.filter(
+  await syncAssetChecksFromChecklistPasses({
+    inspectionId: parsed.data.inspectionId,
+    buildingId: loaded.inspection.buildingId,
+    items: loaded.inspection.items,
+  });
+
+  const inspectionAfterLinkage = await prisma.inspection.findFirst({
+    where: { id: parsed.data.inspectionId },
+    include: { items: true, assetChecks: true },
+  });
+  if (!inspectionAfterLinkage) {
+    return { ok: false, error: "Inspection not found." };
+  }
+
+  const pendingAssets = inspectionAfterLinkage.assetChecks.filter(
     (check) => check.result === InspectionItemResult.pending,
   );
   if (pendingAssets.length > 0) {
@@ -391,7 +408,7 @@ export async function submitInspection(
     };
   }
 
-  const failedAssetsWithoutNotes = loaded.inspection.assetChecks.filter(
+  const failedAssetsWithoutNotes = inspectionAfterLinkage.assetChecks.filter(
     (check) =>
       check.result === InspectionItemResult.fail &&
       (!check.notes || check.notes.trim() === ""),

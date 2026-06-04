@@ -11,6 +11,7 @@ export type ChecklistItemState = {
   id: string;
   label: string;
   description: string | null;
+  linkedTagNumber: string | null;
   result: InspectionItemResult;
   notes: string | null;
 };
@@ -117,6 +118,12 @@ export function ChecklistItemCard({
       <h2 className="mt-2 text-lg font-semibold leading-snug text-white">{item.label}</h2>
       {item.description ? (
         <p className="mt-2 text-sm text-slate-400">{item.description}</p>
+      ) : null}
+      {item.linkedTagNumber ? (
+        <p className="mt-2 text-xs text-slate-500">
+          Register tag:{" "}
+          <span className="font-medium text-slate-300">{item.linkedTagNumber}</span>
+        </p>
       ) : null}
 
       <div className="mt-auto space-y-4 pt-6">

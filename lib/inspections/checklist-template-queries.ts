@@ -6,6 +6,7 @@ export type ChecklistTemplateItemRow = {
   id: string;
   label: string;
   description: string | null;
+  linkedTagNumber: string | null;
   sortOrder: number;
   hidden: boolean;
 };
@@ -46,6 +47,7 @@ export async function getChecklistTemplatesEditorData(
             inspectionTypeId: true,
             label: true,
             description: true,
+            linkedTagNumber: true,
             sortOrder: true,
             hidden: true,
           },
@@ -58,6 +60,7 @@ export async function getChecklistTemplatesEditorData(
       id: item.id,
       label: item.label,
       description: item.description,
+      linkedTagNumber: item.linkedTagNumber,
       sortOrder: item.sortOrder,
       hidden: item.hidden,
     });

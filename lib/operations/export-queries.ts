@@ -16,6 +16,12 @@ import {
   computeDueInspections,
   type DueInspectionRow,
 } from "@/lib/operations/due-inspections";
+import {
+  computeDueAssets,
+  type DueAssetRow,
+  type DueAssetStatus,
+} from "@/lib/operations/due-assets";
+import { assetTypeLabel } from "@/lib/assets/constants";
 import { prisma } from "@/lib/prisma";
 
 export type DueBuildingExportRow = DueInspectionRow & {
@@ -62,6 +68,25 @@ const dueStatusLabel: Record<DueInspectionRow["status"], string> = {
 export function dueStatusLabelForExport(status: DueInspectionRow["status"]): string {
   return dueStatusLabel[status];
 }
+
+const dueAssetStatusLabel: Record<DueAssetStatus, string> = {
+  overdue: "Overdue",
+  due_this_month: "Due this month",
+};
+
+export function dueAssetStatusLabelForExport(status: DueAssetStatus): string {
+  return dueAssetStatusLabel[status];
+}
+
+export type DueAssetExportRow = DueAssetRow & {
+  buildingName: string | null;
+  addressLine1: string;
+  addressLine2: string | null;
+  city: string;
+  region: string;
+  postalCode: string;
+  country: string;
+};
 
 export async function getDueBuildingsExportRows(
   session: DashboardSession,
@@ -141,6 +166,62 @@ export async function getDueBuildingsExportRows(
       };
     })
     .filter((row): row is DueBuildingExportRow => row !== null);
+}
+
+export async function getDueAssetsExportRows(
+  session: DashboardSession,
+): Promise<DueAssetExportRow[]> {
+  const scope = branchScopeFromSession(session);
+  const buildingWhere = buildingWhereFromScope(scope, session.companyId);
+
+  const assets = await prisma.buildingAsset.findMany({
+    where: {
+      active: true,
+      nextServiceDue: { not: null },
+      building: buildingWhere,
+    },
+    select: {
+      id: true,
+      assetType: true,
+      tagNumber: true,
+      location: true,
+      nextServiceDue: true,
+      lastServiceAt: true,
+      building: {
+        select: {
+          id: true,
+          name: true,
+          addressLine1: true,
+          addressLine2: true,
+          city: true,
+          region: true,
+          postalCode: true,
+          country: true,
+          customer: { select: { name: true } },
+        },
+      },
+    },
+    orderBy: [{ nextServiceDue: "asc" }, { location: "asc" }],
+  });
+
+  const assetById = new Map(assets.map((asset) => [asset.id, asset]));
+  const dueRows = computeDueAssets({ assets });
+
+  return dueRows.map((row) => {
+    const asset = assetById.get(row.assetId);
+    const building = asset?.building;
+    return {
+      ...row,
+      assetTypeLabel: assetTypeLabel(row.assetType),
+      buildingName: building?.name ?? null,
+      addressLine1: building?.addressLine1 ?? "",
+      addressLine2: building?.addressLine2 ?? null,
+      city: building?.city ?? "",
+      region: building?.region ?? "",
+      postalCode: building?.postalCode ?? "",
+      country: building?.country ?? "",
+    };
+  });
 }
 
 export async function getFailedItemsExportRows(

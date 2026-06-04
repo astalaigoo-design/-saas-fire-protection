@@ -34,11 +34,31 @@ const inspectionFormSelect = {
       id: true,
       label: true,
       description: true,
+      linkedTagNumber: true,
       sortOrder: true,
       result: true,
       notes: true,
     },
     orderBy: { sortOrder: "asc" as const },
+  },
+  assetChecks: {
+    select: {
+      id: true,
+      result: true,
+      notes: true,
+      servicedAt: true,
+      buildingAsset: {
+        select: {
+          id: true,
+          assetType: true,
+          tagNumber: true,
+          location: true,
+          manufacturer: true,
+          model: true,
+        },
+      },
+    },
+    orderBy: { buildingAsset: { location: "asc" } },
   },
   photos: {
     select: { id: true, url: true, caption: true, sortOrder: true },

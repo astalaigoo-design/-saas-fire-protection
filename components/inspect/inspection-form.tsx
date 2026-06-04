@@ -69,6 +69,7 @@ export function InspectionForm({
       id: item.id,
       label: item.label,
       description: item.description,
+      linkedTagNumber: item.linkedTagNumber,
       result: item.result,
       notes: item.notes,
     })),
@@ -147,7 +148,11 @@ export function InspectionForm({
     const mergedItems = inspection.items.map((serverItem) => {
       const local = items.find((item) => item.id === serverItem.id);
       if (!local) return serverItem;
-      return { ...serverItem, result: local.result, notes: local.notes };
+      return {
+        ...serverItem,
+        result: local.result,
+        notes: local.notes,
+      };
     });
 
     const mergedAssetChecks = inspection.assetChecks.map((serverCheck) => {

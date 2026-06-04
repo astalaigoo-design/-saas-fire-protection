@@ -8,6 +8,13 @@ export const checklistTemplateTypeIdSchema = z.object({
   inspectionTypeId: z.string().cuid("Invalid inspection type."),
 });
 
+const optionalLinkedTag = z
+  .string()
+  .trim()
+  .max(80, "Tag is too long.")
+  .optional()
+  .transform((value) => (value === "" || value === undefined ? undefined : value));
+
 export const addChecklistTemplateItemSchema = z.object({
   inspectionTypeId: z.string().cuid("Invalid inspection type."),
   label: z
@@ -21,6 +28,7 @@ export const addChecklistTemplateItemSchema = z.object({
     .max(4000, "Description is too long.")
     .optional()
     .transform((value) => (value === "" ? undefined : value)),
+  linkedTagNumber: optionalLinkedTag,
 });
 
 export const updateChecklistTemplateItemSchema = z.object({
@@ -36,6 +44,7 @@ export const updateChecklistTemplateItemSchema = z.object({
     .max(4000, "Description is too long.")
     .optional()
     .transform((value) => (value === "" ? undefined : value)),
+  linkedTagNumber: optionalLinkedTag,
 });
 
 export const reorderChecklistTemplateItemSchema = z.object({

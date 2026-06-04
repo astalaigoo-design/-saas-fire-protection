@@ -98,6 +98,21 @@ function TemplateItemRow({
               className="flex min-h-[4.5rem] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
+          <div className="space-y-1">
+            <Label htmlFor={`tag-${item.id}`} className="text-xs">
+              Equipment tag (optional)
+            </Label>
+            <Input
+              id={`tag-${item.id}`}
+              name="linkedTagNumber"
+              defaultValue={item.linkedTagNumber ?? ""}
+              placeholder="e.g. FE-101"
+              className="min-h-10"
+            />
+            <p className="text-xs text-muted-foreground">
+              When this row passes, the matching register item is stamped on submit.
+            </p>
+          </div>
           <div className="flex flex-wrap gap-2">
             <ActionButton>Save</ActionButton>
             <Button
@@ -128,6 +143,11 @@ function TemplateItemRow({
         <p className="font-medium text-foreground">{item.label}</p>
         {item.description ? (
           <p className="text-xs text-muted-foreground line-clamp-3">{item.description}</p>
+        ) : null}
+        {item.linkedTagNumber ? (
+          <p className="text-xs text-muted-foreground">
+            Register tag: <span className="font-medium text-foreground">{item.linkedTagNumber}</span>
+          </p>
         ) : null}
         {item.hidden ? (
           <p className="text-xs font-medium text-muted-foreground">Hidden on new jobs</p>
@@ -205,6 +225,17 @@ function AddItemForm({ inspectionTypeId }: { inspectionTypeId: string }) {
           rows={2}
           placeholder="AHJ form section or internal procedure"
           className="flex min-h-[3.5rem] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor={`add-tag-${inspectionTypeId}`} className="text-xs">
+          Equipment tag (optional)
+        </Label>
+        <Input
+          id={`add-tag-${inspectionTypeId}`}
+          name="linkedTagNumber"
+          placeholder="e.g. FE-101"
+          className="min-h-10"
         />
       </div>
       <ActionButton>Add to template</ActionButton>

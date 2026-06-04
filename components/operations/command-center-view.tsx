@@ -18,6 +18,7 @@ import type { AutomationVisibility } from "@/lib/operations/automation-visibilit
 import type { CommandCenterSnapshot } from "@/lib/operations/queries";
 import type { DueInspectionRow } from "@/lib/operations/due-inspections";
 import { OperationsExportButtons } from "@/components/operations/operations-export-buttons";
+import { DueAssetList } from "@/components/operations/due-asset-list";
 import { DUE_REMINDER_DAYS } from "@/lib/scheduling/recurrence-policy";
 import { cn } from "@/lib/utils";
 
@@ -132,7 +133,7 @@ export function CommandCenterView({
     <div className="space-y-8">
       <PageHeader
         title="Command center"
-        description={`Track open violations, due dates, and quotes. Deficiencies move open → owned → resolved → verified (auto on pass re-inspection). Due-date emails send ${DUE_REMINDER_DAYS} days ahead.`}
+        description={`Track open violations, building inspection cadences, equipment service due dates, and quotes. Deficiencies move open → owned → resolved → verified (auto on pass re-inspection). Due-date emails send ${DUE_REMINDER_DAYS} days ahead.`}
         actions={
           <div className="flex flex-col items-stretch gap-3 sm:items-end">
             <OperationsExportButtons />
@@ -150,9 +151,19 @@ export function CommandCenterView({
         <h2 id="command-stats" className="sr-only">
           Summary stats
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
           <StatCard label="Overdue / not started" value={overdueTotal} />
           <StatCard label="Due in 14 days" value={snapshot.dueTotals.dueSoon} />
+          <StatCard
+            label="Equipment overdue"
+            value={snapshot.dueAssets.totals.equipmentOverdue}
+            hint="Register items past next service due"
+          />
+          <StatCard
+            label="Extinguishers due"
+            value={snapshot.dueAssets.totals.extinguishersDueThisMonth}
+            hint={`${snapshot.dueAssets.serviceMonthLabel} + overdue`}
+          />
           <StatCard label="Open deficiencies" value={snapshot.summary.openDeficiencies} />
           <StatCard
             label="Open quote pipeline"
@@ -213,6 +224,54 @@ export function CommandCenterView({
                 </CardContent>
               </Card>
             ))}
+          </div>
+
+          <div className="space-y-4 border-t border-border pt-8">
+            <div>
+              <h2 className="font-heading text-lg font-semibold text-foreground">
+                Equipment due for service
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Company-wide register view: overdue items and anything with a next service due in{" "}
+                {snapshot.dueAssets.serviceMonthLabel}. Set dates on each building&apos;s
+                Equipment tab or via CSV import.
+              </p>
+            </div>
+            <div className="grid gap-6 xl:grid-cols-2">
+              <Card>
+                <CardHeader className="border-b border-border/60">
+                  <CardTitle className="text-base">
+                    Fire extinguishers ({snapshot.dueAssets.serviceMonthLabel})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4">
+                  <DueAssetList
+                    rows={snapshot.dueAssets.extinguishers}
+                    emptyTitle="No extinguishers due"
+                    emptyDescription="Import equipment or add extinguishers with a next service due date to see them here."
+                  />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="border-b border-border/60">
+                  <CardTitle className="text-base">All equipment types</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6 pt-4">
+                  {snapshot.dueAssets.byType.length === 0 ? (
+                    <DueAssetList rows={[]} />
+                  ) : (
+                    snapshot.dueAssets.byType.map((group) => (
+                      <div key={group.assetType} className="space-y-3">
+                        <h3 className="text-sm font-medium text-foreground">
+                          {group.assetTypeLabel} ({group.rows.length})
+                        </h3>
+                        <DueAssetList rows={group.rows} />
+                      </div>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </TabsContent>
 

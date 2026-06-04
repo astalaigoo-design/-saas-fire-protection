@@ -13,7 +13,7 @@ export function MarketingFieldInspectionPreview() {
       id: item.id,
       label: item.label,
       description: item.description,
-      sortOrder: item.sortOrder,
+      linkedTagNumber: null,
       result: item.result,
       notes: item.notes,
     })),
