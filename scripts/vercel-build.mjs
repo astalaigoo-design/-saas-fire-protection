@@ -28,6 +28,9 @@ console.log(
   `Vercel build — Node ${process.version}, VERCEL_ENV=${process.env.VERCEL_ENV ?? "local"}`,
 );
 console.log(
+  `  VERCEL_PROJECT: ${process.env.VERCEL_PROJECT_NAME ?? "(local)"}`,
+);
+console.log(
   `  DATABASE_URL: ${process.env.DATABASE_URL?.trim() ? "set" : "missing"}`,
 );
 console.log(
