@@ -37,8 +37,9 @@ export function BranchesSettingsSection({ branches }: BranchesSettingsSectionPro
           Branches
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Offices or regions under your company. Customers belong to one branch; each admin or
-          technician is assigned to a single branch. Owners can filter the dashboard by location.
+          Offices or regions under your company. Roles stay owner, admin, or technician — there is
+          no branch-admin role. Customers belong to one branch; admins and technicians are assigned
+          to a single branch. Owners can filter the dashboard by location.
         </p>
       </div>
 

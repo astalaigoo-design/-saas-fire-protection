@@ -2,6 +2,7 @@ import type { AppRole } from "@/lib/auth/roles";
 
 /**
  * Branch assignment model: one optional `User.branchId` per row — no UserBranch join table.
+ * Roles remain owner | admin | technician only (no branch-admin role).
  * Owners are company-wide (null). Admins and technicians belong to exactly one branch.
  */
 export function requiresAssignedBranch(role: AppRole): boolean {

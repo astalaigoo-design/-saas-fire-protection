@@ -3,6 +3,11 @@ import { buildingLabel } from "@/lib/customers/format";
 import { sendDueReminderEmail } from "@/lib/email/send-due-reminder";
 import { isReportEmailConfigured } from "@/lib/email/env";
 import { computeDueInspections } from "@/lib/operations/due-inspections";
+import {
+  dueReminderBuildingWhere,
+  dueReminderInspectionTypeWhere,
+  dueReminderInspectionWhere,
+} from "@/lib/scheduling/due-reminder-scope";
 import { DUE_REMINDER_DAYS } from "@/lib/scheduling/recurrence-policy";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { prisma } from "@/lib/prisma";
@@ -23,6 +28,7 @@ function dueReminderKey(dueAt: Date, inspectionTypeCode: string): string {
   return `${inspectionTypeCode}:${startOfDay(dueAt).toISOString().slice(0, 10)}`;
 }
 
+/** Company-wide recipients — not limited to a branch (all owners + admins). */
 async function getReminderRecipients(companyId: string): Promise<string[]> {
   const company = await prisma.company.findUnique({
     where: { id: companyId },
@@ -131,7 +137,7 @@ export async function sendDueInspectionReminders(
 
     const [buildings, inspections, inspectionTypes] = await Promise.all([
       prisma.building.findMany({
-        where: { customer: { companyId: company.id } },
+        where: dueReminderBuildingWhere(company.id),
         select: {
           id: true,
           name: true,
@@ -141,7 +147,7 @@ export async function sendDueInspectionReminders(
         },
       }),
       prisma.inspection.findMany({
-        where: { companyId: company.id },
+        where: dueReminderInspectionWhere(company.id),
         select: {
           id: true,
           buildingId: true,
@@ -153,7 +159,7 @@ export async function sendDueInspectionReminders(
         },
       }),
       prisma.inspectionType.findMany({
-        where: { companyId: company.id },
+        where: dueReminderInspectionTypeWhere(company.id),
         select: { code: true },
       }),
     ]);

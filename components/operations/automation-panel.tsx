@@ -21,8 +21,9 @@ export function AutomationPanel({ automation }: AutomationPanelProps) {
           Automated reminders
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Daily cron emails inspections due in {automation.leadDays} days to your report email and
-          owner addresses. Trial-ending notices run on a separate schedule.
+          Daily cron emails inspections due in {automation.leadDays} days across all branches to
+          your report email and every owner/admin address. Trial-ending notices run on a separate
+          schedule.
         </p>
       </div>
 
