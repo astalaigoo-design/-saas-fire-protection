@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 import { formatDate } from "@/lib/dashboard/dates";
-import { getReportEmailFrom, isReportEmailConfigured } from "@/lib/email/env";
+import { getReportEmailFrom, isOutboundEmailConfigured } from "@/lib/email/env";
 
 export type SendComplianceReportEmailInput = {
   to: string;
@@ -60,8 +60,11 @@ function escapeHtml(value: string): string {
 export async function sendComplianceReportEmail(
   input: SendComplianceReportEmailInput,
 ): Promise<SendComplianceReportEmailResult> {
-  if (!isReportEmailConfigured()) {
-    return { ok: false, error: "Report email is not configured (RESEND_API_KEY / REPORT_EMAIL_FROM)." };
+  if (!isOutboundEmailConfigured()) {
+    return {
+      ok: false,
+      error: "Outbound email is not configured (RESEND_API_KEY / REPORT_EMAIL_FROM).",
+    };
   }
 
   const from = getReportEmailFrom();

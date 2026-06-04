@@ -1,4 +1,4 @@
-import { getReportEmailFrom, isReportEmailConfigured } from "@/lib/email/env";
+import { getReportEmailFrom, isOutboundEmailConfigured } from "@/lib/email/env";
 import { listOwnerAdminEmails } from "@/lib/notifications/recipients";
 import { APP_NAME } from "@/lib/branding";
 import { getAppOrigin } from "@/lib/app-url";
@@ -22,7 +22,7 @@ function escapeHtml(value: string): string {
 export async function sendStaffNotificationEmails(
   input: SendStaffNotificationEmailsInput,
 ): Promise<void> {
-  if (!isReportEmailConfigured()) return;
+  if (!isOutboundEmailConfigured()) return;
 
   const recipients = await listOwnerAdminEmails(input.companyId);
   if (recipients.length === 0) return;

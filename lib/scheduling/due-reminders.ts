@@ -1,7 +1,10 @@
 import { UserRole } from "@prisma/client";
 import { buildingLabel } from "@/lib/customers/format";
 import { sendDueReminderEmail } from "@/lib/email/send-due-reminder";
-import { isReportEmailConfigured } from "@/lib/email/env";
+import {
+  isOutboundEmailConfigured,
+  OUTBOUND_EMAIL_NOT_CONFIGURED,
+} from "@/lib/email/env";
 import { computeDueInspections } from "@/lib/operations/due-inspections";
 import {
   dueReminderBuildingWhere,
@@ -90,12 +93,13 @@ export type DueReminderRunResult = {
 export async function sendDueInspectionReminders(
   now = new Date(),
 ): Promise<DueReminderRunResult> {
-  if (!isReportEmailConfigured()) {
+  if (!isOutboundEmailConfigured()) {
+    console.warn("due-reminders cron:", OUTBOUND_EMAIL_NOT_CONFIGURED);
     return {
       companiesProcessed: 0,
       remindersSent: 0,
       skipped: 0,
-      errors: ["Email is not configured."],
+      errors: [OUTBOUND_EMAIL_NOT_CONFIGURED],
     };
   }
 

@@ -6,7 +6,7 @@ import {
 } from "@/lib/branches/scope";
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { sendComplianceReportEmail } from "@/lib/email/send-compliance-report";
-import { isReportEmailConfigured } from "@/lib/email/env";
+import { isOutboundEmailConfigured } from "@/lib/email/env";
 import { notifyReportEmailFailed } from "@/lib/notifications/notify-report-email-failed";
 import { generateComplianceReport } from "@/lib/reports/generate-compliance-report";
 import { prisma } from "@/lib/prisma";
@@ -21,7 +21,7 @@ async function alertReportEmailSkipped(
   reason: string,
   buildingLabelText?: string,
 ): Promise<void> {
-  if (reason.includes("not configured for this environment")) return;
+  if (reason.includes("not configured")) return;
   if (reason.includes("already emailed")) return;
 
   await notifyReportEmailFailed({
@@ -40,10 +40,11 @@ export async function emailComplianceReportAfterSubmit(
   session: DashboardSession,
   inspectionId: string,
 ): Promise<ReportEmailOutcome> {
-  if (!isReportEmailConfigured()) {
+  if (!isOutboundEmailConfigured()) {
     return {
       status: "skipped",
-      reason: "Email delivery is not configured for this environment.",
+      reason:
+        "Outbound email (Resend) is not configured — report was saved; use the share link or configure RESEND_API_KEY and REPORT_EMAIL_FROM.",
     };
   }
 

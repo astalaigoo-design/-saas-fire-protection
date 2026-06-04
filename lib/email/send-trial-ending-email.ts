@@ -1,5 +1,5 @@
 import { formatDate } from "@/lib/dashboard/dates";
-import { getReportEmailFrom, isReportEmailConfigured } from "@/lib/email/env";
+import { getReportEmailFrom, isOutboundEmailConfigured } from "@/lib/email/env";
 import { APP_NAME } from "@/lib/branding";
 import { Resend } from "resend";
 
@@ -53,10 +53,10 @@ function buildHtml(input: SendTrialEndingEmailInput): string {
 export async function sendTrialEndingEmail(
   input: SendTrialEndingEmailInput,
 ): Promise<SendTrialEndingEmailResult> {
-  if (!isReportEmailConfigured()) {
+  if (!isOutboundEmailConfigured()) {
     return {
       ok: false,
-      error: "Email is not configured (RESEND_API_KEY / REPORT_EMAIL_FROM).",
+      error: "Outbound email is not configured (RESEND_API_KEY / REPORT_EMAIL_FROM).",
     };
   }
 

@@ -1,4 +1,4 @@
-import { getReportEmailFrom, isReportEmailConfigured } from "@/lib/email/env";
+import { getReportEmailFrom, isOutboundEmailConfigured } from "@/lib/email/env";
 import { APP_NAME } from "@/lib/branding";
 import { getAppOrigin } from "@/lib/app-url";
 import { Resend } from "resend";
@@ -72,8 +72,11 @@ function bodyFor(input: SendTechnicianJobEmailInput): string {
 export async function sendTechnicianJobEmail(
   input: SendTechnicianJobEmailInput,
 ): Promise<SendTechnicianJobEmailResult> {
-  if (!isReportEmailConfigured()) {
-    return { ok: false, error: "Email is not configured." };
+  if (!isOutboundEmailConfigured()) {
+    return {
+      ok: false,
+      error: "Outbound email is not configured (RESEND_API_KEY / REPORT_EMAIL_FROM).",
+    };
   }
 
   const to = input.to.trim();

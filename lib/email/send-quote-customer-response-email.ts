@@ -1,4 +1,4 @@
-import { getReportEmailFrom, isReportEmailConfigured } from "@/lib/email/env";
+import { getReportEmailFrom, isOutboundEmailConfigured } from "@/lib/email/env";
 import { APP_NAME } from "@/lib/branding";
 import {
   formatReinspectionScheduleDate,
@@ -129,10 +129,10 @@ function buildHtml(input: SendQuoteCustomerResponseEmailInput): string {
 export async function sendQuoteCustomerResponseEmail(
   input: SendQuoteCustomerResponseEmailInput,
 ): Promise<SendQuoteCustomerResponseEmailResult> {
-  if (!isReportEmailConfigured()) {
+  if (!isOutboundEmailConfigured()) {
     return {
       ok: false,
-      error: "Email is not configured (RESEND_API_KEY / REPORT_EMAIL_FROM).",
+      error: "Outbound email is not configured (RESEND_API_KEY / REPORT_EMAIL_FROM).",
     };
   }
 

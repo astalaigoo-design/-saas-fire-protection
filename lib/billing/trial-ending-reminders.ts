@@ -2,7 +2,10 @@ import { SubscriptionStatus, UserRole } from "@prisma/client";
 import { getAppOrigin } from "@/lib/app-url";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { sendTrialEndingEmail } from "@/lib/email/send-trial-ending-email";
-import { isReportEmailConfigured } from "@/lib/email/env";
+import {
+  isOutboundEmailConfigured,
+  OUTBOUND_EMAIL_NOT_CONFIGURED,
+} from "@/lib/email/env";
 import {
   TRIAL_ENDING_REMINDER_DAYS,
   type TrialEndingReminderDays,
@@ -94,12 +97,13 @@ export type TrialEndingReminderRunResult = {
 export async function sendTrialEndingReminders(
   now = new Date(),
 ): Promise<TrialEndingReminderRunResult> {
-  if (!isReportEmailConfigured()) {
+  if (!isOutboundEmailConfigured()) {
+    console.warn("trial-ending-reminders cron:", OUTBOUND_EMAIL_NOT_CONFIGURED);
     return {
       companiesProcessed: 0,
       remindersSent: 0,
       skipped: 0,
-      errors: ["Email is not configured."],
+      errors: [OUTBOUND_EMAIL_NOT_CONFIGURED],
     };
   }
 

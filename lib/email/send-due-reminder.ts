@@ -1,5 +1,5 @@
 import { formatDate } from "@/lib/dashboard/dates";
-import { getReportEmailFrom, isReportEmailConfigured } from "@/lib/email/env";
+import { getReportEmailFrom, isOutboundEmailConfigured } from "@/lib/email/env";
 import { Resend } from "resend";
 
 export type SendDueReminderEmailInput = {
@@ -42,8 +42,11 @@ function buildHtml(input: SendDueReminderEmailInput): string {
 export async function sendDueReminderEmail(
   input: SendDueReminderEmailInput,
 ): Promise<SendDueReminderEmailResult> {
-  if (!isReportEmailConfigured()) {
-    return { ok: false, error: "Email is not configured (RESEND_API_KEY / REPORT_EMAIL_FROM)." };
+  if (!isOutboundEmailConfigured()) {
+    return {
+      ok: false,
+      error: "Outbound email is not configured (RESEND_API_KEY / REPORT_EMAIL_FROM).",
+    };
   }
 
   const recipients = input.to.map((email) => email.trim()).filter(Boolean);

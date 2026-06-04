@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { getReportEmailFrom, isReportEmailConfigured } from "@/lib/email/env";
+import { getReportEmailFrom, isOutboundEmailConfigured } from "@/lib/email/env";
 
 type QuoteEmailLineItem = {
   label: string;
@@ -112,8 +112,11 @@ function buildHtml(input: SendQuoteEmailInput): string {
 export async function sendQuoteEmail(
   input: SendQuoteEmailInput,
 ): Promise<SendQuoteEmailResult> {
-  if (!isReportEmailConfigured()) {
-    return { ok: false, error: "Quote email is not configured (RESEND_API_KEY / REPORT_EMAIL_FROM)." };
+  if (!isOutboundEmailConfigured()) {
+    return {
+      ok: false,
+      error: "Outbound email is not configured (RESEND_API_KEY / REPORT_EMAIL_FROM).",
+    };
   }
 
   const from = getReportEmailFrom();
