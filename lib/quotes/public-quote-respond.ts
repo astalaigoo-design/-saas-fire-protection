@@ -2,6 +2,7 @@ import { InspectionStatus, QuoteStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { writeAuditEvent } from "@/lib/audit/write-event";
+import { notifyQuoteCustomerResponse } from "@/lib/notifications/notify-quote-response";
 import { buildingLabel } from "@/lib/customers/format";
 import { sendQuoteCustomerResponseEmail } from "@/lib/email/send-quote-customer-response-email";
 import {
@@ -102,6 +103,14 @@ export async function respondToPublicQuote(
       quoteTitle,
       schedule,
     });
+    await notifyQuoteCustomerResponse({
+      companyId: quote.companyId,
+      quoteId: quote.id,
+      type: "quote.accepted",
+      buildingLabel: building,
+      quoteTitle,
+      customerName: quote.inspection.building.customer.name,
+    });
     revalidateAfterQuoteResponse(quote.shareToken);
     if (schedule.scheduled) {
       revalidatePath("/dashboard/jobs");
@@ -161,6 +170,15 @@ export async function respondToPublicQuote(
   await notifyCompany(quote, "request_changes", {
     buildingLabel: building,
     quoteTitle,
+    customerMessage: input.message,
+  });
+  await notifyQuoteCustomerResponse({
+    companyId: quote.companyId,
+    quoteId: quote.id,
+    type: "quote.changes_requested",
+    buildingLabel: building,
+    quoteTitle,
+    customerName: quote.inspection.building.customer.name,
     customerMessage: input.message,
   });
   revalidateAfterQuoteResponse(quote.shareToken);

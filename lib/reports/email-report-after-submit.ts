@@ -7,12 +7,30 @@ import {
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { sendComplianceReportEmail } from "@/lib/email/send-compliance-report";
 import { isReportEmailConfigured } from "@/lib/email/env";
+import { notifyReportEmailFailed } from "@/lib/notifications/notify-report-email-failed";
 import { generateComplianceReport } from "@/lib/reports/generate-compliance-report";
 import { prisma } from "@/lib/prisma";
 
 export type ReportEmailOutcome =
   | { status: "sent"; to: string }
   | { status: "skipped"; reason: string };
+
+async function alertReportEmailSkipped(
+  companyId: string,
+  inspectionId: string,
+  reason: string,
+  buildingLabelText?: string,
+): Promise<void> {
+  if (reason.includes("not configured for this environment")) return;
+  if (reason.includes("already emailed")) return;
+
+  await notifyReportEmailFailed({
+    companyId,
+    inspectionId,
+    reason,
+    buildingLabel: buildingLabelText,
+  });
+}
 
 /**
  * Post-submit hook: generate the compliance PDF and email it to the customer.
@@ -55,10 +73,9 @@ export async function emailComplianceReportAfterSubmit(
     shareToken = generated.shareToken;
   } catch (error) {
     console.error("emailComplianceReportAfterSubmit: PDF generation failed", error);
-    return {
-      status: "skipped",
-      reason: "Could not generate the PDF report for email.",
-    };
+    const reason = "Could not generate the PDF report for email.";
+    await alertReportEmailSkipped(session.companyId, inspectionId, reason);
+    return { status: "skipped", reason };
   }
 
   const scope = branchScopeFromSession(session);
@@ -89,16 +106,21 @@ export async function emailComplianceReportAfterSubmit(
 
   const customerEmail = data.building.customer.email?.trim();
   if (!customerEmail) {
+    const noEmailReason =
+      "This customer has no email address — add one on the customer profile.";
     await prisma.report.update({
       where: { id: reportId },
       data: {
         emailError: "Customer has no email address on file.",
       },
     });
-    return {
-      status: "skipped",
-      reason: "This customer has no email address — add one on the customer profile.",
-    };
+    await alertReportEmailSkipped(
+      session.companyId,
+      inspectionId,
+      noEmailReason,
+      buildingLabel(data.building),
+    );
+    return { status: "skipped", reason: noEmailReason };
   }
 
   const overallPass = !data.items.some(
@@ -121,14 +143,19 @@ export async function emailComplianceReportAfterSubmit(
 
   if (!sendResult.ok) {
     console.error("emailComplianceReportAfterSubmit: send failed", sendResult.error);
+    const failReason =
+      "The report was saved but the email could not be sent. Try downloading from the dashboard.";
     await prisma.report.update({
       where: { id: reportId },
       data: { emailError: sendResult.error },
     });
-    return {
-      status: "skipped",
-      reason: "The report was saved but the email could not be sent. Try downloading from the dashboard.",
-    };
+    await alertReportEmailSkipped(
+      session.companyId,
+      inspectionId,
+      failReason,
+      buildingLabel(data.building),
+    );
+    return { status: "skipped", reason: failReason };
   }
 
   await prisma.report.update({

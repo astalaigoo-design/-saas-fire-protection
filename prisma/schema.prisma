@@ -104,7 +104,8 @@ model Company {
   inspectionTypes InspectionType[]
   inspections     Inspection[]
   quotes          Quote[]
-  auditEvents     AuditEvent[]
+  auditEvents         AuditEvent[]
+  staffNotifications  StaffNotification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -148,8 +149,9 @@ model User {
   branchId String?
   branch   Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
 
-  inspectionsAssigned Inspection[] @relation("InspectionAssignee")
-  auditEvents         AuditEvent[] @relation("AuditEventActor")
+  inspectionsAssigned     Inspection[]            @relation("InspectionAssignee")
+  auditEvents             AuditEvent[]            @relation("AuditEventActor")
+  staffNotificationReads  StaffNotificationRead[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -477,6 +479,47 @@ model AuditEvent {
   @@index([companyId, createdAt])
   @@index([actorUserId, createdAt])
   @@map("audit_events")
+}
+
+/// In-app alert for owners, admins, and (when targeted) assigned technicians.
+model StaffNotification {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  /// e.g. quote.accepted, inspection.assigned, report.email_failed
+  type String
+
+  title String
+  body  String @db.Text
+
+  href       String?
+  entityType String?
+  entityId   String?
+
+  /// Null = company-wide for owners/admins; set for assignee-only alerts.
+  targetUserId String?
+
+  reads StaffNotificationRead[]
+
+  createdAt DateTime @default(now())
+
+  @@index([companyId, createdAt])
+  @@index([companyId, targetUserId, createdAt])
+  @@map("staff_notifications")
+}
+
+model StaffNotificationRead {
+  id             String            @id @default(cuid())
+  notificationId String
+  notification   StaffNotification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  readAt         DateTime          @default(now())
+
+  @@unique([notificationId, userId])
+  @@index([userId, readAt])
+  @@map("staff_notification_reads")
 }
 
 /// Durable idempotency cache for serverless/offline replays.

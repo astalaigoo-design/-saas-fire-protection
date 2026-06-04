@@ -43,6 +43,11 @@ const checks = [
     sql: `SELECT 1 FROM information_schema.tables
           WHERE table_schema = 'public' AND table_name = 'checklist_template_items'`,
   },
+  {
+    label: "staff_notifications",
+    sql: `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'staff_notifications'`,
+  },
 ];
 
 let failed = false;

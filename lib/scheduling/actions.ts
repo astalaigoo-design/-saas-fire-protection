@@ -7,6 +7,8 @@ import { canManageJobs } from "@/lib/auth/permissions";
 import { requireWritableTenant } from "@/lib/billing/guards";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { resolveInspectionChecklistCreateInputs } from "@/lib/inspections/resolve-checklist-items";
+import { notifyInspectionScheduled } from "@/lib/notifications/notify-inspection-scheduled";
+import { writeAuditEvent } from "@/lib/audit/write-event";
 import { syncBuildingComplianceStatus } from "@/lib/buildings/sync-compliance";
 import { captureServerActionError } from "@/lib/monitoring/capture";
 import { prisma } from "@/lib/prisma";
@@ -134,10 +136,12 @@ export async function scheduleInspection(
     month: scheduledAt.getMonth() + 1,
   };
 
+  let firstInspectionId: string | null = null;
+
   try {
     await prisma.$transaction(async (tx) => {
       for (const occurrenceDate of dates) {
-        await tx.inspection.create({
+        const created = await tx.inspection.create({
           data: {
             companyId: session.companyId,
             buildingId: parsed.data.buildingId,
@@ -149,7 +153,9 @@ export async function scheduleInspection(
             notes: parsed.data.notes ?? null,
             items: { create: checklistItems },
           },
+          select: { id: true },
         });
+        firstInspectionId ??= created.id;
       }
     });
   } catch (error) {
@@ -158,6 +164,26 @@ export async function scheduleInspection(
   }
 
   await syncBuildingComplianceStatus(parsed.data.buildingId);
+
+  if (firstInspectionId) {
+    await writeAuditEvent({
+      companyId: session.companyId,
+      actorUserId: session.appUserId,
+      action: "inspection.scheduled",
+      entityType: "inspection",
+      entityId: firstInspectionId,
+      metadata: {
+        occurrenceCount: dates.length,
+        buildingId: parsed.data.buildingId,
+        assignedToUserId: assignedToUserId ?? null,
+      },
+    });
+    await notifyInspectionScheduled({
+      companyId: session.companyId,
+      inspectionId: firstInspectionId,
+      occurrenceCount: dates.length,
+    });
+  }
 
   revalidatePath("/dashboard/jobs");
   redirect(

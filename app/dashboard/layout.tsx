@@ -69,7 +69,7 @@ export default async function DashboardLayout({
                   label={branchSwitcher.label}
                 />
               ) : null}
-              <DashboardHeaderActions />
+              <DashboardHeaderActions session={session} />
             </div>
           </div>
           <div className="px-4 pb-3">
@@ -86,7 +86,7 @@ export default async function DashboardLayout({
                 label={branchSwitcher.label}
               />
             ) : null}
-            <DashboardHeaderActions />
+            <DashboardHeaderActions session={session} />
           </div>
         </header>
 

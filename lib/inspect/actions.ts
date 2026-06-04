@@ -36,6 +36,7 @@ import { autoScheduleFollowUpInspection } from "@/lib/scheduling/auto-schedule-f
 import { autoScheduleNextInspection } from "@/lib/scheduling/auto-schedule-next";
 import { prisma } from "@/lib/prisma";
 import { writeAuditEvent } from "@/lib/audit/write-event";
+import { notifyReportEmailFailed } from "@/lib/notifications/notify-report-email-failed";
 import { captureServerActionError } from "@/lib/monitoring/capture";
 
 export type InspectActionResult =
@@ -412,6 +413,11 @@ export async function submitInspection(
         status: "skipped",
         reason: "Inspection was saved but the report could not be generated.",
       };
+      await notifyReportEmailFailed({
+        companyId: session.companyId,
+        inspectionId: parsed.data.inspectionId,
+        reason: reportEmail.reason,
+      });
     }
   }
 
