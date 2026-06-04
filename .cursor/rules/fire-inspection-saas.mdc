@@ -23,14 +23,15 @@ alwaysApply: true
 
 ## Auth / roles
 
-- Clerk **`publicMetadata.role`**: `owner` | `admin` | `technician` only — **no** separate “branch admin” or other branch-scoped roles.
+- Clerk **`publicMetadata.role`**: `owner` | `admin` | `technician` only — **no** “branch-only admin” or other fourth role. Branch-limited access = invite **`admin`** + set **`User.branchId`** (one FK), not a new role enum.
 - Use `lib/auth/permissions.ts` and guards for route-level access; enforce row-level rules in queries (e.g. technicians: assigned jobs only).
 
 ## Branches (data scope, not roles)
 
-- **`Branch`** = office/region; **`Customer.branchId`** and optional **`User.branchId`** scope data.
+- **`Branch`** = office/region; a company may have **many branches**, but each user has at most **one** `User.branchId` (nullable FK) — **no `UserBranch` join table** and no multi-branch membership per user.
+- **`Customer.branchId`** = which branch owns the customer (required FK).
 - **Owner:** company-wide (`User.branchId` null); may filter dashboard by branch (cookie) and move customers / reassign team branches.
-- **Admin / technician:** exactly one assigned branch (`User.branchId`); see only that branch’s customers unless role permissions say otherwise.
+- **Admin / technician:** exactly one assigned branch (`User.branchId`); reassign via Organization → Team updates that single FK (+ Clerk metadata). They cannot belong to multiple branches at once.
 - Branch changes are assignment + query filters — do not add a fourth role or branch-specific permission enum.
 - **Crons** (`/api/cron/due-reminders`, trial reminders): stay **company-wide** — do not scope due-reminder queries or recipients by branch. Dashboard operations may respect the owner’s branch filter; scheduled email does not.
 

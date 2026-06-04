@@ -5,7 +5,11 @@ export function isOwner(role: AppRole | null): boolean {
   return role === "owner";
 }
 
-/** Admin: manage jobs and customers (no implied owner-only caps here). */
+/**
+ * Admin: manage jobs and customers within their data scope.
+ * There is no separate “branch admin” role — invite `admin` and set `User.branchId` in
+ * Organization → Team to limit them to one branch (`lib/branches/scope.ts`).
+ */
 export function isAdmin(role: AppRole | null): boolean {
   return role === "admin";
 }

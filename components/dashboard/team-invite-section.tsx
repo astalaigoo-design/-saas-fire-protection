@@ -94,7 +94,8 @@ export function TeamInviteSection({ members, pendingInvites, branches }: TeamInv
             ))}
           </select>
           <p className="text-xs text-muted-foreground">
-            Technicians see assigned inspections only. Admins can manage customers and jobs.
+            Technicians see assigned inspections only. Admins manage customers and jobs; choose a
+            branch above to keep them on one location (same admin role — not a separate branch-admin).
           </p>
         </div>
         {branches.length > 0 ? (
