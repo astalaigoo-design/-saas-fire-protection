@@ -64,7 +64,15 @@ export function IntegrationsSettingsSection({ data }: IntegrationsSettingsSectio
         <p className="mt-1 text-sm text-muted-foreground">
           Connect external systems with a read-only REST API and signed outbound webhooks. API keys
           and webhook secrets are shown once when created — store them in your CMMS or accounting
-          tool. Requests are scoped to your company only.
+          tool. Requests are scoped to your company only.{" "}
+          <span className="text-foreground">
+            Repair quote webhooks sync status only — not QuickBooks invoices or Stripe payments.
+          </span>{" "}
+          See{" "}
+          <a href="#repair-quotes" className="font-medium text-primary underline-offset-2 hover:underline">
+            Repair quotes
+          </a>{" "}
+          below.
         </p>
       </div>
 

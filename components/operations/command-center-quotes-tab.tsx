@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { QuotePipelineKpis } from "@/components/quotes/quote-pipeline-kpis";
 import { QuotesStageNav } from "@/components/quotes/quotes-stage-nav";
+import { RepairQuotesScopeNotice } from "@/components/quotes/repair-quotes-scope-notice";
 import { EmptyState } from "@/components/ui/empty-state";
 import { buttonVariants } from "@/components/ui/button";
 import { formatQuoteCurrency } from "@/lib/quotes/format";
@@ -28,6 +29,8 @@ export function CommandCenterQuotesTab({
           Open quotes
         </Link>
       </div>
+
+      <RepairQuotesScopeNotice variant="inline" />
 
       <QuotePipelineKpis metrics={metrics} />
 

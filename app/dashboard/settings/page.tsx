@@ -10,6 +10,7 @@ import { BranchesSettingsSection } from "@/components/dashboard/branches-setting
 import { OutboundEmailSettingsSection } from "@/components/dashboard/outbound-email-settings-section";
 import { TechnicianAlertsSettingsSection } from "@/components/dashboard/technician-alerts-settings-section";
 import { TeamInviteSection } from "@/components/dashboard/team-invite-section";
+import { RepairQuotesSettingsSection } from "@/components/dashboard/repair-quotes-settings-section";
 import { IntegrationsSettingsSection } from "@/components/dashboard/integrations-settings-section";
 import { getIntegrationsSettingsData } from "@/lib/integrations/queries";
 import { listBranchesForCompany } from "@/lib/branches/queries";
@@ -48,6 +49,8 @@ export default async function OrgSettingsPage() {
       <BranchesSettingsSection branches={branches} />
 
       <OutboundEmailSettingsSection status={getOutboundEmailStatus()} />
+
+      <RepairQuotesSettingsSection />
 
       <TechnicianAlertsSettingsSection
         emailStatus={getOutboundEmailStatus()}

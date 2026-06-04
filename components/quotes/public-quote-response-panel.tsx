@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { QuoteStatus } from "@prisma/client";
+import { REPAIR_QUOTE_ACCEPT_DISCLAIMER } from "@/lib/quotes/scope";
 import { cn } from "@/lib/utils";
 
 type PublicQuoteResponsePanelProps = {
@@ -70,7 +71,7 @@ export function PublicQuoteResponsePanel({
     if (action !== "request_changes") {
       const confirmed = window.confirm(
         action === "accept"
-          ? "Accept this quote? The contractor will be notified."
+          ? "Accept this quote? The contractor will be notified. This does not pay or charge anything."
           : "Decline this quote? The contractor will be notified.",
       );
       if (!confirmed) return;
@@ -197,6 +198,8 @@ export function PublicQuoteResponsePanel({
           </button>
         </div>
       )}
+
+      <p className="text-center text-xs text-slate-500">{REPAIR_QUOTE_ACCEPT_DISCLAIMER}</p>
     </div>
   );
 }

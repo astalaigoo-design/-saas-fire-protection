@@ -63,7 +63,7 @@ export function QuoteSendPanel({ quoteId, customerEmail, totalLabel }: QuoteSend
         <h3 className="text-sm font-semibold text-foreground">Review & send</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           Sends the compliance inspection report and repair quote in one email ({totalLabel}{" "}
-          quote total).
+          quote total). Customer accept on the link is approval only — no card charge or invoice.
         </p>
       </div>
 

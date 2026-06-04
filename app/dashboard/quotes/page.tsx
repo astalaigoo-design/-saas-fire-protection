@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
 import { listCompanyQuotesSafe } from "@/lib/dashboard/queries";
 import { OutboundEmailInlineNotice } from "@/components/dashboard/outbound-email-inline-notice";
+import { RepairQuotesScopeNotice } from "@/components/quotes/repair-quotes-scope-notice";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { getOutboundChannelsStatus } from "@/lib/outbound/channels";
 import {
@@ -64,13 +65,15 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
 
       <PageHeader
         title="Repair quotes"
-        description="Pipeline for repair revenue — draft, customer response, accepted jobs, and win rate. Compliance PDFs live under Reports."
+        description="Internal repair pipeline — draft, email to customer, accept/decline on /q/… links. Not QuickBooks, Stripe, or invoicing."
         actions={
           <Link href="/dashboard/reports" className={cn(buttonVariants({ variant: "outline" }), "min-h-10")}>
             Compliance reports
           </Link>
         }
       />
+
+      <RepairQuotesScopeNotice variant="inline" />
 
       <OutboundEmailInlineNotice channels={getOutboundChannelsStatus()} context="quotes" />
 

@@ -18,7 +18,7 @@ export const RESEND_DEPENDENT_FEATURES = [
 /** Works without RESEND_API_KEY — still operational. */
 export const WORKS_WITHOUT_RESEND = [
   "Compliance PDF download and public share links (/r/…)",
-  "Quote public links and customer responses (/q/…)",
+  "Quote public links and customer responses (/q/…) — accept is approval, not payment",
   "In-app staff bell and technician My jobs alerts",
   "Technician SMS when Twilio is configured",
 ] as const;
