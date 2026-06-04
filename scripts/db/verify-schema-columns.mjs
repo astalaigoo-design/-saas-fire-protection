@@ -53,6 +53,21 @@ const checks = [
     sql: `SELECT 1 FROM information_schema.tables
           WHERE table_schema = 'public' AND table_name = 'deficiencies'`,
   },
+  {
+    label: "building_assets",
+    sql: `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'building_assets'`,
+  },
+  {
+    label: "users.phone",
+    sql: `SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'phone'`,
+  },
+  {
+    label: "inspections.technicianDayOfSmsSentAt",
+    sql: `SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'inspections' AND column_name = 'technicianDayOfSmsSentAt'`,
+  },
 ];
 
 let failed = false;

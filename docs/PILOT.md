@@ -22,9 +22,11 @@ Use this guide to onboard **one fire inspection company** (your tenant) with **o
 Complete these once per environment:
 
 - [ ] Production DB baselined: `npm run db:baseline-migrations -- --verify --yes` (once), then deploys run `migrate deploy` automatically.
+- [ ] After each deploy: `npm run db:migrate:status` and `npm run db:verify-schema` (see [PRODUCTION-MIGRATIONS.md](./PRODUCTION-MIGRATIONS.md)).
 - [ ] Vercel env: `DATABASE_URL`, `DIRECT_URL`, Clerk keys, Supabase storage keys.
 - [ ] Clerk: `getflareflow.com` added under **Domains**; webhook → `https://getflareflow.com/api/webhooks/clerk` with `CLERK_WEBHOOK_SIGNING_SECRET` in Vercel.
 - [ ] Resend: `getflareflow.com` verified; `RESEND_API_KEY` + `REPORT_EMAIL_FROM` on Vercel (for post-submit email and **Send quote**).
+- [ ] Optional Twilio: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_SMS_FROM` — technician assign/reschedule + day-of SMS (see Organization → Technician job alerts).
 - [ ] Optional: remove leftover demo rows — `npm run db:check-demo` then `npm run db:cleanup-smoke` (dev/staging only if intentional; see script dry run without `--apply`).
 
 ---
@@ -99,6 +101,27 @@ You should see the customer on **Customers**.
 
 Confirm the building appears on the customer detail page and **Buildings** list.
 
+### Optional — bulk import many buildings (CSV)
+
+Use when the pilot has a spreadsheet of sites instead of typing each building.
+
+1. **Buildings** → **Import CSV** (`/dashboard/buildings/import`).
+2. **Download template** — columns include `branch`, `customer`, `building_name`, address fields, optional `customer_email` / `customer_phone`.
+3. Fill rows (one building per row; same customer name repeats across rows).
+4. Upload → review preview → confirm import.
+
+Requires migration `20260602120000_add_branches` if you use the `branch` column (defaults to **Main** when omitted).
+
+### Optional — equipment register on a building
+
+Track extinguishers, panels, emergency lights, etc. per site (not required for the minimal pilot).
+
+1. Open the building → **Equipment** tab.
+2. **Add equipment** — type, location (required), tag #, manufacturer, service dates, notes.
+3. Save; repeat for a few assets if you want to demo the register.
+
+Requires migration `20260607120000_add_building_assets` on production (`npm run db:migrate:deploy`).
+
 ---
 
 ## 4. Schedule one inspection
@@ -148,10 +171,11 @@ After submit:
 
 ## 7. Optional — add a technician
 
-1. **Dashboard → Organization** → **Team** → enter email → **Technician** → **Send invite**.
+1. **Dashboard → Organization** → **Team** → enter email → **Technician** → **Send invite** (pick **branch** if you have multiple locations).
 2. They accept the Clerk email and sign up; `role` and `companyId` are set automatically.
-3. Assign them on the next **Schedule inspection** form.
-4. They use **Dashboard → Inspections** (or **My jobs** if only technician role) → **Open inspection**.
+3. Set their **mobile (SMS)** on the team row or ask them to save it on **My jobs** (for Twilio alerts).
+4. Assign them on the next **Schedule inspection** form.
+5. They use **My jobs** (technician home) or **Open inspection** — assign/reschedule sends in-app bell + email + SMS when configured.
 
 **Manual fallback:** Clerk Dashboard → invite user, then set public metadata:
 
@@ -181,6 +205,8 @@ After submit:
 | 404 on `/dashboard` when signed out | Expected — sign in at `/sign-in`. |
 | No Customers / Buildings nav | Role is `technician`; set `owner` or `admin` in Clerk metadata. |
 | “Repair quotes temporarily unavailable” | Run `npm run db:migrate:status`; baseline or `npm run db:migrate:deploy` on production. |
+| Building **Equipment** tab errors | Migration `20260607120000_add_building_assets` — see [PRODUCTION-MIGRATIONS.md](./PRODUCTION-MIGRATIONS.md). |
+| CSV import fails / branch column | Migrations for `branches` + `customers.branchId`; use **Main** or match Organization branch names. |
 | Send quote does nothing | `RESEND_API_KEY`, `REPORT_EMAIL_FROM`, verified domain; customer email set. |
 | Photos fail to upload | `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, bucket `inspection-photos`. |
 | User not in database | Clerk webhook URL + `CLERK_WEBHOOK_SIGNING_SECRET`; check Vercel function logs. |
@@ -195,6 +221,9 @@ After submit:
 ## Related commands
 
 ```bash
+npm run db:migrate:status  # Pending migrations?
+npm run db:migrate:deploy  # Apply pending (production DIRECT_URL in .env)
+npm run db:verify-schema   # building_assets, branches, etc.
 npm run db:check-demo      # Read-only counts (safe on production)
 npm run db:cleanup-smoke   # Remove smoke-test customers (use with care)
 npm run db:seed            # Dev only — demo Riverside data; do not use on production pilot

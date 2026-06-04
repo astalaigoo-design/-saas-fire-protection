@@ -4,7 +4,7 @@ Quick pass after each **Production** deploy to https://getflareflow.com. Target 
 
 **Canonical checklist:** this file in the repo (`docs/PRODUCTION-SMOKE-TEST.md`). Copy sections into Notion if your team tracks deploys there — keep this file updated when flows change.
 
-**Deeper pilot / first tenant:** [PILOT.md](./PILOT.md) · **New company setup:** [PILOT-ONBOARDING.md](./PILOT-ONBOARDING.md)
+**Deeper pilot / first tenant:** [PILOT.md](./PILOT.md) · **New company setup:** [PILOT-ONBOARDING.md](./PILOT-ONBOARDING.md) · **Migrations:** [PRODUCTION-MIGRATIONS.md](./PRODUCTION-MIGRATIONS.md)
 
 ---
 
@@ -29,6 +29,9 @@ Quick pass after each **Production** deploy to https://getflareflow.com. Target 
 ```bash
 npm run db:migrate:status
 # Expect: "Database schema is up to date!"
+
+npm run db:verify-schema
+# Expect: OK for branches, building_assets, deficiencies, staff_notifications, etc.
 ```
 
 ---
@@ -65,6 +68,8 @@ Use a dedicated **smoke** owner account (not a real client tenant if you can avo
 - [ ] **Organization** opens (`/dashboard/settings`).
 - [ ] **Billing** opens (`/dashboard/billing`) — trial banner or plan status renders (no crash).
 - [ ] **Command center** opens (`/dashboard/operations`) if you ship ops features.
+- [ ] **Buildings → Import CSV** loads (`/dashboard/buildings/import`) — owner/admin.
+- [ ] Open any building → **Equipment** tab loads (requires `building_assets` migration).
 
 **Clerk metadata sanity** (if dashboard is empty or wrong role):
 
@@ -121,7 +126,9 @@ Skip unless that area shipped in this deploy.
 |---------|-------------|
 | `MIDDLEWARE_INVOCATION_FAILED` / blank site | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` + `CLERK_SECRET_KEY` on Production |
 | Dashboard error digest | Vercel logs, Sentry, `DATABASE_URL` / `DIRECT_URL` |
-| 500 on writes | `npm run db:migrate:status`; build log for migrate deploy |
+| 500 on writes | `npm run db:migrate:status`; `npm run db:verify-schema`; build log for migrate deploy |
+| Equipment tab 500 | Apply `20260607120000_add_building_assets` — [PRODUCTION-MIGRATIONS.md](./PRODUCTION-MIGRATIONS.md) |
+| CSV import 500 | Branches migration + valid `branch` column names |
 | Public `/q` or `/r` → sign-in | `middleware.ts` public routes; `shareToken` column |
 | Cron 401 expected; 500 is not | `CRON_SECRET` set; route logs |
 
@@ -131,6 +138,8 @@ Skip unless that area shipped in this deploy.
 
 ```bash
 npm run db:migrate:status
+npm run db:migrate:deploy      # manual apply if Vercel build skipped migrations
+npm run db:verify-schema
 npm run db:check-demo          # read-only; safe on production
-npx vercel crons ls            # confirm 3 cron paths registered
+npx vercel crons ls            # confirm cron paths registered
 ```

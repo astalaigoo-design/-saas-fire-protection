@@ -100,8 +100,17 @@ npm run pilot:onboard -- --verify
 
 ## After onboarding
 
-Continue with the field checklist: [PILOT.md](./PILOT.md) (customer → building → schedule → inspect).
+1. **Confirm DB schema** (especially if this database existed before the latest app release):
 
-After each production deploy, run [PRODUCTION-SMOKE-TEST.md](./PRODUCTION-SMOKE-TEST.md).
+```bash
+npm run db:migrate:status
+npm run db:verify-schema
+```
 
-Owner nav should include **Organization**, **Billing** (read-only for admins), and full job/customer access.
+See [PRODUCTION-MIGRATIONS.md](./PRODUCTION-MIGRATIONS.md) if anything is `MISSING` (e.g. `building_assets` for equipment, `branches` for multi-location).
+
+2. Continue with the field checklist: [PILOT.md](./PILOT.md) (customer → building → optional CSV import / equipment → schedule → inspect).
+
+3. After each production deploy, run [PRODUCTION-SMOKE-TEST.md](./PRODUCTION-SMOKE-TEST.md).
+
+Owner nav should include **Organization** (branches, checklist templates, outbound email), **Buildings → Import CSV**, building **Equipment** tab, **Billing** (read-only for admins), and full job/customer access.
