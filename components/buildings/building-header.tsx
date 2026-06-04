@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { buildingTypeLabel } from "@/lib/buildings/constants";
 import { buildingDisplayName, buildingFullAddress } from "@/lib/buildings/format";
+import { formatDate } from "@/lib/dashboard/dates";
 import type { BuildingDetailPageData } from "@/lib/buildings/queries";
 import { BuildingEditDialog } from "@/components/buildings/building-edit-dialog";
 import { buttonVariants } from "@/components/ui/button";
@@ -49,6 +50,15 @@ export function BuildingHeader({ data, canEdit }: BuildingHeaderProps) {
               <dt className="text-muted-foreground">Fire district / jurisdiction</dt>
               <dd className="font-medium text-foreground">
                 {building.fireDistrict?.trim() || "Not specified"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Permit / approval</dt>
+              <dd className="font-medium text-foreground">
+                {building.permitNumber?.trim() || "Not specified"}
+                {building.permitExpiresAt
+                  ? ` · expires ${formatDate(building.permitExpiresAt)}`
+                  : ""}
               </dd>
             </div>
           </dl>

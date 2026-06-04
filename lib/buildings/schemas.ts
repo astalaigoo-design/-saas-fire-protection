@@ -34,6 +34,8 @@ export const updateBuildingSchema = z.object({
     .optional()
     .transform((v) => (v === "" ? undefined : v)),
   fireDistrict: z.string().trim().max(200).optional().or(z.literal("")),
+  permitNumber: z.string().trim().max(100).optional().or(z.literal("")),
+  permitExpiresAt: z.string().trim().max(32).optional().or(z.literal("")),
   notes: z.string().trim().max(10000).optional().or(z.literal("")),
 });
 

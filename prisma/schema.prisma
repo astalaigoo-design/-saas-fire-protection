@@ -228,6 +228,9 @@ model Building {
   buildingType BuildingType?
   /// Fire district or AHJ jurisdiction.
   fireDistrict String?
+  /// AHJ permit or system approval identifier.
+  permitNumber   String?
+  permitExpiresAt DateTime?
   /// General site notes (free text).
   notes        String?       @map("generalNotes") @db.Text
 

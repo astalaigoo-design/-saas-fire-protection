@@ -22,12 +22,16 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   const inspections = await getCalendarInspections(session, month.year, month.month);
   const showScheduledBanner = searchParams.scheduled === "1";
   const showUpdatedBanner = searchParams.updated === "1";
+  const showBulkBanner = searchParams.bulk === "1";
+  const bulkMovedRaw = searchParams.moved;
+  const bulkMovedCount =
+    typeof bulkMovedRaw === "string" ? Math.max(0, Number.parseInt(bulkMovedRaw, 10) || 0) : 0;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Calendar"
-        description="Click a job to assign or reschedule and notify the technician. Click a day header to schedule new work."
+        description="Drag jobs between days, bulk-reschedule multiple visits, or open a job to change assignee and time. Technicians are notified on changes."
         actions={
           <div className="flex flex-wrap gap-2">
             <Link
@@ -50,6 +54,8 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
         inspections={inspections}
         showScheduledBanner={showScheduledBanner}
         showUpdatedBanner={showUpdatedBanner}
+        showBulkBanner={showBulkBanner}
+        bulkMovedCount={bulkMovedCount}
         canEditJobs
       />
     </div>

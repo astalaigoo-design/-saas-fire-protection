@@ -30,6 +30,7 @@ export default async function CommandCenterPage({ searchParams }: CommandCenterP
   const entityFilter = firstQueryValue(searchParams.entity);
   const tabParam = firstQueryValue(searchParams.tab);
   const defaultTab: CommandCenterTab =
+    tabParam === "equipment" ||
     tabParam === "deficiencies" ||
     tabParam === "quotes" ||
     tabParam === "activity" ||

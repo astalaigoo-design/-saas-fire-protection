@@ -31,6 +31,8 @@ const buildingDetailSelect = {
   country: true,
   buildingType: true,
   fireDistrict: true,
+  permitNumber: true,
+  permitExpiresAt: true,
   notes: true,
   currentStatus: true,
   createdAt: true,

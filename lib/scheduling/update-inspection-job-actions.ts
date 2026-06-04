@@ -1,27 +1,17 @@
 "use server";
 
-import { InspectionStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { canManageJobs } from "@/lib/auth/permissions";
-import {
-  branchScopeFromSession,
-  inspectionWhereFromScope,
-} from "@/lib/branches/scope";
 import { requireWritableTenant } from "@/lib/billing/guards";
 import { getDashboardSession } from "@/lib/dashboard/session";
-import { writeAuditEvent } from "@/lib/audit/write-event";
 import { captureServerActionError } from "@/lib/monitoring/capture";
-import { prisma } from "@/lib/prisma";
+import { applyInspectionScheduleUpdate } from "@/lib/scheduling/apply-inspection-schedule";
 import {
   combineDateAndTime,
   parseDateInputValue,
   type CalendarMonth,
 } from "@/lib/scheduling/calendar";
-import {
-  notifyTechnicianForInspection,
-  notifyTechnicianJobUnassigned,
-} from "@/lib/scheduling/notify-technician-job";
 import { updateInspectionJobSchema } from "@/lib/scheduling/update-inspection-job-schemas";
 
 export type UpdateInspectionJobState =
@@ -60,121 +50,19 @@ export async function updateInspectionJob(
   const scheduledAt = combineDateAndTime(date, parsed.data.scheduledTime);
   if (!scheduledAt) return { ok: false, error: "Enter a valid time." };
 
-  const scope = branchScopeFromSession(session);
-  const before = await prisma.inspection.findFirst({
-    where: {
-      id: parsed.data.inspectionId,
-      ...inspectionWhereFromScope(scope, session.companyId),
-      status: { in: [InspectionStatus.scheduled, InspectionStatus.in_progress] },
-    },
-    select: {
-      id: true,
-      scheduledAt: true,
-      assignedToUserId: true,
-      buildingId: true,
-    },
-  });
-
-  if (!before) {
-    return { ok: false, error: "Job not found or cannot be edited." };
-  }
-
   const assigneeId = parsed.data.assignedToUserId ?? null;
-  if (assigneeId) {
-    const technician = await prisma.user.findFirst({
-      where: {
-        id: assigneeId,
-        companyId: session.companyId,
-        role: "technician",
-        active: true,
-      },
-      select: { id: true },
-    });
-    if (!technician) {
-      return { ok: false, error: "Selected technician is not valid." };
-    }
-  }
-
-  const scheduleChanged = before.scheduledAt.getTime() !== scheduledAt.getTime();
-  const assigneeChanged = before.assignedToUserId !== assigneeId;
-
-  if (!scheduleChanged && !assigneeChanged) {
-    return { ok: true };
-  }
 
   try {
-    await prisma.inspection.update({
-      where: { id: before.id },
-      data: {
-        scheduledAt,
-        assignedToUserId: assigneeId,
-      },
+    const result = await applyInspectionScheduleUpdate({
+      session,
+      inspectionId: parsed.data.inspectionId,
+      scheduledAt,
+      assignedToUserId: assigneeId,
     });
+    if (!result.ok) return result;
   } catch (error) {
     captureServerActionError("updateInspectionJob", error);
     return { ok: false, error: "Could not update this job." };
-  }
-
-  if (assigneeChanged) {
-    await writeAuditEvent({
-      companyId: session.companyId,
-      actorUserId: session.appUserId,
-      action: "inspection.assignee_changed",
-      entityType: "inspection",
-      entityId: before.id,
-      metadata: {
-        previousAssigneeId: before.assignedToUserId,
-        assignedToUserId: assigneeId,
-      },
-    });
-  }
-
-  if (scheduleChanged) {
-    await writeAuditEvent({
-      companyId: session.companyId,
-      actorUserId: session.appUserId,
-      action: "inspection.rescheduled",
-      entityType: "inspection",
-      entityId: before.id,
-      metadata: {
-        previousScheduledAt: before.scheduledAt.toISOString(),
-        scheduledAt: scheduledAt.toISOString(),
-      },
-    });
-  }
-
-  if (assigneeChanged && before.assignedToUserId) {
-    const newAssignee = assigneeId
-      ? await prisma.user.findFirst({
-          where: { id: assigneeId, companyId: session.companyId },
-          select: { name: true },
-        })
-      : null;
-
-    await notifyTechnicianJobUnassigned({
-      companyId: session.companyId,
-      inspectionId: before.id,
-      previousAssigneeUserId: before.assignedToUserId,
-      newAssigneeName: newAssignee?.name ?? null,
-    });
-  }
-
-  if (assigneeId) {
-    if (assigneeChanged) {
-      await notifyTechnicianForInspection({
-        companyId: session.companyId,
-        inspectionId: before.id,
-        kind: "assigned",
-        bypassRecurringSeriesGuard: true,
-      });
-    } else if (scheduleChanged) {
-      await notifyTechnicianForInspection({
-        companyId: session.companyId,
-        inspectionId: before.id,
-        kind: "rescheduled",
-        previousScheduledAt: before.scheduledAt,
-      });
-    }
   }
 
   const redirectMonth: CalendarMonth = {
@@ -183,6 +71,6 @@ export async function updateInspectionJob(
   };
 
   revalidatePath("/dashboard/jobs");
-  revalidatePath(`/inspect/${before.id}`);
+  revalidatePath(`/inspect/${parsed.data.inspectionId}`);
   redirect(`/dashboard/jobs?year=${redirectMonth.year}&month=${redirectMonth.month}&updated=1`);
 }

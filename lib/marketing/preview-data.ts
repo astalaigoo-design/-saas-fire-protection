@@ -81,6 +81,86 @@ export const marketingCommandCenterPreview: CommandCenterSnapshot = {
     annual: [],
   },
   dueTotals: { overdue: 2, dueSoon: 4, neverInspected: 1 },
+  dueAssets: {
+    rows: [
+      {
+        assetId: "asset-1",
+        assetType: "fire_extinguisher" as const,
+        assetTypeLabel: "Fire extinguisher",
+        tagNumber: "FE-12",
+        location: "Lobby",
+        buildingId: "b1",
+        buildingLabel: "Riverside Medical — Building A",
+        customerName: "Riverside Medical Group",
+        status: "overdue" as const,
+        nextServiceDue: new Date("2026-05-20T00:00:00Z"),
+        lastServiceAt: new Date("2025-05-20T00:00:00Z"),
+      },
+    ],
+    extinguishers: [
+      {
+        assetId: "asset-1",
+        assetType: "fire_extinguisher" as const,
+        assetTypeLabel: "Fire extinguisher",
+        tagNumber: "FE-12",
+        location: "Lobby",
+        buildingId: "b1",
+        buildingLabel: "Riverside Medical — Building A",
+        customerName: "Riverside Medical Group",
+        status: "overdue" as const,
+        nextServiceDue: new Date("2026-05-20T00:00:00Z"),
+        lastServiceAt: new Date("2025-05-20T00:00:00Z"),
+      },
+    ],
+    byType: [
+      {
+        assetType: "fire_extinguisher" as const,
+        assetTypeLabel: "Fire extinguisher",
+        rows: [
+          {
+            assetId: "asset-1",
+            assetType: "fire_extinguisher" as const,
+            assetTypeLabel: "Fire extinguisher",
+            tagNumber: "FE-12",
+            location: "Lobby",
+            buildingId: "b1",
+            buildingLabel: "Riverside Medical — Building A",
+            customerName: "Riverside Medical Group",
+            status: "overdue" as const,
+            nextServiceDue: new Date("2026-05-20T00:00:00Z"),
+            lastServiceAt: new Date("2025-05-20T00:00:00Z"),
+          },
+        ],
+      },
+    ],
+    totals: {
+      equipmentOverdue: 1,
+      equipmentDueThisMonth: 2,
+      extinguishersOverdue: 1,
+      extinguishersDueThisMonth: 1,
+    },
+    serviceMonthLabel: "June 2026",
+  },
+  importHealth: {
+    buildingsInScope: 24,
+    buildingsWithoutRegister: 3,
+    activeAssets: 180,
+    assetsMissingNextDue: 12,
+    recentImports: {
+      customers: 8,
+      buildings: 22,
+      equipment: 140,
+      scheduleJobs: 18,
+    },
+    lastImportAt: new Date("2026-05-30T00:00:00Z"),
+    registerGaps: [
+      {
+        buildingId: "b3",
+        buildingLabel: "Oak Street Warehouse",
+        customerName: "Harborview Properties",
+      },
+    ],
+  },
   deficiencies: [
     {
       id: "def-1",
@@ -133,6 +213,11 @@ export const marketingCommandCenterPreview: CommandCenterSnapshot = {
     openDeficiencies: 1,
     pendingQuotes: 1,
     reportsSentThisMonth: 3,
+    equipmentOverdue: 1,
+    equipmentDueThisMonth: 2,
+    buildingsWithoutRegister: 3,
+    assetsMissingNextDue: 12,
+    csvImportsLast90Days: 188,
   },
 };
 

@@ -11,6 +11,8 @@ import { formatDate } from "@/lib/dashboard/dates";
 import { AutomationPanel } from "@/components/operations/automation-panel";
 import { AuditLogFeed } from "@/components/operations/audit-log-feed";
 import { CommandCenterDeficienciesTab } from "@/components/operations/command-center-deficiencies-tab";
+import { CommandCenterEquipmentTab } from "@/components/operations/command-center-equipment-tab";
+import { CommandCenterImportHealth } from "@/components/operations/command-center-import-health";
 import { CommandCenterQuotesTab } from "@/components/operations/command-center-quotes-tab";
 import type { QuotePipelineMetrics } from "@/lib/quotes/pipeline";
 import type { AuditLogPage } from "@/lib/audit/queries";
@@ -18,7 +20,6 @@ import type { AutomationVisibility } from "@/lib/operations/automation-visibilit
 import type { CommandCenterSnapshot } from "@/lib/operations/queries";
 import type { DueInspectionRow } from "@/lib/operations/due-inspections";
 import { OperationsExportButtons } from "@/components/operations/operations-export-buttons";
-import { DueAssetList } from "@/components/operations/due-asset-list";
 import { DUE_REMINDER_DAYS } from "@/lib/scheduling/recurrence-policy";
 import { cn } from "@/lib/utils";
 
@@ -105,7 +106,12 @@ function DueInspectionList({ rows }: { rows: DueInspectionRow[] }) {
 
 type AssignableStaff = { id: string; name: string | null; role: string };
 
-export type CommandCenterTab = "overview" | "deficiencies" | "quotes" | "activity";
+export type CommandCenterTab =
+  | "overview"
+  | "equipment"
+  | "deficiencies"
+  | "quotes"
+  | "activity";
 
 type CommandCenterViewProps = {
   snapshot: CommandCenterSnapshot;
@@ -128,6 +134,12 @@ export function CommandCenterView({
 }: CommandCenterViewProps) {
   const overdueTotal =
     snapshot.dueTotals.overdue + snapshot.dueTotals.neverInspected;
+  const equipmentAttention =
+    snapshot.dueAssets.totals.equipmentOverdue +
+    snapshot.dueAssets.totals.equipmentDueThisMonth;
+  const importAttention =
+    snapshot.summary.buildingsWithoutRegister +
+    snapshot.summary.assetsMissingNextDue;
 
   return (
     <div className="space-y-8">
@@ -151,35 +163,65 @@ export function CommandCenterView({
         <h2 id="command-stats" className="sr-only">
           Summary stats
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-          <StatCard label="Overdue / not started" value={overdueTotal} />
-          <StatCard label="Due in 14 days" value={snapshot.dueTotals.dueSoon} />
-          <StatCard
-            label="Equipment overdue"
-            value={snapshot.dueAssets.totals.equipmentOverdue}
-            hint="Register items past next service due"
-          />
-          <StatCard
-            label="Extinguishers due"
-            value={snapshot.dueAssets.totals.extinguishersDueThisMonth}
-            hint={`${snapshot.dueAssets.serviceMonthLabel} + overdue`}
-          />
-          <StatCard label="Open deficiencies" value={snapshot.summary.openDeficiencies} />
-          <StatCard
-            label="Open quote pipeline"
-            value={0}
-            displayValue={
-              quotePipeline.openPipelineCents > 0
-                ? new Intl.NumberFormat("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                    maximumFractionDigits: 0,
-                  }).format(quotePipeline.openPipelineCents / 100)
-                : "$0"
-            }
-            hint={`${snapshot.summary.pendingQuotes} drafts`}
-          />
-          <StatCard label="Reports sent (month)" value={snapshot.summary.reportsSentThisMonth} />
+        <div className="space-y-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Inspections
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <StatCard label="Overdue / not started" value={overdueTotal} />
+            <StatCard label="Due in 14 days" value={snapshot.dueTotals.dueSoon} />
+            <StatCard label="Open deficiencies" value={snapshot.summary.openDeficiencies} />
+          </div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Equipment register
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              label="Equipment overdue"
+              value={snapshot.summary.equipmentOverdue}
+              hint="Past next service due"
+            />
+            <StatCard
+              label="Due this month"
+              value={snapshot.summary.equipmentDueThisMonth}
+              hint={snapshot.dueAssets.serviceMonthLabel}
+            />
+            <StatCard
+              label="Sites without register"
+              value={snapshot.summary.buildingsWithoutRegister}
+              hint="No active equipment rows"
+            />
+            <StatCard
+              label="Assets missing due date"
+              value={snapshot.summary.assetsMissingNextDue}
+              hint="Won't show in due lists"
+            />
+          </div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Quotes & imports
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <StatCard
+              label="Open quote pipeline"
+              value={0}
+              displayValue={
+                quotePipeline.openPipelineCents > 0
+                  ? new Intl.NumberFormat("en-US", {
+                      style: "currency",
+                      currency: "USD",
+                      maximumFractionDigits: 0,
+                    }).format(quotePipeline.openPipelineCents / 100)
+                  : "$0"
+              }
+              hint={`${snapshot.summary.pendingQuotes} drafts`}
+            />
+            <StatCard
+              label="CSV imports (90 days)"
+              value={snapshot.summary.csvImportsLast90Days}
+              hint="Customers, buildings, equipment, schedule"
+            />
+            <StatCard label="Reports sent (month)" value={snapshot.summary.reportsSentThisMonth} />
+          </div>
         </div>
       </section>
 
@@ -187,6 +229,9 @@ export function CommandCenterView({
         <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
           <TabsList variant="line" className="min-w-max">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="equipment">
+              Equipment ({equipmentAttention})
+            </TabsTrigger>
             <TabsTrigger value="deficiencies">
               Deficiencies ({snapshot.summary.openDeficiencies})
             </TabsTrigger>
@@ -197,7 +242,9 @@ export function CommandCenterView({
           </TabsList>
         </div>
 
-        <TabsContent value="overview" className="mt-6 space-y-4">
+        <TabsContent value="overview" className="mt-6 space-y-8">
+          <CommandCenterImportHealth health={snapshot.importHealth} />
+
           <div>
             <h2 className="font-heading text-lg font-semibold text-foreground">
               Buildings due & overdue
@@ -226,53 +273,32 @@ export function CommandCenterView({
             ))}
           </div>
 
-          <div className="space-y-4 border-t border-border pt-8">
-            <div>
-              <h2 className="font-heading text-lg font-semibold text-foreground">
-                Equipment due for service
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Company-wide register view: overdue items and anything with a next service due in{" "}
-                {snapshot.dueAssets.serviceMonthLabel}. Set dates on each building&apos;s
-                Equipment tab or via CSV import.
-              </p>
-            </div>
-            <div className="grid gap-6 xl:grid-cols-2">
-              <Card>
-                <CardHeader className="border-b border-border/60">
-                  <CardTitle className="text-base">
-                    Fire extinguishers ({snapshot.dueAssets.serviceMonthLabel})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-4">
-                  <DueAssetList
-                    rows={snapshot.dueAssets.extinguishers}
-                    emptyTitle="No extinguishers due"
-                    emptyDescription="Import equipment or add extinguishers with a next service due date to see them here."
-                  />
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="border-b border-border/60">
-                  <CardTitle className="text-base">All equipment types</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6 pt-4">
-                  {snapshot.dueAssets.byType.length === 0 ? (
-                    <DueAssetList rows={[]} />
-                  ) : (
-                    snapshot.dueAssets.byType.map((group) => (
-                      <div key={group.assetType} className="space-y-3">
-                        <h3 className="text-sm font-medium text-foreground">
-                          {group.assetTypeLabel} ({group.rows.length})
-                        </h3>
-                        <DueAssetList rows={group.rows} />
-                      </div>
-                    ))
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+          {equipmentAttention > 0 || importAttention > 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {equipmentAttention > 0 ? (
+                <>
+                  <Link
+                    href="/dashboard/operations?tab=equipment"
+                    className="font-medium text-primary hover:underline"
+                  >
+                    {equipmentAttention} equipment item{equipmentAttention === 1 ? "" : "s"} due or
+                    overdue
+                  </Link>
+                </>
+              ) : null}
+              {equipmentAttention > 0 && importAttention > 0 ? " · " : null}
+              {importAttention > 0
+                ? `${importAttention} register gap${importAttention === 1 ? "" : "s"} (see Data & import health above)`
+                : null}
+            </p>
+          ) : null}
+        </TabsContent>
+
+        <TabsContent value="equipment" className="mt-6">
+          <CommandCenterEquipmentTab
+            dueAssets={snapshot.dueAssets}
+            importHealth={snapshot.importHealth}
+          />
         </TabsContent>
 
         <TabsContent value="deficiencies" className="mt-6 space-y-4">

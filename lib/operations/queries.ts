@@ -25,6 +25,7 @@ import {
 import { AssetType } from "@prisma/client";
 import type { DeficiencyRow } from "@/lib/deficiencies/queries";
 import { listOpenDeficiencies } from "@/lib/deficiencies/queries";
+import { getImportHealthSnapshot, type ImportHealthSnapshot } from "@/lib/operations/import-health";
 import { prisma } from "@/lib/prisma";
 
 /** @deprecated Use DeficiencyRow — kept for export/legacy references. */
@@ -71,10 +72,16 @@ export type CommandCenterSnapshot = {
   deficiencies: DeficiencyRow[];
   pendingQuotes: PendingQuoteRow[];
   reportsSentThisMonth: SentReportRow[];
+  importHealth: ImportHealthSnapshot;
   summary: {
     openDeficiencies: number;
     pendingQuotes: number;
     reportsSentThisMonth: number;
+    equipmentOverdue: number;
+    equipmentDueThisMonth: number;
+    buildingsWithoutRegister: number;
+    assetsMissingNextDue: number;
+    csvImportsLast90Days: number;
   };
 };
 
@@ -102,8 +109,16 @@ export async function getCommandCenterSnapshot(
     },
   });
 
-  const [buildings, inspections, inspectionTypes, deficiencies, pendingQuotes, reportsSent, registerAssets] =
-    await Promise.all([
+  const [
+    buildings,
+    inspections,
+    inspectionTypes,
+    deficiencies,
+    pendingQuotes,
+    reportsSent,
+    registerAssets,
+    importHealth,
+  ] = await Promise.all([
       prisma.building.findMany({
         where: buildingWhere,
         select: {
@@ -226,7 +241,8 @@ export async function getCommandCenterSnapshot(
         },
         orderBy: [{ nextServiceDue: "asc" }, { location: "asc" }],
       }),
-    ]);
+    getImportHealthSnapshot(session),
+  ]);
 
   const typeCodes =
     inspectionTypes.length > 0
@@ -283,10 +299,20 @@ export async function getCommandCenterSnapshot(
     deficiencies,
     pendingQuotes: pendingQuoteRows,
     reportsSentThisMonth,
+    importHealth,
     summary: {
       openDeficiencies: deficiencies.length,
       pendingQuotes: pendingQuoteRows.length,
       reportsSentThisMonth: reportsSentThisMonth.length,
+      equipmentOverdue: dueAssetTotals.equipmentOverdue,
+      equipmentDueThisMonth: dueAssetTotals.equipmentDueThisMonth,
+      buildingsWithoutRegister: importHealth.buildingsWithoutRegister,
+      assetsMissingNextDue: importHealth.assetsMissingNextDue,
+      csvImportsLast90Days:
+        importHealth.recentImports.customers +
+        importHealth.recentImports.buildings +
+        importHealth.recentImports.equipment +
+        importHealth.recentImports.scheduleJobs,
     },
   };
 }

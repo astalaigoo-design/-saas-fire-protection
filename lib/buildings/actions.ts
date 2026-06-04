@@ -15,6 +15,7 @@ import {
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { captureServerActionError } from "@/lib/monitoring/capture";
 import { prisma } from "@/lib/prisma";
+import { parseDateInputValue } from "@/lib/scheduling/calendar";
 
 export type BuildingActionResult = { ok: true } | { ok: false; error: string };
 
@@ -119,6 +120,8 @@ export async function updateBuilding(
     country: formData.get("country") || "US",
     buildingType: formData.get("buildingType"),
     fireDistrict: formData.get("fireDistrict"),
+    permitNumber: formData.get("permitNumber"),
+    permitExpiresAt: formData.get("permitExpiresAt"),
     notes: formData.get("notes"),
   });
 
@@ -130,6 +133,15 @@ export async function updateBuilding(
   if (!existing) return { ok: false, error: "Building not found." };
 
   const d = parsed.data;
+  let permitExpiresAt: Date | null = null;
+  if (d.permitExpiresAt) {
+    const parsedDate = parseDateInputValue(d.permitExpiresAt);
+    if (!parsedDate) {
+      return { ok: false, error: "Permit expiration must be a valid date (YYYY-MM-DD)." };
+    }
+    permitExpiresAt = parsedDate;
+  }
+
   await prisma.building.update({
     where: { id: d.buildingId },
     data: {
@@ -142,6 +154,8 @@ export async function updateBuilding(
       country: d.country,
       buildingType: d.buildingType || null,
       fireDistrict: d.fireDistrict || null,
+      permitNumber: d.permitNumber || null,
+      permitExpiresAt,
       notes: d.notes || null,
     },
   });

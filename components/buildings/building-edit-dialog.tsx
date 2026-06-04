@@ -130,6 +130,30 @@ export function BuildingEditDialog({ building }: BuildingEditDialogProps) {
               />
             </div>
           </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="edit-permit-number">Permit / approval number</Label>
+              <Input
+                id="edit-permit-number"
+                name="permitNumber"
+                defaultValue={building.permitNumber ?? ""}
+                placeholder="AHJ permit or system approval ID"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-permit-expires">Permit expires</Label>
+              <Input
+                id="edit-permit-expires"
+                name="permitExpiresAt"
+                type="date"
+                defaultValue={
+                  building.permitExpiresAt
+                    ? building.permitExpiresAt.toISOString().slice(0, 10)
+                    : ""
+                }
+              />
+            </div>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="edit-notes">General notes</Label>
             <Textarea
