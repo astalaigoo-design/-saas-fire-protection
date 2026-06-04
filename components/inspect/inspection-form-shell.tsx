@@ -61,7 +61,8 @@ function OfflineInspectionUnavailable({ inspectionId }: { inspectionId: string }
       <h1 className="text-lg font-semibold text-white">Inspection not available offline</h1>
       <p className="mt-2 text-sm text-slate-400">
         Open this job from My Jobs while you have internet once. After that, you can work offline
-        on this device — including other jobs you have opened online.
+        on this device — checklist, photos, signature, and equipment pass/fail (if the register
+        was loaded online).
       </p>
       <p className="mt-2 font-mono text-xs text-slate-500">{inspectionId.slice(0, 12)}…</p>
       <Link

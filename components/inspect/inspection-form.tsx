@@ -184,10 +184,12 @@ export function InspectionForm({
       snapshot: {
         ...inspection,
         items: mergedItems,
+        assetChecks: mergedAssetChecks,
         photos: mergedPhotos,
         signatureData: signature,
       },
       updatedAt: Date.now(),
+      equipmentRegisterCached: mergedAssetChecks.length > 0,
     });
   }, [inspection, items, assetChecks, photos, signature]);
 
@@ -336,6 +338,10 @@ export function InspectionForm({
           assetChecks={assetChecks}
           locked={locked}
           onAssetChecksChange={setAssetChecks}
+          offlineMode={offlineOnly || !isOnline}
+          offlineRegisterUnavailable={
+            (offlineOnly || !isOnline) && assetChecks.length === 0
+          }
         />
 
         {locked && photos.length > 0 ? (

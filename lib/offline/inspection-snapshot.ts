@@ -22,6 +22,28 @@ export function parseInspectionSnapshot(snapshot: unknown): InspectionFormData |
   return hydrateInspectionFormData(snapshot);
 }
 
+function mergeAssetChecks(
+  server: InspectionFormData["assetChecks"],
+  cached: InspectionFormData["assetChecks"],
+): InspectionFormData["assetChecks"] {
+  if (!cached.length) return server;
+  const byId = new Map(server.map((row) => [row.id, row]));
+  for (const cachedRow of cached) {
+    const serverRow = byId.get(cachedRow.id);
+    if (serverRow) {
+      byId.set(cachedRow.id, {
+        ...serverRow,
+        result: cachedRow.result,
+        notes: cachedRow.notes,
+        servicedAt: cachedRow.servicedAt,
+      });
+    } else {
+      byId.set(cachedRow.id, cachedRow);
+    }
+  }
+  return Array.from(byId.values());
+}
+
 export function mergeInspectionWithCache(
   server: InspectionFormData,
   cached: InspectionFormData,
@@ -31,7 +53,7 @@ export function mergeInspectionWithCache(
     status: cached.status !== "scheduled" ? cached.status : server.status,
     signatureData: cached.signatureData ?? server.signatureData,
     items: cached.items,
-    assetChecks: cached.assetChecks ?? server.assetChecks,
+    assetChecks: mergeAssetChecks(server.assetChecks, cached.assetChecks),
     photos: cached.photos,
   };
 }

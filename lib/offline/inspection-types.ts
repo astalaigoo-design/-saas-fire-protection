@@ -54,4 +54,6 @@ export type CachedInspectionSnapshot = {
   inspectionId: string;
   snapshot: InspectionFormData;
   updatedAt: number;
+  /** Set when a non-empty equipment register was cached for offline use. */
+  equipmentRegisterCached?: boolean;
 };

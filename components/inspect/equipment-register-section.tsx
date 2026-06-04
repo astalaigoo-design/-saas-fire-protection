@@ -37,6 +37,10 @@ type EquipmentRegisterSectionProps = {
   assetChecks: AssetCheckState[];
   locked: boolean;
   onAssetChecksChange: (checks: AssetCheckState[]) => void;
+  /** True when viewing a cached inspection with no register rows (open online once). */
+  offlineRegisterUnavailable?: boolean;
+  /** Hide camera scan when offline (pass/fail still works). */
+  offlineMode?: boolean;
 };
 
 const resultButtonClass = (active: boolean, tone: "pass" | "fail" | "na") => {
@@ -234,6 +238,8 @@ export function EquipmentRegisterSection({
   assetChecks,
   locked,
   onAssetChecksChange,
+  offlineRegisterUnavailable = false,
+  offlineMode = false,
 }: EquipmentRegisterSectionProps) {
   const [scanOpen, setScanOpen] = useState(false);
   const [scanMessage, setScanMessage] = useState<string | null>(null);
@@ -250,6 +256,21 @@ export function EquipmentRegisterSection({
       ),
     [assetChecks],
   );
+
+  if (offlineRegisterUnavailable) {
+    return (
+      <section className="space-y-3 px-4" aria-labelledby="equipment-register-heading">
+        <h2 id="equipment-register-heading" className="text-lg font-semibold text-white">
+          Equipment register
+        </h2>
+        <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          This job was not opened online with the building equipment list, so the register is
+          not available offline. Connect once, open this job from My jobs, then you can mark
+          pass/fail offline on your next visit.
+        </p>
+      </section>
+    );
+  }
 
   if (assetChecks.length === 0) return null;
 
@@ -285,11 +306,12 @@ export function EquipmentRegisterSection({
         </h2>
         <p className="mt-1 text-sm text-slate-400">
           Mark each item on site. Pass updates last service on submit.
+          {offlineMode ? " Saves locally when offline." : null}
           {pendingCount > 0 && !locked
             ? ` ${pendingCount} remaining.`
             : null}
         </p>
-        {!locked ? (
+        {!locked && !offlineMode ? (
           <div className="mt-3">
             <Button
               type="button"
@@ -300,6 +322,11 @@ export function EquipmentRegisterSection({
               Scan QR / barcode
             </Button>
           </div>
+        ) : null}
+        {!locked && offlineMode ? (
+          <p className="mt-2 text-xs text-slate-500">
+            QR/barcode scan needs a connection. Scroll the list to mark pass, fail, or N/A.
+          </p>
         ) : null}
         {scanMessage ? (
           <p className="mt-2 text-sm text-amber-200" role="status">
