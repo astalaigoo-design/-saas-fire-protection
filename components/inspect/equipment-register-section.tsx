@@ -41,6 +41,12 @@ type EquipmentRegisterSectionProps = {
   offlineRegisterUnavailable?: boolean;
   /** Hide camera scan when offline (pass/fail still works). */
   offlineMode?: boolean;
+  /** When set, register scan uses the parent handler (shared with checklist scan). */
+  onScanValue?: (value: string) => void;
+  /** Highlight a register row after a shared scan (parent-controlled). */
+  highlightedCheckId?: string | null;
+  /** Hide the local scan button when a shared scan bar is shown above the checklist. */
+  hideScanButton?: boolean;
 };
 
 const resultButtonClass = (active: boolean, tone: "pass" | "fail" | "na") => {
@@ -240,10 +246,14 @@ export function EquipmentRegisterSection({
   onAssetChecksChange,
   offlineRegisterUnavailable = false,
   offlineMode = false,
+  onScanValue,
+  highlightedCheckId = null,
+  hideScanButton = false,
 }: EquipmentRegisterSectionProps) {
   const [scanOpen, setScanOpen] = useState(false);
   const [scanMessage, setScanMessage] = useState<string | null>(null);
-  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [localHighlightedId, setLocalHighlightedId] = useState<string | null>(null);
+  const highlightedId = highlightedCheckId ?? localHighlightedId;
 
   const scanIndex = useMemo(
     () =>
@@ -278,7 +288,23 @@ export function EquipmentRegisterSection({
     (c) => c.result === InspectionItemResult.pending,
   ).length;
 
+  const scrollToAssetCheck = (checkId: string) => {
+    if (!onScanValue) {
+      setLocalHighlightedId(checkId);
+      window.setTimeout(() => setLocalHighlightedId(null), 4000);
+    }
+    document.getElementById(`asset-check-${checkId}`)?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  };
+
   const handleScan = (value: string) => {
+    if (onScanValue) {
+      onScanValue(value);
+      return;
+    }
+
     const assetId = findAssetIdByScanValue(value, scanIndex);
     if (!assetId) {
       setScanMessage(`No register item matches “${value.trim()}”.`);
@@ -290,12 +316,7 @@ export function EquipmentRegisterSection({
       return;
     }
     setScanMessage(null);
-    setHighlightedId(check.id);
-    document.getElementById(`asset-check-${check.id}`)?.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-    });
-    window.setTimeout(() => setHighlightedId(null), 4000);
+    scrollToAssetCheck(check.id);
   };
 
   return (
@@ -310,7 +331,7 @@ export function EquipmentRegisterSection({
           {offlineMode ? " Saves locally when offline." : null}
           {pendingCount > 0 && !locked ? ` ${pendingCount} not marked yet.` : null}
         </p>
-        {!locked && !offlineMode ? (
+        {!locked && !offlineMode && !hideScanButton ? (
           <div className="mt-3">
             <Button
               type="button"
@@ -334,11 +355,13 @@ export function EquipmentRegisterSection({
         ) : null}
       </div>
 
-      <BarcodeScannerSheet
-        open={scanOpen}
-        onClose={() => setScanOpen(false)}
-        onScan={handleScan}
-      />
+      {!onScanValue ? (
+        <BarcodeScannerSheet
+          open={scanOpen}
+          onClose={() => setScanOpen(false)}
+          onScan={handleScan}
+        />
+      ) : null}
       <ul className="space-y-3">
         {assetChecks.map((check) => (
           <li key={check.id}>

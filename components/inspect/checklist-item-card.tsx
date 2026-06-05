@@ -22,6 +22,7 @@ type ChecklistItemCardProps = {
   index: number;
   total: number;
   locked: boolean;
+  highlighted?: boolean;
   itemPhotoCount: number;
   onUpdated: (item: ChecklistItemState) => void;
   onPhotoAdded: (photo: { id: string; url: string; caption: string | null }) => void;
@@ -33,6 +34,7 @@ export function ChecklistItemCard({
   index,
   total,
   locked,
+  highlighted = false,
   itemPhotoCount,
   onUpdated,
   onPhotoAdded,
@@ -111,7 +113,14 @@ export function ChecklistItemCard({
   const isFail = item.result === InspectionItemResult.fail;
 
   return (
-    <article className="flex h-full w-[min(24rem,calc(100vw-2rem))] shrink-0 snap-center flex-col rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-lg">
+    <article
+      id={`checklist-item-${item.id}`}
+      className={`flex h-full w-[min(24rem,calc(100vw-2rem))] shrink-0 snap-center flex-col rounded-2xl border bg-slate-900 p-4 shadow-lg ${
+        highlighted
+          ? "border-amber-400 ring-2 ring-amber-400/60"
+          : "border-slate-800"
+      }`}
+    >
       <p className="text-xs font-medium text-slate-500">
         Item {index + 1} of {total}
       </p>

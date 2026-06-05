@@ -3,10 +3,14 @@
 import { InspectionItemResult, InspectionStatus } from "@prisma/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { BuildingHeader } from "@/components/inspect/building-header";
 import { PreJobBriefCard } from "@/components/inspect/pre-job-brief-card";
-import { ChecklistCarousel } from "@/components/inspect/checklist-carousel";
+import {
+  ChecklistCarousel,
+  type ChecklistCarouselHandle,
+} from "@/components/inspect/checklist-carousel";
+import { InspectionTagScanBar } from "@/components/inspect/inspection-tag-scan-bar";
 import {
   EquipmentRegisterSection,
   type AssetCheckState,
@@ -20,6 +24,7 @@ import { VisitArrivalPanel } from "@/components/inspect/visit-arrival-panel";
 import { InspectionServiceRecordedSummary } from "@/components/inspect/inspection-service-recorded-summary";
 import { VisitProofSummary } from "@/components/inspect/visit-proof-summary";
 import { collectServiceRecordedRows } from "@/lib/inspect/job-equipment";
+import { resolveInspectionScanTarget } from "@/lib/inspect/resolve-scan-target";
 import { captureDeviceGps } from "@/lib/inspect/capture-gps";
 import type { AppRole } from "@/lib/auth/roles";
 import type { ChecklistItemState } from "@/components/inspect/checklist-item-card";
@@ -114,6 +119,12 @@ export function InspectionForm({
   );
   const [mileageMiles, setMileageMiles] = useState("");
   const [pending, startTransition] = useTransition();
+  const checklistRef = useRef<ChecklistCarouselHandle>(null);
+  const [scanMessage, setScanMessage] = useState<string | null>(null);
+  const [highlightedChecklistItemId, setHighlightedChecklistItemId] = useState<string | null>(
+    null,
+  );
+  const [highlightedAssetCheckId, setHighlightedAssetCheckId] = useState<string | null>(null);
 
   const hasCheckedIn = Boolean(inspection.arrivedAt ?? localArrivedAt);
   const offlineMode = offlineOnly || !isOnline;
@@ -306,6 +317,43 @@ export function InspectionForm({
     });
   };
 
+  const handleTagScan = useCallback(
+    (value: string) => {
+      const target = resolveInspectionScanTarget({
+        scanValue: value,
+        items,
+        assetChecks,
+      });
+
+      if (!target) {
+        setScanMessage(`No checklist or register match for “${value.trim()}”.`);
+        return;
+      }
+
+      setScanMessage(null);
+
+      if (target.checklistItemId) {
+        setHighlightedChecklistItemId(target.checklistItemId);
+        checklistRef.current?.scrollToItemId(target.checklistItemId);
+        window.setTimeout(() => setHighlightedChecklistItemId(null), 4000);
+      }
+
+      if (target.assetCheckId) {
+        setHighlightedAssetCheckId(target.assetCheckId);
+        document.getElementById(`asset-check-${target.assetCheckId}`)?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        window.setTimeout(() => setHighlightedAssetCheckId(null), 4000);
+      }
+
+      if (!target.checklistItemId && target.assetCheckId) {
+        setScanMessage(`Opened register — ${target.label}. No linked checklist row for this tag.`);
+      }
+    },
+    [items, assetChecks],
+  );
+
   const handlePhotoAdded = (photo: InspectionPhoto) => {
     setPhotos((current) => [...current, photo]);
     void listOfflineMutations(inspection.id).then((mutations) =>
@@ -360,11 +408,20 @@ export function InspectionForm({
 
         {!awaitingCheckIn ? (
           <>
+            <InspectionTagScanBar
+              disabled={locked}
+              offlineMode={offlineMode}
+              message={scanMessage}
+              onScan={handleTagScan}
+            />
+
             <ChecklistCarousel
+              ref={checklistRef}
               inspectionId={inspection.id}
               items={items}
               photos={photos}
               locked={locked}
+              highlightedItemId={highlightedChecklistItemId}
               onItemsChange={setItems}
               onPhotoAdded={handlePhotoAdded}
             />
@@ -376,6 +433,9 @@ export function InspectionForm({
               onAssetChecksChange={setAssetChecks}
               offlineMode={offlineMode}
               offlineRegisterUnavailable={offlineMode && assetChecks.length === 0}
+              onScanValue={locked || offlineMode ? undefined : handleTagScan}
+              highlightedCheckId={highlightedAssetCheckId}
+              hideScanButton={!locked && !offlineMode}
             />
           </>
         ) : null}
