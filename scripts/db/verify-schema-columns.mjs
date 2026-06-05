@@ -88,6 +88,26 @@ const checks = [
     sql: `SELECT 1 FROM information_schema.columns
           WHERE table_schema = 'public' AND table_name = 'inspections' AND column_name = 'technicianDayOfSmsSentAt'`,
   },
+  {
+    label: "branch_asset_service_intervals",
+    sql: `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'branch_asset_service_intervals'`,
+  },
+  {
+    label: "jurisdictions",
+    sql: `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'jurisdictions'`,
+  },
+  {
+    label: "work_orders",
+    sql: `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'work_orders'`,
+  },
+  {
+    label: "inspections.arrivedAt",
+    sql: `SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = 'inspections' AND column_name = 'arrivedAt'`,
+  },
 ];
 
 let failed = false;

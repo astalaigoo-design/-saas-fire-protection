@@ -22,12 +22,92 @@ Use this guide to onboard **one fire inspection company** (your tenant) with **o
 Complete these once per environment:
 
 - [ ] Production DB baselined: `npm run db:baseline-migrations -- --verify --yes` (once), then deploys run `migrate deploy` automatically.
-- [ ] After each deploy: `npm run db:migrate:status` and `npm run db:verify-schema` (see [PRODUCTION-MIGRATIONS.md](./PRODUCTION-MIGRATIONS.md)).
+- [ ] After each deploy: `npm run db:migrate:status` → **up to date**; `npm run db:verify-schema` → all `OK` (see [PRODUCTION-MIGRATIONS.md](./PRODUCTION-MIGRATIONS.md)).
 - [ ] Vercel env: `DATABASE_URL`, `DIRECT_URL`, Clerk keys, Supabase storage keys.
 - [ ] Clerk: `getflareflow.com` added under **Domains**; webhook → `https://getflareflow.com/api/webhooks/clerk` with `CLERK_WEBHOOK_SIGNING_SECRET` in Vercel.
-- [ ] Resend: `getflareflow.com` verified; `RESEND_API_KEY` + `REPORT_EMAIL_FROM` on Vercel (for post-submit email and **Send quote**).
+- [ ] **Email + CSV + equipment prerequisites** below (Resend, import order, migrations).
 - [ ] Optional Twilio: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_SMS_FROM` — technician assign/reschedule + day-of SMS (see Organization → Technician job alerts).
 - [ ] Optional: remove leftover demo rows — `npm run db:check-demo` then `npm run db:cleanup-smoke` (dev/staging only if intentional; see script dry run without `--apply`).
+
+---
+
+## Prerequisites — email, CSV, and equipment
+
+Complete **before** bulk import or promising quotes / compliance email to a pilot.
+
+### 1. Database migrations (required for imports)
+
+CSV and equipment features need current schema. On production (with `DIRECT_URL` in `.env`):
+
+```bash
+npm run db:migrate:status    # expect: Database schema is up to date!
+npm run db:verify-schema     # expect: all OK
+```
+
+If anything is pending or `MISSING`, run `npm run db:migrate:deploy` and see [PRODUCTION-MIGRATIONS.md](./PRODUCTION-MIGRATIONS.md).
+
+| Feature | Minimum migration |
+|---------|-------------------|
+| **Branches** + `branch` CSV column | `20260602120000_add_branches` |
+| **Customers → Import CSV** | `branches` + `customers.branchId` |
+| **Buildings → Import CSV** | `branches` (building import can create customers) |
+| **Equipment register** + **Import equipment** | `20260607120000_add_building_assets` |
+| Field equipment pass/fail on inspect | `20260609130000_add_inspection_asset_checks` |
+| Barcode / QR on equipment rows | `20260611120000_add_building_asset_barcode` |
+| **Calendar → Import schedule** | buildings + inspection types in DB (no extra migration) |
+| Technician SMS + day-of | `20260608120000_user_phone_day_of_sms` |
+
+### 2. Outbound email (Resend) — required for customer-facing mail
+
+Set on Vercel Production:
+
+| Variable | Purpose |
+|----------|---------|
+| `RESEND_API_KEY` | API access |
+| `REPORT_EMAIL_FROM` | From address, e.g. `reports@getflareflow.com` |
+
+Also:
+
+- Verify sending domain at [resend.com](https://resend.com) (**getflareflow.com**).
+- **Organization → Outbound email** in the app should show configured (owner/admin).
+
+**What needs email on file:**
+
+| Flow | Recipient | Where to set |
+|------|-----------|--------------|
+| Post-inspection compliance PDF | Customer | Customer **email** (or `customer_email` in building CSV) |
+| **Send quote** | Customer | Same customer email |
+| Due / trial reminders (cron) | Owner/admin inboxes | Clerk sign-in email + Resend configured |
+| Assign / reschedule job | Technician | **Organization → Team** email (or `technician_email` in schedule CSV) |
+
+In-app bell notifications work **without** Resend. SMS is separate (Twilio). Pilots still need **customer email** on accounts they want to email.
+
+### 3. CSV import order (do not skip steps)
+
+The dashboard **Get started** card follows this order. Each step depends on the previous unless noted.
+
+1. **Organization → Branches** — create branch names if multi-location (omit `branch` column or use **Main** for single office).
+2. **Customers → Import CSV** — `branch`, `customer`, optional `email`, `phone`.  
+   - Set **email** now if you plan to send quotes or compliance PDFs.
+3. **Buildings → Import CSV** — `branch`, `customer`, `building_name`, address fields, optional `customer_email` / `customer_phone`.  
+   - `customer` must match step 2 (or import creates new customers).
+4. **Buildings → Import equipment** (optional) — sites must already exist.  
+   - Match rows by `branch` + `customer` + `building_name` (or address).  
+   - `asset_type`: `fire_extinguisher`, `fire_alarm_panel`, `sprinkler_component`, `fire_hydrant`, `standpipe`, `emergency_light`, `hose_cabinet`, `other` (aliases like `extinguisher`, `hydrant` work in preview).
+5. **Calendar → Import schedule** — buildings + inspection types must exist.  
+   - `inspection_type`: codes `annual`, `quarterly`, `monthly` or exact names from Organization.  
+   - Optional `technician_email` must match an active team member.
+
+**Preview before import** on every CSV — fix branch name typos and duplicates there.
+
+### 4. Equipment register (single site or bulk)
+
+**After buildings exist:**
+
+- **Bulk:** **Buildings → Import equipment** (`/dashboard/buildings/import-equipment`) — up to 500 rows per file.
+- **Single site:** Building detail → **Equipment** tab → **Add equipment** (location required; tag # and barcode optional).
+
+**Field inspection:** open `/inspect/...` on a building with equipment — **Equipment register** section appears when `inspection_asset_checks` migration is applied. Scan QR/barcode or link checklist rows by tag in Organization → checklist templates.
 
 ---
 
@@ -134,7 +214,7 @@ Confirm the site appears on the customer detail page and **Buildings** list.
 1. Open a building → **Equipment** tab (or `?tab=assets` from onboarding).
 2. **Add equipment** — type, location (required), tag #, manufacturer, service dates, notes.
 
-Requires migration `20260607120000_add_building_assets` on production (`npm run db:migrate:deploy`).
+Requires migrations in **§ Prerequisites** (`building_assets` + `inspection_asset_checks` for field register).
 
 ---
 
@@ -232,7 +312,9 @@ After submit:
 | “Repair quotes temporarily unavailable” | Run `npm run db:migrate:status`; baseline or `npm run db:migrate:deploy` on production. |
 | Building **Equipment** tab errors | Migration `20260607120000_add_building_assets` — see [PRODUCTION-MIGRATIONS.md](./PRODUCTION-MIGRATIONS.md). |
 | CSV import fails / branch column | Migrations for `branches` + `customers.branchId`; use **Main** or match Organization branch names. |
-| Send quote does nothing | `RESEND_API_KEY`, `REPORT_EMAIL_FROM`, verified domain; customer email set. |
+| Send quote does nothing | Resend env + verified domain; customer **email** on record (see **§ Prerequisites — email**). |
+| Equipment import: building not found | Import buildings first; `branch` / `customer` / `building_name` must match existing rows. |
+| Schedule CSV: technician skipped | `technician_email` must match Organization → Team; assign manually if omitted. |
 | Photos fail to upload | `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, bucket `inspection-photos`. |
 | User not in database / stuck on account setup | App now **auto-provisions on sign-in** (no webhook required). If still stuck: open `/account-setup` → **Connect workspace**. Ops: Clerk webhook → `https://getflareflow.com/api/webhooks/clerk` + `CLERK_WEBHOOK_SIGNING_SECRET`; `npm run fix-user -- <clerk_user_id> owner` as fallback. |
 

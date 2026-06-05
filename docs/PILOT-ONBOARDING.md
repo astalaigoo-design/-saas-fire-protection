@@ -100,17 +100,34 @@ npm run pilot:onboard -- --verify
 
 ## After onboarding
 
-1. **Confirm DB schema** (especially if this database existed before the latest app release):
+1. **Apply and verify production schema** (required before CSV or equipment):
 
 ```bash
-npm run db:migrate:status
-npm run db:verify-schema
+npm run db:migrate:status   # Database schema is up to date!
+npm run db:migrate:deploy   # if anything pending (use DIRECT_URL)
+npm run db:verify-schema    # all OK
 ```
 
-See [PRODUCTION-MIGRATIONS.md](./PRODUCTION-MIGRATIONS.md) if anything is `MISSING` (e.g. `building_assets` for equipment, `branches` for multi-location).
+See [PRODUCTION-MIGRATIONS.md](./PRODUCTION-MIGRATIONS.md) if anything is `MISSING`.
 
-2. Continue with the field checklist: [PILOT.md](./PILOT.md) (**Import customers** → **Import buildings** → optional **Equipment** → **Import schedule** → inspect). The dashboard **Get started** card mirrors this order.
+2. **Configure outbound email** before promising quotes or compliance PDFs:
 
-3. After each production deploy, run [PRODUCTION-SMOKE-TEST.md](./PRODUCTION-SMOKE-TEST.md).
+   - Vercel: `RESEND_API_KEY`, `REPORT_EMAIL_FROM` (verified **getflareflow.com** domain).
+   - Owner checks **Organization → Outbound email** shows configured.
+   - Import **customer email** in Customers CSV (or per customer) before **Send quote**.
+
+3. **CSV + equipment path** — [PILOT.md § Prerequisites](./PILOT.md#prerequisites--email-csv-and-equipment):
+
+   | Order | Action |
+   |-------|--------|
+   | 1 | Organization → **Branches** (if multi-location) |
+   | 2 | **Customers → Import CSV** (`email` column for mail later) |
+   | 3 | **Buildings → Import CSV** |
+   | 4 | **Import equipment** (optional; buildings must exist) |
+   | 5 | **Calendar → Import schedule** (`technician_email` optional) |
+
+4. Continue the field checklist: [PILOT.md](./PILOT.md) → inspect → Reports.
+
+5. After each production deploy, run [PRODUCTION-SMOKE-TEST.md](./PRODUCTION-SMOKE-TEST.md).
 
 Owner nav should include **Organization** (branches, checklist templates, outbound email), **Customers → Import CSV**, **Buildings → Import CSV**, **Import equipment**, building **Equipment** tab, **Billing** (read-only for admins), and full job/customer access.
