@@ -1,5 +1,6 @@
-import { InspectionItemResult } from "@prisma/client";
+import { AssetType, InspectionItemResult } from "@prisma/client";
 import { describe, expect, it } from "vitest";
+import { nextServiceDueFromInterval } from "@/lib/assets/service-intervals";
 import {
   buildAssetTagIndex,
   collectServicedAssetIds,
@@ -88,5 +89,28 @@ describe("asset linkage", () => {
       true,
     );
     expect(textContainsEquipmentTag("FE-1010", "fe-101")).toBe(false);
+  });
+
+  it("advances next due by water-system interval when a register asset passes", () => {
+    const completedAt = new Date("2026-06-05T14:00:00Z");
+    const servicedIds = collectServicedAssetIds({
+      items: [],
+      assetChecks: [
+        { buildingAssetId: "hydrant-1", result: InspectionItemResult.pass },
+      ],
+      tagIndex: new Map(),
+    });
+    expect(servicedIds).toEqual(["hydrant-1"]);
+
+    const nextDue = nextServiceDueFromInterval(completedAt, 12);
+    expect(nextDue?.getFullYear()).toBe(2027);
+    expect(nextDue?.getMonth()).toBe(5);
+
+    const quarterly = nextServiceDueFromInterval(
+      completedAt,
+      3,
+    );
+    expect(quarterly?.getMonth()).toBe(8);
+    expect(AssetType.sprinkler_component).toBe("sprinkler_component");
   });
 });

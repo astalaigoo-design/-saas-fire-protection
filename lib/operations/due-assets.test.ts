@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   computeDueAssets,
   countDueAssetTotals,
+  countDueByWaterSystemType,
   filterDueAssetsByType,
 } from "@/lib/operations/due-assets";
 
@@ -96,5 +97,44 @@ describe("countDueAssetTotals", () => {
     expect(totals.equipmentDueThisMonth).toBe(1);
     expect(totals.extinguishersDueThisMonth).toBe(2);
     expect(filterDueAssetsByType(rows, AssetType.fire_extinguisher)).toHaveLength(2);
+  });
+});
+
+describe("countDueByWaterSystemType", () => {
+  it("totals overdue and due_this_month per hydrant, standpipe, and sprinkler", () => {
+    const now = new Date("2026-06-15T12:00:00Z");
+    const rows = computeDueAssets({
+      assets: [
+        asset({
+          id: "hydrant",
+          assetType: AssetType.fire_hydrant,
+          nextServiceDue: new Date("2026-05-01"),
+        }),
+        asset({
+          id: "standpipe",
+          assetType: AssetType.standpipe,
+          nextServiceDue: new Date("2026-06-20"),
+        }),
+        asset({
+          id: "sprinkler",
+          assetType: AssetType.sprinkler_component,
+          nextServiceDue: new Date("2026-07-05"),
+        }),
+        asset({
+          id: "ext",
+          assetType: AssetType.fire_extinguisher,
+          nextServiceDue: new Date("2026-05-01"),
+        }),
+      ],
+      now,
+      monthStart: new Date(2026, 5, 1),
+      monthEnd: new Date(2026, 6, 1),
+    });
+
+    const water = countDueByWaterSystemType(rows);
+    expect(water.fire_hydrant).toEqual({ overdue: 1, dueThisMonth: 0 });
+    expect(water.standpipe).toEqual({ overdue: 0, dueThisMonth: 1 });
+    expect(water.sprinkler_component).toEqual({ overdue: 0, dueThisMonth: 0 });
+    expect(water.attentionTotal).toBe(2);
   });
 });
