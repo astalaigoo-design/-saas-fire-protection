@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 type MyPhoneFormProps = {
   currentPhone: string | null;
   smsConfigured: boolean;
+  hasJobsToday?: boolean;
 };
 
 function SaveButton() {
@@ -23,19 +24,34 @@ function SaveButton() {
   );
 }
 
-export function MyPhoneForm({ currentPhone, smsConfigured }: MyPhoneFormProps) {
+export function MyPhoneForm({
+  currentPhone,
+  smsConfigured,
+  hasJobsToday = false,
+}: MyPhoneFormProps) {
   const [state, formAction] = useFormState<UpdateMyPhoneState | undefined, FormData>(
     updateMyTechnicianPhone,
     undefined,
   );
 
+  const missingPhone = !currentPhone?.trim();
+  const urgentToday = smsConfigured && missingPhone && hasJobsToday;
+
   return (
-    <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+    <section
+      className={
+        urgentToday
+          ? "rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 shadow-sm"
+          : "rounded-xl border border-border bg-card p-4 shadow-sm"
+      }
+    >
       <h2 className="text-sm font-semibold text-foreground">SMS job alerts</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        {smsConfigured
-          ? "Add your mobile number to get texts when jobs are assigned, rescheduled, or due today."
-          : "SMS is not enabled on this server yet. You still get in-app and email alerts when configured."}
+        {urgentToday
+          ? "You have visits today but no mobile number saved. Add your number to get this morning’s day-of text and schedule updates."
+          : smsConfigured
+            ? "Add your mobile number to get texts when jobs are assigned, rescheduled, or due today."
+            : "SMS is not enabled on this server yet. You still get in-app and email alerts when configured."}
       </p>
       <form action={formAction} className="mt-4 space-y-3">
         <div className="space-y-2">

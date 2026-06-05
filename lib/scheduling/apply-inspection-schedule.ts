@@ -10,6 +10,7 @@ import {
   notifyTechnicianForInspection,
   notifyTechnicianJobUnassigned,
 } from "@/lib/scheduling/notify-technician-job";
+import { shouldResetTechnicianDayOfSmsSentAt } from "@/lib/scheduling/technician-day-of-reminders";
 
 export type ApplyInspectionScheduleInput = {
   session: DashboardSession;
@@ -82,11 +83,17 @@ export async function applyInspectionScheduleUpdate(
     };
   }
 
+  const resetDayOfSms =
+    assigneeChanged ||
+    (scheduleChanged &&
+      shouldResetTechnicianDayOfSmsSentAt(before.scheduledAt, input.scheduledAt));
+
   await prisma.inspection.update({
     where: { id: before.id },
     data: {
       scheduledAt: input.scheduledAt,
       ...(assigneeProvided ? { assignedToUserId: assigneeId } : {}),
+      ...(resetDayOfSms ? { technicianDayOfSmsSentAt: null } : {}),
     },
   });
 

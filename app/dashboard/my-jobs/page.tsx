@@ -1,4 +1,5 @@
 import { MyJobsClient } from "@/components/dashboard/my-jobs-client";
+import { MyJobsTodaySection } from "@/components/dashboard/my-jobs-today-section";
 import { ContinueInspectionHero } from "@/components/dashboard/continue-inspection-hero";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/dashboard/page-header";
@@ -13,6 +14,7 @@ import { prisma } from "@/lib/prisma";
 import { pickPromotedResumeJobId } from "@/lib/inspect/resume-job";
 import { CacheRouteOnVisit } from "@/components/offline/cache-route-on-visit";
 import { MyWorkOrdersSection } from "@/components/dashboard/my-work-orders-section";
+import { partitionTechnicianJobsByToday } from "@/lib/inspect/my-jobs-today";
 import { getMyAssignedInspections, toJobCatalogEntry } from "@/lib/inspect/my-jobs";
 import { listMyAssignedWorkOrders } from "@/lib/work-orders/queries";
 
@@ -34,6 +36,7 @@ export default async function MyJobsPage() {
   ]);
 
   const catalogJobs = jobs.map(toJobCatalogEntry);
+  const { todayJobs, upcomingJobs } = partitionTechnicianJobsByToday(catalogJobs);
 
   const serverResumeJobId = pickPromotedResumeJobId(
     catalogJobs.map((job) => ({ ...job, status: job.status ?? "scheduled" })),
@@ -58,14 +61,24 @@ export default async function MyJobsPage() {
         outboundEmailConfigured={emailStatus.configured}
       />
 
-      <MyPhoneForm currentPhone={me?.phone ?? null} smsConfigured={smsStatus.configured} />
+      <MyPhoneForm
+        currentPhone={me?.phone ?? null}
+        smsConfigured={smsStatus.configured}
+        hasJobsToday={todayJobs.length > 0}
+      />
 
       <CacheRouteOnVisit path="/dashboard/my-jobs" />
       <ContinueInspectionHero jobs={catalogJobs} serverResumeJobId={serverResumeJobId} />
 
       <MyWorkOrdersSection workOrders={workOrders} />
 
-      <MyJobsClient serverJobs={catalogJobs} promotedJobId={serverResumeJobId} />
+      <MyJobsTodaySection jobs={todayJobs} highlightId={serverResumeJobId} />
+
+      <MyJobsClient
+        serverJobs={catalogJobs}
+        upcomingJobs={upcomingJobs}
+        promotedJobId={serverResumeJobId}
+      />
     </div>
   );
 }

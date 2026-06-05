@@ -6,7 +6,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { parseCalendarMonth } from "@/lib/scheduling/calendar";
+import { TechnicianDayOfReadinessBanner } from "@/components/dashboard/technician-day-of-readiness-banner";
 import { getCalendarInspections } from "@/lib/scheduling/queries";
+import { listTodayJobsMissingTechnicianPhone } from "@/lib/scheduling/technician-day-of-readiness";
 import { cn } from "@/lib/utils";
 
 type JobsPageProps = {
@@ -19,7 +21,10 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   ensureCanManageJobs(session.role);
 
   const month = parseCalendarMonth(searchParams);
-  const inspections = await getCalendarInspections(session, month.year, month.month);
+  const [inspections, dayOfReadiness] = await Promise.all([
+    getCalendarInspections(session, month.year, month.month),
+    listTodayJobsMissingTechnicianPhone(session),
+  ]);
   const showScheduledBanner = searchParams.scheduled === "1";
   const showUpdatedBanner = searchParams.updated === "1";
   const showBulkBanner = searchParams.bulk === "1";
@@ -49,6 +54,8 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           </div>
         }
       />
+      <TechnicianDayOfReadinessBanner rows={dayOfReadiness} />
+
       <InspectionCalendar
         month={month}
         inspections={inspections}

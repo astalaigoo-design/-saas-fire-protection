@@ -17,6 +17,10 @@
       "schedule": "0 12 * * *"
     },
     {
+      "path": "/api/cron/technician-day-of",
+      "schedule": "0 17 * * *"
+    },
+    {
       "path": "/api/cron/due-reminders",
       "schedule": "0 13 * * *"
     },

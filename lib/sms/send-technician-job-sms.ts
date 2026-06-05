@@ -1,4 +1,6 @@
 import { getAppOrigin } from "@/lib/app-url";
+import { buildMapsSearchUrl } from "@/lib/maps/build-search-url";
+import { getDayOfSmsTimeZone } from "@/lib/scheduling/day-of-timezone";
 import { isSmsConfigured } from "@/lib/sms/env";
 import { sendSmsMessage } from "@/lib/sms/send-message";
 import type { TechnicianJobEmailKind } from "@/lib/email/send-technician-job-email";
@@ -10,13 +12,14 @@ function truncateBody(text: string): string {
   return `${text.slice(0, SMS_BODY_MAX - 1)}…`;
 }
 
-function formatWhen(date: Date): string {
+function formatWhen(date: Date, timeZone?: string): string {
   return date.toLocaleString("en-US", {
     weekday: "short",
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    ...(timeZone ? { timeZone } : {}),
   });
 }
 
@@ -24,18 +27,27 @@ function buildBody(input: {
   kind: TechnicianJobEmailKind | "day_of";
   inspectionTypeName: string;
   buildingLabel: string;
+  addressLine?: string;
+  mapsQuery?: string;
   scheduledAt: Date;
   inspectionId: string;
   companyName?: string;
   newAssigneeName?: string | null;
   occurrenceNote?: string | null;
 }): string {
-  const when = formatWhen(input.scheduledAt);
+  const when =
+    input.kind === "day_of"
+      ? formatWhen(input.scheduledAt, getDayOfSmsTimeZone())
+      : formatWhen(input.scheduledAt);
   const jobUrl = `${getAppOrigin()}/inspect/${encodeURIComponent(input.inspectionId)}`;
 
   if (input.kind === "day_of") {
+    const address = input.addressLine?.trim() || input.buildingLabel;
+    const mapsUrl = input.mapsQuery?.trim()
+      ? buildMapsSearchUrl(input.mapsQuery)
+      : jobUrl;
     return truncateBody(
-      `${input.companyName ?? "GetFlareflow"}: Job today — ${input.inspectionTypeName} at ${input.buildingLabel}, ${when}. ${jobUrl}`,
+      `${input.companyName ?? "GetFlareflow"}: Today ${when} — ${input.inspectionTypeName}, ${address}. ${mapsUrl}`,
     );
   }
 
@@ -75,6 +87,8 @@ export async function sendTechnicianJobSms(input: {
   kind: TechnicianJobEmailKind | "day_of";
   inspectionTypeName: string;
   buildingLabel: string;
+  addressLine?: string;
+  mapsQuery?: string;
   scheduledAt: Date;
   inspectionId: string;
   companyName?: string;

@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 type MyJobsClientProps = {
   serverJobs: JobCatalogEntry[];
+  upcomingJobs: JobCatalogEntry[];
   promotedJobId: string | null;
 };
 
@@ -26,8 +27,12 @@ function jobForSort(job: JobCatalogEntry) {
   };
 }
 
-export function MyJobsClient({ serverJobs, promotedJobId }: MyJobsClientProps) {
-  const [jobs, setJobs] = useState<JobCatalogEntry[]>(serverJobs);
+export function MyJobsClient({
+  serverJobs,
+  upcomingJobs,
+  promotedJobId,
+}: MyJobsClientProps) {
+  const [jobs, setJobs] = useState<JobCatalogEntry[]>(upcomingJobs);
   const [offline, setOffline] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -42,9 +47,9 @@ export function MyJobsClient({ serverJobs, promotedJobId }: MyJobsClientProps) {
   useEffect(() => {
     if (serverJobs.length > 0) {
       saveJobCatalog(serverJobs);
-      setJobs(sortTechnicianJobs(serverJobs.map(jobForSort)));
+      setJobs(sortTechnicianJobs(upcomingJobs.map(jobForSort)));
     }
-  }, [serverJobs]);
+  }, [serverJobs, upcomingJobs]);
 
   useEffect(() => {
     const sync = () => {
@@ -56,7 +61,7 @@ export function MyJobsClient({ serverJobs, promotedJobId }: MyJobsClientProps) {
           setJobs(sortTechnicianJobs(cached.map(jobForSort)));
         }
       } else if (serverJobs.length > 0) {
-        setJobs(sortTechnicianJobs(serverJobs.map(jobForSort)));
+        setJobs(sortTechnicianJobs(upcomingJobs.map(jobForSort)));
       }
     };
 
@@ -67,7 +72,7 @@ export function MyJobsClient({ serverJobs, promotedJobId }: MyJobsClientProps) {
       window.removeEventListener("online", sync);
       window.removeEventListener("offline", sync);
     };
-  }, [serverJobs]);
+  }, [serverJobs, upcomingJobs]);
 
   const highlightId = promotedJobId ?? activeId;
 
@@ -85,7 +90,7 @@ export function MyJobsClient({ serverJobs, promotedJobId }: MyJobsClientProps) {
     return ordered.filter((job) => matchesMyJobSearch(job, search));
   }, [jobs, highlightId, search]);
 
-  if (jobs.length === 0) {
+  if (jobs.length === 0 && serverJobs.length === 0) {
     return (
       <EmptyState
         title={offline ? "No jobs saved on this device" : "No assigned inspections right now"}
@@ -98,6 +103,10 @@ export function MyJobsClient({ serverJobs, promotedJobId }: MyJobsClientProps) {
     );
   }
 
+  if (jobs.length === 0) {
+    return null;
+  }
+
   return (
     <>
       {offline ? (
@@ -107,11 +116,11 @@ export function MyJobsClient({ serverJobs, promotedJobId }: MyJobsClientProps) {
       ) : null}
 
       <div className="space-y-1">
-        <h2 className="text-sm font-semibold text-foreground">All assigned jobs</h2>
+        <h2 className="text-sm font-semibold text-foreground">Upcoming</h2>
         <p className="text-xs text-muted-foreground">
           {offline
             ? "Saved for offline access on this device."
-            : "Scheduled and in-progress inspections assigned to you."}
+            : "Later scheduled and in-progress inspections assigned to you."}
         </p>
       </div>
 
