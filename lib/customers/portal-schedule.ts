@@ -72,7 +72,15 @@ export function validatePortalScheduleDate(
   return null;
 }
 
-function buildPortalScheduleNotes(customerName: string, notes?: string): string {
+export function portalScheduleDayBounds(scheduledAt: Date): { dayStart: Date; dayEnd: Date } {
+  const dayStart = new Date(scheduledAt);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(dayStart);
+  dayEnd.setDate(dayEnd.getDate() + 1);
+  return { dayStart, dayEnd };
+}
+
+export function buildPortalScheduleNotes(customerName: string, notes?: string): string {
   const prefix = `[Customer portal] ${customerName}`;
   if (!notes) return prefix;
   return `${prefix}\n${notes}`;
@@ -134,10 +142,7 @@ export async function scheduleInspectionFromPortal(
     return { ok: false, error: "Inspection type not found." };
   }
 
-  const dayStart = new Date(scheduledAt);
-  dayStart.setHours(0, 0, 0, 0);
-  const dayEnd = new Date(dayStart);
-  dayEnd.setDate(dayEnd.getDate() + 1);
+  const { dayStart, dayEnd } = portalScheduleDayBounds(scheduledAt);
 
   const conflicting = await prisma.inspection.findFirst({
     where: {

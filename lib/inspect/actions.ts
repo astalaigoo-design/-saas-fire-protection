@@ -27,6 +27,11 @@ import {
   updateInspectionAssetCheckSchema,
   uploadPhotoSchema,
 } from "@/lib/inspect/schemas";
+import {
+  inspectionHasFailedItems,
+  validateAssetChecksForSubmit,
+  validateChecklistItemsForSubmit,
+} from "@/lib/inspect/submit-validation";
 import { recordVisitArrivalSchema } from "@/lib/inspect/visit-proof";
 import { isSupabaseStorageConfigured } from "@/lib/supabase/env";
 import {
@@ -430,28 +435,10 @@ export async function submitInspection(
   const loaded = await loadEditableInspection(parsed.data.inspectionId, session);
   if (!loaded.ok) return { ok: false, error: loaded.error };
 
-  const pending = loaded.inspection.items.filter(
-    (item) => item.result === InspectionItemResult.pending,
-  );
-  if (pending.length > 0) {
-    return {
-      ok: false,
-      error: `Complete all checklist items (${pending.length} remaining).`,
-    };
-  }
+  const checklistValidation = validateChecklistItemsForSubmit(loaded.inspection.items);
+  if (!checklistValidation.ok) return { ok: false, error: checklistValidation.error };
 
-  const failedWithoutNotes = loaded.inspection.items.filter(
-    (item) =>
-      item.result === InspectionItemResult.fail &&
-      (!item.notes || item.notes.trim() === ""),
-  );
-  if (failedWithoutNotes.length > 0) {
-    return { ok: false, error: "Every failed item needs a note." };
-  }
-
-  const hasFailedItems = loaded.inspection.items.some(
-    (item) => item.result === InspectionItemResult.fail,
-  );
+  const hasFailedItems = inspectionHasFailedItems(loaded.inspection.items);
 
   await syncAssetChecksFromChecklistPasses({
     inspectionId: parsed.data.inspectionId,
@@ -467,14 +454,8 @@ export async function submitInspection(
     return { ok: false, error: "Inspection not found." };
   }
 
-  const failedAssetsWithoutNotes = inspectionAfterLinkage.assetChecks.filter(
-    (check) =>
-      check.result === InspectionItemResult.fail &&
-      (!check.notes || check.notes.trim() === ""),
-  );
-  if (failedAssetsWithoutNotes.length > 0) {
-    return { ok: false, error: "Every failed equipment item needs a note." };
-  }
+  const assetValidation = validateAssetChecksForSubmit(inspectionAfterLinkage.assetChecks);
+  if (!assetValidation.ok) return { ok: false, error: assetValidation.error };
 
   const now = new Date();
   await prisma.inspection.update({

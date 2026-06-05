@@ -27,6 +27,7 @@ import {
   type ScheduleImportPreviewRow,
   type ScheduleImportSummary,
 } from "@/lib/scheduling/import-csv-resolve";
+import { scheduleImportSlotKey } from "@/lib/scheduling/import-csv-commit-plan";
 import type { RecurrenceOption } from "@/lib/scheduling/recurrence";
 
 export type ScheduleImportPreviewResult =
@@ -49,10 +50,6 @@ export type ScheduleImportCommitResult =
     };
 
 export type ScheduleImportResult = ScheduleImportPreviewResult | ScheduleImportCommitResult;
-
-function scheduleSlotKey(buildingId: string, scheduledAt: Date, inspectionTypeId: string): string {
-  return `${buildingId}|${scheduledAt.toISOString().slice(0, 16)}|${inspectionTypeId}`;
-}
 
 async function loadImportContext(companyId: string) {
   const [branches, customers, buildings, inspectionTypes, technicians, inspections] =
@@ -96,7 +93,7 @@ async function loadImportContext(companyId: string) {
     ]);
 
   const existingSlotKeys = new Set(
-    inspections.map((i) => scheduleSlotKey(i.buildingId, i.scheduledAt, i.inspectionTypeId)),
+    inspections.map((i) => scheduleImportSlotKey(i.buildingId, i.scheduledAt, i.inspectionTypeId)),
   );
 
   const defaultBranchId = await getDefaultBranchId(companyId);
@@ -323,7 +320,7 @@ export async function runScheduleImport(input: unknown): Promise<ScheduleImportR
           scheduledVisits += 1;
 
           ctx.existingSlotKeys.add(
-            scheduleSlotKey(buildingId, occurrenceDate, inspectionTypeId),
+            scheduleImportSlotKey(buildingId, occurrenceDate, inspectionTypeId),
           );
         }
 

@@ -2,6 +2,29 @@ import { WorkOrderStatus, type Prisma } from "@prisma/client";
 import { applyWorkOrderAssetServiceOnComplete } from "@/lib/work-orders/asset-service-on-complete";
 import { captureServerActionError } from "@/lib/monitoring/capture";
 import { prisma } from "@/lib/prisma";
+import {
+  validateWorkOrderPartStock,
+  type WorkOrderPartSnapshot,
+  type WorkOrderPartStockLine,
+} from "@/lib/work-orders/part-stock-validation";
+
+type PartLineDb = Pick<WorkOrderPartStockLine, "partId" | "quantity" | "label">;
+
+async function loadPartsByIdForLines(
+  lines: PartLineDb[],
+  db: Prisma.TransactionClient | typeof prisma,
+): Promise<Map<string, WorkOrderPartSnapshot>> {
+  const partsById = new Map<string, WorkOrderPartSnapshot>();
+  for (const line of lines) {
+    if (!line.partId || partsById.has(line.partId)) continue;
+    const part = await db.part.findUnique({
+      where: { id: line.partId },
+      select: { quantityOnHand: true, sku: true },
+    });
+    if (part) partsById.set(line.partId, part);
+  }
+  return partsById;
+}
 
 async function decrementInventoryForLines(
   workOrderId: string,
@@ -12,19 +35,12 @@ async function decrementInventoryForLines(
     select: { partId: true, quantity: true, label: true },
   });
 
+  const partsById = await loadPartsByIdForLines(lines, tx);
+  const stock = validateWorkOrderPartStock(lines, partsById);
+  if (!stock.ok) return stock;
+
   for (const line of lines) {
     if (!line.partId) continue;
-    const part = await tx.part.findUnique({
-      where: { id: line.partId },
-      select: { quantityOnHand: true, sku: true },
-    });
-    if (!part) continue;
-    if (part.quantityOnHand < line.quantity) {
-      return {
-        ok: false,
-        error: `Insufficient stock for ${part.sku} (need ${line.quantity}, have ${part.quantityOnHand}).`,
-      };
-    }
     await tx.part.update({
       where: { id: line.partId },
       data: { quantityOnHand: { decrement: line.quantity } },
@@ -61,22 +77,12 @@ export async function completeWorkOrder(
 
   const lines = await prisma.workOrderPartLine.findMany({
     where: { workOrderId: existing.id, partId: { not: null } },
-    select: { partId: true, quantity: true },
+    select: { partId: true, quantity: true, label: true },
   });
 
-  for (const line of lines) {
-    if (!line.partId) continue;
-    const part = await prisma.part.findUnique({
-      where: { id: line.partId },
-      select: { quantityOnHand: true, sku: true },
-    });
-    if (part && part.quantityOnHand < line.quantity) {
-      return {
-        ok: false,
-        error: `Insufficient stock for ${part.sku} (need ${line.quantity}, have ${part.quantityOnHand}).`,
-      };
-    }
-  }
+  const partsById = await loadPartsByIdForLines(lines, prisma);
+  const preCheck = validateWorkOrderPartStock(lines, partsById);
+  if (!preCheck.ok) return preCheck;
 
   try {
     await prisma.$transaction(async (tx) => {

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildPortalScheduleNotes,
+  portalScheduleDayBounds,
   portalScheduleMaxDate,
   portalScheduleMinDate,
   portalScheduleRequestSchema,
@@ -49,5 +51,24 @@ describe("portal schedule date bounds", () => {
     const now = new Date("2026-06-05T12:00:00");
     expect(portalScheduleMinDate(now)).toBe("2026-06-06");
     expect(portalScheduleMaxDate(now)).toBe("2026-09-03");
+  });
+});
+
+describe("buildPortalScheduleNotes", () => {
+  it("prefixes customer name for office visibility", () => {
+    expect(buildPortalScheduleNotes("Acme Bakery")).toBe("[Customer portal] Acme Bakery");
+    expect(buildPortalScheduleNotes("Acme Bakery", "Gate code 1234")).toBe(
+      "[Customer portal] Acme Bakery\nGate code 1234",
+    );
+  });
+});
+
+describe("portalScheduleDayBounds", () => {
+  it("returns local midnight through next midnight for conflict checks", () => {
+    const scheduledAt = new Date("2026-07-01T14:30:00");
+    const { dayStart, dayEnd } = portalScheduleDayBounds(scheduledAt);
+    expect(dayStart.getHours()).toBe(0);
+    expect(dayStart.getMinutes()).toBe(0);
+    expect(dayEnd.getTime() - dayStart.getTime()).toBe(24 * 60 * 60 * 1000);
   });
 });

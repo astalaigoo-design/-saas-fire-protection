@@ -9,6 +9,7 @@ import {
   resolveBuildingInBranch,
 } from "@/lib/import/resolve-building-for-customer";
 import type { ScheduleImportRow } from "@/lib/scheduling/import-csv-schemas";
+import { scheduleImportSlotKey } from "@/lib/scheduling/import-csv-commit-plan";
 import {
   combineDateAndTime,
   parseDateInputValue,
@@ -66,11 +67,6 @@ type BuildingRow = {
 };
 type InspectionTypeRow = { id: string; code: string; name: string };
 type AssigneeRow = { id: string; name: string | null; email: string | null };
-
-function scheduleSlotKey(buildingId: string, scheduledAt: Date, inspectionTypeId: string): string {
-  const iso = scheduledAt.toISOString().slice(0, 16);
-  return `${buildingId}|${iso}|${inspectionTypeId}`;
-}
 
 function resolveInspectionTypeId(
   input: string,
@@ -348,7 +344,7 @@ export function resolveScheduleImportRows(input: {
 
     const recurrence = data.recurrence as RecurrenceOption;
     const visitCount = getRecurrenceOccurrenceCount(recurrence);
-    const slotKey = scheduleSlotKey(buildingResult.buildingId, scheduledAt, typeResult.id);
+    const slotKey = scheduleImportSlotKey(buildingResult.buildingId, scheduledAt, typeResult.id);
 
     if (seenInFile.has(slotKey)) {
       duplicates += 1;
