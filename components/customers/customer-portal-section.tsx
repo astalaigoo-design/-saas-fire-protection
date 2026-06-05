@@ -39,8 +39,8 @@ export function CustomerPortalSection({
         Customer portal
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Share a read-only link so your customer can view finalized compliance PDFs by building.
-        This is not a staff login — no Clerk account for the customer.
+        Share a link so your customer can view compliance PDFs, see upcoming visits, and request
+        inspection dates. This is not a staff login — no Clerk account for the customer.
       </p>
 
       {error ? (

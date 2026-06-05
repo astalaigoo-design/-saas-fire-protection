@@ -37,7 +37,8 @@ export async function applyRateLimit(request: Request): Promise<NextResponse | n
 
   if (
     pathname.startsWith("/api/public/reports/") ||
-    pathname.startsWith("/api/public/quotes/")
+    pathname.startsWith("/api/public/quotes/") ||
+    pathname.startsWith("/api/public/portal/")
   ) {
     const ip = getClientIp(request);
     const result = await publicPdfLimiter().limit(`ip:${ip}`);

@@ -82,6 +82,15 @@ export function formatAuditEventSummary(event: AuditEventForDisplay): string {
       if (at) return `${label} scheduled for ${formatIsoDate(at)}`;
       return `${label} scheduled from accepted quote`;
     }
+    case "inspection.scheduled_from_portal": {
+      const at = metaString(meta, "scheduledAt");
+      const customer = metaString(meta, "customerName");
+      if (at && customer) {
+        return `${customer} requested visit for ${formatIsoDate(at)}`;
+      }
+      if (at) return `Customer requested visit for ${formatIsoDate(at)}`;
+      return "Customer requested inspection via portal";
+    }
     case "inspection.due_reminder_sent": {
       const type = metaString(meta, "inspectionTypeName");
       const due = metaString(meta, "dueAt");

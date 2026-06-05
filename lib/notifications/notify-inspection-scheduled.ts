@@ -17,6 +17,7 @@ export async function notifyInspectionScheduled(input: {
   companyId: string;
   inspectionId: string;
   occurrenceCount: number;
+  customerPortalRequest?: { customerName: string };
 }): Promise<void> {
   const inspection = await prisma.inspection.findFirst({
     where: { id: input.inspectionId, companyId: input.companyId },
@@ -42,18 +43,23 @@ export async function notifyInspectionScheduled(input: {
     .join(" · ");
   const when = formatScheduleDate(inspection.scheduledAt);
   const assigneeName = inspection.assignedTo?.name?.trim() || null;
+  const portalCustomer = input.customerPortalRequest?.customerName?.trim();
   const countLabel =
     input.occurrenceCount > 1
       ? `${input.occurrenceCount} recurring visits`
-      : "Inspection scheduled";
+      : portalCustomer
+        ? "Customer requested inspection"
+        : "Inspection scheduled";
 
   const href = `/dashboard/jobs?year=${inspection.scheduledAt.getFullYear()}&month=${inspection.scheduledAt.getMonth() + 1}`;
+
+  const portalSuffix = portalCustomer ? ` · requested by ${portalCustomer} via portal` : "";
 
   await createStaffNotification({
     companyId: input.companyId,
     type: "inspection.scheduled",
     title: countLabel,
-    body: `${inspection.inspectionType.name} at ${buildingLabel} — ${when}${assigneeName ? ` · assigned to ${assigneeName}` : ""}.`,
+    body: `${inspection.inspectionType.name} at ${buildingLabel} — ${when}${assigneeName ? ` · assigned to ${assigneeName}` : ""}${portalSuffix}.`,
     href,
     entityType: "inspection",
     entityId: inspection.id,

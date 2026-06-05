@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PortalSchedulePanel } from "@/components/portal/portal-schedule-panel";
+import { PortalUpcomingVisits } from "@/components/portal/portal-upcoming-visits";
 import { PublicCompanyHeader } from "@/components/public/public-company-header";
 import { phoneTelHref } from "@/lib/companies/public-branding";
 import { publicReportUrl } from "@/lib/app-url";
@@ -25,51 +27,70 @@ export default async function CustomerPortalPage({ params }: CustomerPortalPageP
           </p>
           <h1 className="text-2xl font-semibold text-white">{meta.customerName}</h1>
           <p className="text-sm text-slate-400">
-            Compliance reports from {meta.companyName}
+            Compliance reports and scheduling from {meta.companyName}
           </p>
         </div>
 
-        {meta.buildings.length === 0 ? (
-          <p className="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-center text-sm text-slate-400">
-            No buildings on file yet.
-          </p>
-        ) : (
-          <ul className="space-y-4">
-            {meta.buildings.map((building) => (
-              <li
-                key={building.id}
-                className="rounded-2xl border border-slate-800 bg-slate-900 p-5"
-              >
-                <h2 className="text-lg font-semibold text-white">{building.label}</h2>
-                {building.reports.length === 0 ? (
-                  <p className="mt-2 text-sm text-slate-500">No finalized reports yet.</p>
-                ) : (
-                  <ul className="mt-4 space-y-3">
-                    {building.reports.map((report) => (
-                      <li key={report.shareToken}>
-                        <p className="text-sm text-slate-300">{report.title}</p>
-                        <p className="text-xs text-slate-500">
-                          {report.inspectionTypeName} · Completed {formatDate(report.completedAt)}
-                        </p>
-                        <a
-                          href={publicReportUrl(report.shareToken)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-2 inline-flex min-h-10 items-center text-sm font-semibold text-amber-400 hover:text-amber-300"
-                        >
-                          View PDF →
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+        <PortalUpcomingVisits visits={meta.upcomingVisits} />
+
+        <PortalSchedulePanel
+          portalToken={meta.portalToken}
+          buildings={meta.buildings.map((building) => ({
+            id: building.id,
+            label: building.label,
+          }))}
+          inspectionTypes={meta.inspectionTypes}
+          scheduleMinDate={meta.scheduleMinDate}
+          scheduleMaxDate={meta.scheduleMaxDate}
+        />
+
+        <section aria-labelledby="portal-reports-heading" className="space-y-3">
+          <h2 id="portal-reports-heading" className="text-lg font-semibold text-white">
+            Compliance reports
+          </h2>
+
+          {meta.buildings.length === 0 ? (
+            <p className="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-center text-sm text-slate-400">
+              No buildings on file yet.
+            </p>
+          ) : (
+            <ul className="space-y-4">
+              {meta.buildings.map((building) => (
+                <li
+                  key={building.id}
+                  className="rounded-2xl border border-slate-800 bg-slate-900 p-5"
+                >
+                  <h3 className="text-base font-semibold text-white">{building.label}</h3>
+                  {building.reports.length === 0 ? (
+                    <p className="mt-2 text-sm text-slate-500">No finalized reports yet.</p>
+                  ) : (
+                    <ul className="mt-4 space-y-3">
+                      {building.reports.map((report) => (
+                        <li key={report.shareToken}>
+                          <p className="text-sm text-slate-300">{report.title}</p>
+                          <p className="text-xs text-slate-500">
+                            {report.inspectionTypeName} · Completed {formatDate(report.completedAt)}
+                          </p>
+                          <a
+                            href={publicReportUrl(report.shareToken)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 inline-flex min-h-10 items-center text-sm font-semibold text-amber-400 hover:text-amber-300"
+                          >
+                            View PDF →
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         <p className="text-center text-xs leading-5 text-slate-500">
-          Read-only access. For scheduling or billing questions, contact{" "}
+          For billing or urgent access issues, contact{" "}
           {meta.branding.reportPhone ? (
             <a
               href={phoneTelHref(meta.branding.reportPhone)}
