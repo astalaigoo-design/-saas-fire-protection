@@ -6,5 +6,7 @@ describe("assetTypeLabel", () => {
   it("returns human labels for register types", () => {
     expect(assetTypeLabel(AssetType.fire_extinguisher)).toBe("Fire extinguisher");
     expect(assetTypeLabel(AssetType.fire_alarm_panel)).toBe("Fire alarm panel");
+    expect(assetTypeLabel(AssetType.fire_hydrant)).toBe("Fire hydrant");
+    expect(assetTypeLabel(AssetType.standpipe)).toBe("Standpipe");
   });
 });

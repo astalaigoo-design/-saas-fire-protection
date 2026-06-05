@@ -7,14 +7,20 @@ import { BuildingReportsTab } from "@/components/buildings/building-reports-tab"
 import { BuildingNotesTab } from "@/components/buildings/building-notes-tab";
 import { BuildingAssetsTab } from "@/components/buildings/building-assets-tab";
 import { BuildingDeficienciesTab } from "@/components/buildings/building-deficiencies-tab";
+import type { AssetType } from "@prisma/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type BuildingDetailTabsProps = {
   data: BuildingDetailPageData;
   defaultTab?: "history" | "assets" | "deficiencies" | "photos" | "reports" | "notes";
+  assetTypeFilter?: AssetType;
 };
 
-export function BuildingDetailTabs({ data, defaultTab = "history" }: BuildingDetailTabsProps) {
+export function BuildingDetailTabs({
+  data,
+  defaultTab = "history",
+  assetTypeFilter,
+}: BuildingDetailTabsProps) {
   const photoCount = data.inspections.reduce((n, i) => n + i.photos.length, 0);
 
   return (
@@ -47,6 +53,7 @@ export function BuildingDetailTabs({ data, defaultTab = "history" }: BuildingDet
           inactiveAssets={data.inactiveAssets}
           assetAuditHistory={data.assetAuditHistory}
           assetFormDefaults={data.assetFormDefaults}
+          assetTypeFilter={assetTypeFilter}
         />
       </TabsContent>
       <TabsContent value="deficiencies" className="mt-4">

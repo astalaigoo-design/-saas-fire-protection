@@ -1,5 +1,5 @@
 import { AssetType } from "@prisma/client";
-import { assetTypeLabel } from "@/lib/assets/constants";
+import { assetTypeLabel, WATER_SYSTEM_ASSET_TYPES } from "@/lib/assets/constants";
 import { buildingLabel } from "@/lib/customers/format";
 import { getMonthRange } from "@/lib/dashboard/dates";
 
@@ -24,6 +24,13 @@ export type DueAssetTotals = {
   equipmentDueThisMonth: number;
   extinguishersOverdue: number;
   extinguishersDueThisMonth: number;
+};
+
+export type WaterSystemDueTotals = {
+  fire_hydrant: { overdue: number; dueThisMonth: number };
+  standpipe: { overdue: number; dueThisMonth: number };
+  sprinkler_component: { overdue: number; dueThisMonth: number };
+  attentionTotal: number;
 };
 
 type AssetSnapshot = {
@@ -149,4 +156,30 @@ export function groupDueAssetsByType(rows: DueAssetRow[]): {
       rows: typeRows,
     }))
     .sort((a, b) => a.assetTypeLabel.localeCompare(b.assetTypeLabel));
+}
+
+export function countDueByWaterSystemType(rows: DueAssetRow[]): WaterSystemDueTotals {
+  const empty = () => ({ overdue: 0, dueThisMonth: 0 });
+  const totals: WaterSystemDueTotals = {
+    fire_hydrant: empty(),
+    standpipe: empty(),
+    sprinkler_component: empty(),
+    attentionTotal: 0,
+  };
+
+  for (const row of rows) {
+    if (!WATER_SYSTEM_ASSET_TYPES.includes(row.assetType as (typeof WATER_SYSTEM_ASSET_TYPES)[number])) {
+      continue;
+    }
+    const bucket = totals[row.assetType as keyof Omit<WaterSystemDueTotals, "attentionTotal">];
+    if (row.status === "overdue") {
+      bucket.overdue += 1;
+      totals.attentionTotal += 1;
+    } else if (row.status === "due_this_month") {
+      bucket.dueThisMonth += 1;
+      totals.attentionTotal += 1;
+    }
+  }
+
+  return totals;
 }

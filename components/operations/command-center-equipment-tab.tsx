@@ -1,5 +1,7 @@
+import { AssetType } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DueAssetList } from "@/components/operations/due-asset-list";
+import { waterSystemAssetTypeLabel } from "@/lib/assets/constants";
 import type { CommandCenterSnapshot } from "@/lib/operations/queries";
 
 type CommandCenterEquipmentTabProps = {
@@ -20,10 +22,36 @@ export function CommandCenterEquipmentTab({
           Equipment service due dates
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Overdue register items and anything due in {dueAssets.serviceMonthLabel}. Pass on field
-          inspections updates last service; due dates come from the building register or equipment
-          CSV.
+          Overdue register items and anything due in {dueAssets.serviceMonthLabel}. Hydrant,
+          standpipe, and sprinkler tests use per-type branch intervals; passing a field test advances
+          the next due date.
         </p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        {(
+          [
+            AssetType.fire_hydrant,
+            AssetType.standpipe,
+            AssetType.sprinkler_component,
+          ] as const
+        ).map((assetType) => {
+          const totals = dueAssets.waterSystems[assetType];
+          const attention = totals.overdue + totals.dueThisMonth;
+          return (
+            <div key={assetType} className="rounded-xl border border-border bg-card px-4 py-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {waterSystemAssetTypeLabel(assetType)}
+              </p>
+              <p className="mt-1 font-heading text-2xl font-semibold text-foreground">
+                {attention}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {totals.overdue} overdue · {totals.dueThisMonth} due {dueAssets.serviceMonthLabel}
+              </p>
+            </div>
+          );
+        })}
       </div>
 
       {importHealth.assetsMissingNextDue > 0 ? (

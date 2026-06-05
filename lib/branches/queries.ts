@@ -1,7 +1,13 @@
 import type { AssetType } from "@prisma/client";
+import { WATER_SYSTEM_ASSET_TYPES } from "@/lib/assets/constants";
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { canFilterBranchesByCookie } from "@/lib/branches/scope";
 import { prisma } from "@/lib/prisma";
+
+export type BranchWaterSystemInterval = {
+  assetType: (typeof WATER_SYSTEM_ASSET_TYPES)[number];
+  intervalMonths: number;
+};
 
 export type BranchListItem = {
   id: string;
@@ -10,6 +16,7 @@ export type BranchListItem = {
   isImportDefault: boolean;
   defaultAssetType: AssetType | null;
   defaultServiceIntervalMonths: number | null;
+  waterSystemIntervals: BranchWaterSystemInterval[];
   customerCount: number;
 };
 
@@ -24,6 +31,10 @@ export async function listBranchesForCompany(companyId: string): Promise<BranchL
       isImportDefault: true,
       defaultAssetType: true,
       defaultServiceIntervalMonths: true,
+      assetServiceIntervals: {
+        where: { assetType: { in: [...WATER_SYSTEM_ASSET_TYPES] } },
+        select: { assetType: true, intervalMonths: true },
+      },
       _count: { select: { customers: true } },
     },
   });
@@ -35,6 +46,16 @@ export async function listBranchesForCompany(companyId: string): Promise<BranchL
     isImportDefault: row.isImportDefault,
     defaultAssetType: row.defaultAssetType,
     defaultServiceIntervalMonths: row.defaultServiceIntervalMonths,
+    waterSystemIntervals: row.assetServiceIntervals
+      .filter((interval): interval is BranchWaterSystemInterval =>
+        WATER_SYSTEM_ASSET_TYPES.includes(
+          interval.assetType as BranchWaterSystemInterval["assetType"],
+        ),
+      )
+      .map((interval) => ({
+        assetType: interval.assetType as BranchWaterSystemInterval["assetType"],
+        intervalMonths: interval.intervalMonths,
+      })),
     customerCount: row._count.customers,
   }));
 }

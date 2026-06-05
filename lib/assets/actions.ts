@@ -11,6 +11,7 @@ import {
 } from "@/lib/assets/schemas";
 import { getBuildingAssetInScope } from "@/lib/assets/queries";
 import { assetTypeLabel } from "@/lib/assets/constants";
+import { computeNextServiceDueForAsset } from "@/lib/assets/service-intervals";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { parseDateInputValue } from "@/lib/scheduling/calendar";
@@ -69,9 +70,16 @@ export async function createBuildingAsset(
   if (lastServiceAt === "invalid") {
     return { ok: false, error: "Enter a valid last service date (YYYY-MM-DD)." };
   }
-  const nextServiceDue = parseOptionalDate(parsed.data.nextServiceDue, "Next service");
+  let nextServiceDue = parseOptionalDate(parsed.data.nextServiceDue, "Next service");
   if (nextServiceDue === "invalid") {
     return { ok: false, error: "Enter a valid next service date (YYYY-MM-DD)." };
+  }
+  if (!nextServiceDue) {
+    nextServiceDue = await computeNextServiceDueForAsset({
+      branchId: building.customer.branchId,
+      assetType: parsed.data.assetType,
+      lastServiceAt,
+    });
   }
 
   try {

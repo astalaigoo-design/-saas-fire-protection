@@ -5,7 +5,11 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { canManageOrgSettings } from "@/lib/auth/permissions";
-import { updateBranchDefaultsSchema } from "@/lib/branches/branch-defaults-schemas";
+import {
+  parseWaterSystemServiceIntervals,
+  updateBranchDefaultsSchema,
+} from "@/lib/branches/branch-defaults-schemas";
+import { seedBranchWaterSystemIntervals, upsertBranchServiceIntervals } from "@/lib/assets/service-intervals";
 import { BRANCH_COOKIE_NAME } from "@/lib/branches/constants";
 import { ensureDefaultBranchForCompany } from "@/lib/branches/default-branch";
 import { getDashboardSession } from "@/lib/dashboard/session";
@@ -36,13 +40,15 @@ export async function createBranch(
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
-  await prisma.branch.create({
+  const branch = await prisma.branch.create({
     data: {
       companyId: session.companyId,
       name: parsed.data.name,
       isDefault: false,
     },
+    select: { id: true },
   });
+  await seedBranchWaterSystemIntervals(branch.id);
 
   revalidatePath("/dashboard/settings");
   revalidatePath("/dashboard");
@@ -100,6 +106,9 @@ export async function updateBranchDefaults(
     defaultAssetType: formData.get("defaultAssetType"),
     defaultServiceIntervalMonths: formData.get("defaultServiceIntervalMonths"),
     isImportDefault: formData.get("isImportDefault"),
+    serviceInterval_fire_hydrant: formData.get("serviceInterval_fire_hydrant"),
+    serviceInterval_standpipe: formData.get("serviceInterval_standpipe"),
+    serviceInterval_sprinkler_component: formData.get("serviceInterval_sprinkler_component"),
   });
 
   if (!parsed.success) {
@@ -110,6 +119,13 @@ export async function updateBranchDefaults(
     return {
       ok: false,
       error: "Service interval must be a whole number between 1 and 60 months.",
+    };
+  }
+  const waterSystemIntervals = parseWaterSystemServiceIntervals(parsed.data);
+  if (waterSystemIntervals === "invalid") {
+    return {
+      ok: false,
+      error: "Water system test intervals must be whole numbers between 1 and 60 months.",
     };
   }
   const defaultServiceIntervalMonths = parsed.data.defaultServiceIntervalMonths;
@@ -136,6 +152,10 @@ export async function updateBranchDefaults(
         isImportDefault: parsed.data.isImportDefault,
       },
     });
+
+    if (waterSystemIntervals.length > 0) {
+      await upsertBranchServiceIntervals(branch.id, waterSystemIntervals, tx);
+    }
   });
 
   revalidatePath("/dashboard/settings");

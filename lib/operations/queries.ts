@@ -17,10 +17,12 @@ import {
 import {
   computeDueAssets,
   countDueAssetTotals,
+  countDueByWaterSystemType,
   filterDueAssetsByType,
   groupDueAssetsByType,
   type DueAssetRow,
   type DueAssetTotals,
+  type WaterSystemDueTotals,
 } from "@/lib/operations/due-assets";
 import { AssetType } from "@prisma/client";
 import type { DeficiencyRow } from "@/lib/deficiencies/queries";
@@ -73,6 +75,7 @@ export type CommandCenterSnapshot = {
     extinguishers: DueAssetRow[];
     byType: ReturnType<typeof groupDueAssetsByType>;
     totals: DueAssetTotals;
+    waterSystems: WaterSystemDueTotals;
     serviceMonthLabel: string;
   };
   deficiencies: DeficiencyRow[];
@@ -93,6 +96,7 @@ export type CommandCenterSnapshot = {
     assetsMissingNextDue: number;
     csvImportsLast90Days: number;
     permitsNeedAttention: number;
+    waterSystemTestsDue: number;
   };
 };
 
@@ -272,6 +276,7 @@ export async function getCommandCenterSnapshot(
 
   const dueAssetRows = computeDueAssets({ assets: registerAssets });
   const dueAssetTotals = countDueAssetTotals(dueAssetRows);
+  const waterSystemTotals = countDueByWaterSystemType(dueAssetRows);
   const serviceMonthLabel = new Intl.DateTimeFormat("en-US", {
     month: "long",
     year: "numeric",
@@ -311,6 +316,7 @@ export async function getCommandCenterSnapshot(
       extinguishers: filterDueAssetsByType(dueAssetRows, AssetType.fire_extinguisher),
       byType: groupDueAssetsByType(dueAssetRows),
       totals: dueAssetTotals,
+      waterSystems: waterSystemTotals,
       serviceMonthLabel,
     },
     deficiencies,
@@ -335,6 +341,7 @@ export async function getCommandCenterSnapshot(
         importHealth.recentImports.equipment +
         importHealth.recentImports.scheduleJobs,
       permitsNeedAttention: permitTotals.needsAttention,
+      waterSystemTestsDue: waterSystemTotals.attentionTotal,
     },
   };
 }

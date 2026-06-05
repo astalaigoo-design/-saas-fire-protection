@@ -9,7 +9,10 @@ import {
   retireBuildingAsset,
   type BuildingAssetActionResult,
 } from "@/lib/assets/actions";
+import type { AssetType } from "@prisma/client";
 import { assetTypeLabel } from "@/lib/assets/constants";
+import { classifyAssetServiceDueBadge } from "@/lib/assets/system-test-status";
+import { AssetServiceDueBadge } from "@/components/buildings/asset-service-due-badge";
 import { buildingAssetLabel } from "@/lib/assets/format";
 import type { BuildingAssetRow } from "@/lib/assets/queries";
 import type { BuildingAssetFormDefaults } from "@/lib/buildings/queries";
@@ -97,6 +100,7 @@ type BuildingAssetsTabProps = {
   inactiveAssets: BuildingAssetRow[];
   assetAuditHistory: AuditEventForDisplay[];
   assetFormDefaults?: BuildingAssetFormDefaults;
+  assetTypeFilter?: AssetType;
 };
 
 export function BuildingAssetsTab({
@@ -105,9 +109,13 @@ export function BuildingAssetsTab({
   inactiveAssets,
   assetAuditHistory,
   assetFormDefaults,
+  assetTypeFilter,
 }: BuildingAssetsTabProps) {
   const [createState, createAction] = useFormState(createBuildingAsset, initialState);
   const [showRemoved, setShowRemoved] = useState(false);
+  const visibleAssets = assetTypeFilter
+    ? assets.filter((asset) => asset.assetType === assetTypeFilter)
+    : assets;
 
   return (
     <div className="space-y-8">
@@ -116,8 +124,9 @@ export function BuildingAssetsTab({
           <div>
             <h3 className="font-medium text-foreground">Add equipment</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Track extinguishers, alarm panels, and other assets with tag numbers and last
-              service dates.{" "}
+              Track extinguishers, hydrants, standpipes, sprinklers, and other assets with tag
+              numbers and test due dates. Next due auto-calculates from branch intervals when left
+              blank.{" "}
               <Link
                 href="/dashboard/buildings/import-equipment"
                 className="font-medium text-primary underline-offset-4 hover:underline"
@@ -158,7 +167,8 @@ export function BuildingAssetsTab({
       <section className="space-y-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="font-heading text-base font-semibold text-foreground">
-            Asset register ({assets.length})
+            Asset register ({visibleAssets.length}
+            {assetTypeFilter ? ` of ${assets.length}` : ""})
             {inactiveAssets.length > 0 ? (
               <span className="ml-1 text-sm font-normal text-muted-foreground">
                 · {inactiveAssets.length} removed
@@ -178,22 +188,38 @@ export function BuildingAssetsTab({
             </Button>
           ) : null}
         </div>
-        {assets.length === 0 ? (
+        {assetTypeFilter ? (
+          <p className="text-sm text-muted-foreground">
+            Showing {assetTypeLabel(assetTypeFilter)} only.{" "}
+            <Link
+              href={`/dashboard/buildings/${buildingId}?tab=assets`}
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
+              Show all equipment
+            </Link>
+          </p>
+        ) : null}
+        {visibleAssets.length === 0 ? (
           <EmptyState
             title="No equipment on file"
             description="Import sites in bulk or add extinguishers and panels here before field work."
           />
         ) : (
           <ul className="space-y-3">
-            {assets.map((asset) => (
+            {visibleAssets.map((asset) => {
+              const dueBadge = classifyAssetServiceDueBadge(asset.nextServiceDue);
+              return (
               <li key={asset.id}>
                 <Card>
                   <CardContent className="space-y-4 pt-6">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="font-medium text-foreground">
-                          {buildingAssetLabel(asset)}
-                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium text-foreground">
+                            {buildingAssetLabel(asset)}
+                          </p>
+                          {dueBadge ? <AssetServiceDueBadge status={dueBadge} /> : null}
+                        </div>
                         <p className="mt-1 text-sm text-muted-foreground">
                           {assetTypeLabel(asset.assetType)} · {asset.location}
                         </p>
@@ -250,7 +276,8 @@ export function BuildingAssetsTab({
                   </CardContent>
                 </Card>
               </li>
-            ))}
+            );
+            })}
           </ul>
         )}
 

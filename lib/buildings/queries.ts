@@ -18,6 +18,11 @@ import {
 import { prisma } from "@/lib/prisma";
 import { inspectionRowCompliance } from "@/lib/buildings/compliance";
 import { computeBuildingInspectionStats } from "@/lib/buildings/stats";
+import { computeNextServiceDueForAsset } from "@/lib/assets/service-intervals";
+import {
+  computeSystemTestStatusByType,
+  type SystemTestStatusByType,
+} from "@/lib/assets/system-test-status";
 import {
   computeDefaultNextServiceDue,
   getBranchAssetDefaults,
@@ -149,6 +154,7 @@ export type BuildingDetailPageData = {
   assetFormDefaults: BuildingAssetFormDefaults;
   deficiencies: Awaited<ReturnType<typeof listDeficienciesForBuilding>>;
   assignableStaff: Awaited<ReturnType<typeof listAssignableStaff>>;
+  systemTestStatus: SystemTestStatusByType;
   stats: {
     compliance: ComplianceStatus;
     nextScheduledAt: Date | null;
@@ -197,14 +203,31 @@ export async function getBuildingDetailPageData(
   const assetFormDefaults: BuildingAssetFormDefaults = {};
   if (branchDefaults?.defaultAssetType) {
     assetFormDefaults.assetType = branchDefaults.defaultAssetType;
+    const defaultDue = await computeNextServiceDueForAsset({
+      branchId: building.customer.branchId,
+      assetType: branchDefaults.defaultAssetType,
+      lastServiceAt: null,
+    });
+    if (defaultDue) {
+      assetFormDefaults.nextServiceDue = toDateInputValue(defaultDue);
+    }
+  } else if (branchDefaults?.defaultServiceIntervalMonths) {
+    const defaultDue = computeDefaultNextServiceDue({
+      lastServiceAt: null,
+      intervalMonths: branchDefaults.defaultServiceIntervalMonths,
+    });
+    if (defaultDue) {
+      assetFormDefaults.nextServiceDue = toDateInputValue(defaultDue);
+    }
   }
-  const defaultDue = computeDefaultNextServiceDue({
-    lastServiceAt: null,
-    intervalMonths: branchDefaults?.defaultServiceIntervalMonths ?? null,
-  });
-  if (defaultDue) {
-    assetFormDefaults.nextServiceDue = toDateInputValue(defaultDue);
-  }
+
+  const systemTestStatus = computeSystemTestStatusByType(
+    assets.map((asset) => ({
+      assetType: asset.assetType,
+      nextServiceDue: asset.nextServiceDue,
+      active: asset.active,
+    })),
+  );
 
   const inspectionsWithCompliance: BuildingInspectionRow[] = inspections.map((inspection) => ({
     ...inspection,
@@ -227,6 +250,7 @@ export async function getBuildingDetailPageData(
     assetFormDefaults,
     deficiencies,
     assignableStaff,
+    systemTestStatus,
     stats: {
       ...inspectionStats,
       lastCompletedAt: lastCompleted?.completedAt ?? null,

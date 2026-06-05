@@ -201,6 +201,11 @@ export function CommandCenterView({
               value={snapshot.summary.assetsMissingNextDue}
               hint="Won't show in due lists"
             />
+            <StatCard
+              label="Water system tests due"
+              value={snapshot.summary.waterSystemTestsDue}
+              hint="Hydrant, standpipe, sprinkler"
+            />
           </div>
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Quotes & imports

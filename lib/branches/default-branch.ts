@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import type { AppRole } from "@/lib/auth/roles";
+import { seedBranchWaterSystemIntervals } from "@/lib/assets/service-intervals";
 import { prisma } from "@/lib/prisma";
 
 export const DEFAULT_BRANCH_NAME = "Main";
@@ -15,10 +16,12 @@ export async function ensureDefaultBranchForCompany(
   });
   if (existing) return existing;
 
-  return client.branch.create({
+  const branch = await client.branch.create({
     data: { companyId, name: DEFAULT_BRANCH_NAME, isDefault: true },
     select: { id: true, name: true },
   });
+  await seedBranchWaterSystemIntervals(branch.id, tx);
+  return branch;
 }
 
 /** Branch id assigned on user create/join; owners are company-wide (null). */

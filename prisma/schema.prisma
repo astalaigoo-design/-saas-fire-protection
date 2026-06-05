@@ -58,6 +58,8 @@ enum AssetType {
   fire_extinguisher
   fire_alarm_panel
   sprinkler_component
+  fire_hydrant
+  standpipe
   emergency_light
   hose_cabinet
   other
@@ -203,12 +205,29 @@ model Branch {
 
   customers Customer[]
   users     User[]
+  assetServiceIntervals BranchAssetServiceInterval[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([companyId])
   @@map("branches")
+}
+
+/// Per-branch test/service interval in months for a specific equipment type.
+model BranchAssetServiceInterval {
+  id        String    @id @default(cuid())
+  branchId  String
+  branch    Branch    @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  assetType AssetType
+  intervalMonths Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([branchId, assetType])
+  @@index([branchId])
+  @@map("branch_asset_service_intervals")
 }
 
 /// Staff member linked to Clerk; belongs to one company.

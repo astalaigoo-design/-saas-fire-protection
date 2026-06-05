@@ -144,6 +144,12 @@ export const marketingCommandCenterPreview: CommandCenterSnapshot = {
       extinguishersOverdue: 1,
       extinguishersDueThisMonth: 1,
     },
+    waterSystems: {
+      fire_hydrant: { overdue: 1, dueThisMonth: 0 },
+      standpipe: { overdue: 0, dueThisMonth: 1 },
+      sprinkler_component: { overdue: 0, dueThisMonth: 1 },
+      attentionTotal: 3,
+    },
     serviceMonthLabel: "June 2026",
   },
   importHealth: {
@@ -254,6 +260,7 @@ export const marketingCommandCenterPreview: CommandCenterSnapshot = {
     assetsMissingNextDue: 12,
     csvImportsLast90Days: 188,
     permitsNeedAttention: 3,
+    waterSystemTestsDue: 3,
   },
 };
 

@@ -1,8 +1,10 @@
 "use client";
 
 import { useFormState, useFormStatus } from "react-dom";
-import { ASSET_TYPES } from "@/lib/assets/constants";
+import { AssetType } from "@prisma/client";
+import { ASSET_TYPES, waterSystemAssetTypeLabel } from "@/lib/assets/constants";
 import { assetTypeLabel } from "@/lib/assets/constants";
+import { DEFAULT_WATER_SYSTEM_INTERVAL_MONTHS } from "@/lib/assets/service-intervals";
 import { updateBranchDefaults, type UpdateBranchDefaultsState } from "@/lib/branches/actions";
 import type { BranchListItem } from "@/lib/branches/queries";
 import { Button } from "@/components/ui/button";
@@ -83,6 +85,42 @@ export function BranchDefaultsForm({ branch }: BranchDefaultsFormProps) {
           </p>
         </div>
       </div>
+
+      <fieldset className="space-y-3 rounded-lg border border-border p-3">
+        <legend className="px-1 text-xs font-medium text-foreground">
+          Test intervals by equipment type (months)
+        </legend>
+        <p className="text-[11px] text-muted-foreground">
+          Used when next service due is blank on import or manual add. Passing a field test advances
+          the due date by this interval.
+        </p>
+        {(
+          [
+            AssetType.fire_hydrant,
+            AssetType.standpipe,
+            AssetType.sprinkler_component,
+          ] as const
+        ).map((assetType) => {
+          const current = branch.waterSystemIntervals.find((row) => row.assetType === assetType);
+          return (
+            <div key={assetType} className="space-y-1">
+              <Label htmlFor={`${branch.id}-${assetType}`} className="text-xs">
+                {waterSystemAssetTypeLabel(assetType)}
+              </Label>
+              <Input
+                id={`${branch.id}-${assetType}`}
+                name={`serviceInterval_${assetType}`}
+                type="number"
+                min={1}
+                max={60}
+                placeholder={String(DEFAULT_WATER_SYSTEM_INTERVAL_MONTHS[assetType])}
+                defaultValue={current?.intervalMonths ?? ""}
+                className="min-h-11"
+              />
+            </div>
+          );
+        })}
+      </fieldset>
 
       <label className="flex cursor-pointer items-center gap-2 text-sm">
         <input

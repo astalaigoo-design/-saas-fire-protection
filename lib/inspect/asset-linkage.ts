@@ -4,6 +4,7 @@ import {
   normalizeScanValue,
   type BuildingAssetScanRow,
 } from "@/lib/assets/scan-match";
+import { computeNextServiceDueForAsset } from "@/lib/assets/service-intervals";
 import { ensureInspectionAssetChecks } from "@/lib/inspect/ensure-asset-checks";
 import { prisma } from "@/lib/prisma";
 
@@ -136,9 +137,14 @@ export async function applyInspectionAssetLinkageOnSubmit(input: {
 }): Promise<void> {
   const inspection = await prisma.inspection.findUnique({
     where: { id: input.inspectionId },
-    select: { buildingId: true },
+    select: {
+      buildingId: true,
+      building: { select: { customer: { select: { branchId: true } } } },
+    },
   });
   if (!inspection) return;
+
+  const branchId = inspection.building.customer.branchId;
 
   const [items, assetChecks, assets] = await Promise.all([
     prisma.inspectionItem.findMany({
@@ -156,7 +162,7 @@ export async function applyInspectionAssetLinkageOnSubmit(input: {
     }),
     prisma.buildingAsset.findMany({
       where: { buildingId: inspection.buildingId, active: true },
-      select: { id: true, tagNumber: true, barcodeValue: true },
+      select: { id: true, tagNumber: true, barcodeValue: true, assetType: true },
     }),
   ]);
 
@@ -174,6 +180,23 @@ export async function applyInspectionAssetLinkageOnSubmit(input: {
     if (check) checkUpdates.push({ id: check.id });
   }
 
+  const assetById = new Map(assets.map((asset) => [asset.id, asset]));
+  const assetUpdates = await Promise.all(
+    servicedAssetIds.map(async (assetId) => {
+      const asset = assetById.get(assetId);
+      if (!asset) return null;
+      const nextServiceDue = await computeNextServiceDueForAsset({
+        branchId,
+        assetType: asset.assetType,
+        lastServiceAt: input.completedAt,
+      });
+      return {
+        assetId,
+        nextServiceDue,
+      };
+    }),
+  );
+
   await prisma.$transaction([
     ...checkUpdates.map((check) =>
       prisma.inspectionAssetCheck.update({
@@ -184,12 +207,17 @@ export async function applyInspectionAssetLinkageOnSubmit(input: {
         },
       }),
     ),
-    ...servicedAssetIds.map((assetId) =>
-      prisma.buildingAsset.update({
-        where: { id: assetId },
-        data: { lastServiceAt: input.completedAt },
-      }),
-    ),
+    ...assetUpdates
+      .filter((row): row is NonNullable<typeof row> => row != null)
+      .map((row) =>
+        prisma.buildingAsset.update({
+          where: { id: row.assetId },
+          data: {
+            lastServiceAt: input.completedAt,
+            ...(row.nextServiceDue ? { nextServiceDue: row.nextServiceDue } : {}),
+          },
+        }),
+      ),
   ]);
 }
 

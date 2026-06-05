@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { canManageCustomers } from "@/lib/auth/permissions";
-import { computeDefaultNextServiceDue } from "@/lib/branches/asset-defaults";
+import { computeNextServiceDueForAsset, getBranchServiceIntervalsForCompany } from "@/lib/assets/service-intervals";
 import { getDefaultBranchId } from "@/lib/branches/default-branch";
 import { resolveImportDefaultBranchId } from "@/lib/branches/import-default";
 import { requireWritableTenant } from "@/lib/billing/guards";
@@ -58,7 +58,7 @@ function assetDedupeKey(input: {
 }
 
 async function loadImportContext(companyId: string) {
-  const [branches, customers, buildings, assets] = await Promise.all([
+  const [branches, customers, buildings, assets, serviceIntervalsByBranch] = await Promise.all([
     prisma.branch.findMany({
       where: { companyId },
       orderBy: [{ isDefault: "desc" }, { name: "asc" }],
@@ -95,6 +95,7 @@ async function loadImportContext(companyId: string) {
         assetType: true,
       },
     }),
+    getBranchServiceIntervalsForCompany(companyId),
   ]);
 
   const existingAssetKeys = new Set(
@@ -109,7 +110,14 @@ async function loadImportContext(companyId: string) {
   );
 
   const defaultBranchId = await getDefaultBranchId(companyId);
-  return { branches, customers, buildings, existingAssetKeys, defaultBranchId };
+  return {
+    branches,
+    customers,
+    buildings,
+    existingAssetKeys,
+    defaultBranchId,
+    serviceIntervalsByBranch,
+  };
 }
 
 function parseImportRows(csv: string) {
@@ -272,14 +280,12 @@ export async function runAssetImport(input: unknown): Promise<AssetImportResult>
           throw new Error("INVALID_DATE:next_service");
         }
 
-        const branchForDefaults = item.branchId
-          ? ctx.branches.find((b) => b.id === item.branchId)
-          : undefined;
-
-        if (!nextServiceDue && branchForDefaults?.defaultServiceIntervalMonths) {
-          nextServiceDue = computeDefaultNextServiceDue({
+        if (!nextServiceDue && item.branchId && row.assetType) {
+          nextServiceDue = await computeNextServiceDueForAsset({
+            branchId: item.branchId,
+            assetType: row.assetType,
             lastServiceAt,
-            intervalMonths: branchForDefaults.defaultServiceIntervalMonths,
+            intervalMap: ctx.serviceIntervalsByBranch.get(item.branchId),
           });
         }
 
