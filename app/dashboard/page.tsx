@@ -21,7 +21,9 @@ import { canManageCustomers, isOwner } from "@/lib/auth/permissions";
 import { getInspectionTypePacksData } from "@/lib/companies/inspection-type-queries";
 import { InspectionTypePacksPromo } from "@/components/dashboard/inspection-type-packs-promo";
 import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
+import { PilotReadinessChecklist } from "@/components/dashboard/pilot-readiness-checklist";
 import { SetupPipelineEmptyState } from "@/components/dashboard/setup-pipeline-empty-state";
+import { getPilotReadinessStatus } from "@/lib/pilot-readiness/status";
 
 export default async function DashboardPage() {
   const session = await getDashboardSession();
@@ -32,14 +34,17 @@ export default async function DashboardPage() {
   }
 
   const showOnboarding = canManageCustomers(session.role);
+  const showPilotReadiness = isOwner(session.role);
 
-  const [stats, upcoming, completed, onboarding, inspectionTypePacks] = await Promise.all([
-    getDashboardStats(session),
-    getUpcomingInspectionsThisWeek(session),
-    getRecentCompletedInspections(session),
-    showOnboarding ? getOnboardingProgress(session) : Promise.resolve(null),
-    isOwner(session.role) ? getInspectionTypePacksData(session) : Promise.resolve(null),
-  ]);
+  const [stats, upcoming, completed, onboarding, inspectionTypePacks, pilotReadiness] =
+    await Promise.all([
+      getDashboardStats(session),
+      getUpcomingInspectionsThisWeek(session),
+      getRecentCompletedInspections(session),
+      showOnboarding ? getOnboardingProgress(session) : Promise.resolve(null),
+      showPilotReadiness ? getInspectionTypePacksData(session) : Promise.resolve(null),
+      showPilotReadiness ? getPilotReadinessStatus() : Promise.resolve(null),
+    ]);
 
   const workspaceName = isSharedTenantCompany({
     id: session.companyId,
@@ -70,6 +75,10 @@ export default async function DashboardPage() {
         description={description}
         actions={<DashboardActions role={session.role} />}
       />
+
+      {pilotReadiness && !pilotReadiness.ready ? (
+        <PilotReadinessChecklist status={pilotReadiness} />
+      ) : null}
 
       {onboarding ? <OnboardingChecklist progress={onboarding} /> : null}
 

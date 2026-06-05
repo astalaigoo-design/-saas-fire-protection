@@ -98,12 +98,20 @@ export function CommandCenterOutbound({ channels }: CommandCenterOutboundProps) 
           </div>
         </div>
 
-        <Link
-          href="/dashboard/settings#outbound-email"
-          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-h-9")}
-        >
-          Organization → outbound email
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/dashboard/settings#outbound-email"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-h-9")}
+          >
+            Organization → outbound email
+          </Link>
+          <Link
+            href="/dashboard/settings#pilot-readiness"
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "min-h-9")}
+          >
+            Pilot readiness checklist
+          </Link>
+        </div>
       </CardContent>
     </Card>
   );

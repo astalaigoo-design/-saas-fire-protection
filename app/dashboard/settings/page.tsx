@@ -8,6 +8,7 @@ import { ChecklistTemplatesSection } from "@/components/dashboard/checklist-temp
 import { InspectionTypePacksSection } from "@/components/dashboard/inspection-type-packs-section";
 import { BranchesSettingsSection } from "@/components/dashboard/branches-settings-section";
 import { OutboundEmailSettingsSection } from "@/components/dashboard/outbound-email-settings-section";
+import { PilotReadinessChecklist } from "@/components/dashboard/pilot-readiness-checklist";
 import { TechnicianAlertsSettingsSection } from "@/components/dashboard/technician-alerts-settings-section";
 import { TeamInviteSection } from "@/components/dashboard/team-invite-section";
 import { RepairQuotesSettingsSection } from "@/components/dashboard/repair-quotes-settings-section";
@@ -20,7 +21,9 @@ import { getChecklistTemplatesEditorData } from "@/lib/inspections/checklist-tem
 import { JurisdictionsSettingsSection } from "@/components/dashboard/jurisdictions-settings-section";
 import { getCompanyProfile } from "@/lib/companies/queries";
 import { getJurisdictionsSettingsData } from "@/lib/jurisdictions/queries";
+import { isOwner } from "@/lib/auth/permissions";
 import { getDashboardSession } from "@/lib/dashboard/session";
+import { getPilotReadinessStatus } from "@/lib/pilot-readiness/status";
 import { getOutboundEmailStatus } from "@/lib/email/env";
 import { getSmsConfigStatus } from "@/lib/sms/env";
 import { getTeamManagementData } from "@/lib/team/queries";
@@ -30,7 +33,7 @@ export default async function OrgSettingsPage() {
   if (!session) redirect("/sign-in");
   ensureCanManageOrgSettings(session.role);
 
-  const [company, team, inspectionTypePacks, checklistTemplates, branches, integrations, jurisdictions] =
+  const [company, team, inspectionTypePacks, checklistTemplates, branches, integrations, jurisdictions, pilotReadiness] =
     await Promise.all([
       getCompanyProfile(session),
       getTeamManagementData(session),
@@ -39,6 +42,7 @@ export default async function OrgSettingsPage() {
       listBranchesForCompany(session.companyId),
       getIntegrationsSettingsData(session.companyId),
       getJurisdictionsSettingsData(session),
+      isOwner(session.role) ? getPilotReadinessStatus() : Promise.resolve(null),
     ]);
   if (!company) redirect("/dashboard");
 
@@ -48,6 +52,8 @@ export default async function OrgSettingsPage() {
         title="Organization"
         description="Manage branches, reassign team members and customers between locations, and configure company details."
       />
+
+      {pilotReadiness ? <PilotReadinessChecklist status={pilotReadiness} /> : null}
 
       <BranchesSettingsSection branches={branches} />
 

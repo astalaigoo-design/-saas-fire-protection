@@ -14,11 +14,13 @@ import { getCompanyBillingSnapshot } from "@/lib/billing/queries";
 import { getDashboardNavItems } from "@/lib/dashboard/nav-items";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { getTechnicianHomeHref } from "@/lib/inspect/resume-job";
-import { canManageJobs } from "@/lib/auth/permissions";
+import { canManageJobs, isOwner } from "@/lib/auth/permissions";
 import { canViewStaffNotifications } from "@/lib/notifications/scope";
 import { getStaffNotificationsFeed } from "@/lib/notifications/queries";
 import { getOutboundChannelsStatus } from "@/lib/outbound/channels";
+import { getPilotReadinessStatus } from "@/lib/pilot-readiness/status";
 import { OutboundChannelsBanner } from "@/components/dashboard/outbound-channels-banner";
+import { PilotReadinessBanner } from "@/components/dashboard/pilot-readiness-banner";
 
 export const metadata: Metadata = DASHBOARD_ROBOTS_METADATA;
 
@@ -53,9 +55,13 @@ export default async function DashboardLayout({
       ? { [homeHref]: notificationFeed.unreadCount }
       : undefined;
 
-  const outboundChannels = canManageJobs(session.role)
-    ? getOutboundChannelsStatus()
-    : null;
+  const showPilotReadiness = isOwner(session.role);
+  const showOutboundBanner = canManageJobs(session.role) && !showPilotReadiness;
+
+  const [outboundChannels, pilotReadiness] = await Promise.all([
+    showOutboundBanner ? Promise.resolve(getOutboundChannelsStatus()) : Promise.resolve(null),
+    showPilotReadiness ? getPilotReadinessStatus() : Promise.resolve(null),
+  ]);
 
   return (
     <div className="min-h-screen bg-background text-foreground lg:flex">
@@ -117,6 +123,7 @@ export default async function DashboardLayout({
 
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 lg:px-6">
           {billing ? <TrialBanner billing={billing} role={session.role} /> : null}
+          {pilotReadiness ? <PilotReadinessBanner status={pilotReadiness} /> : null}
           {outboundChannels ? <OutboundChannelsBanner channels={outboundChannels} /> : null}
           {billing ? (
             <SubscriptionGate billing={billing} role={session.role}>

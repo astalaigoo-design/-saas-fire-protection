@@ -11,8 +11,11 @@ import { ensureCanManageJobs } from "@/lib/auth/guards";
 import { getAutomationVisibility } from "@/lib/operations/automation-visibility";
 import { getCommandCenterSnapshot } from "@/lib/operations/queries";
 import { listRepairPipelineRows } from "@/lib/operations/repair-pipeline";
+import { isOwner } from "@/lib/auth/permissions";
 import { getDashboardSession } from "@/lib/dashboard/session";
+import { getCronSecretStatus } from "@/lib/cron/env";
 import { getOutboundChannelsStatus } from "@/lib/outbound/channels";
+import { getPilotReadinessStatus } from "@/lib/pilot-readiness/status";
 
 type CommandCenterPageProps = {
   searchParams: Record<string, string | string[] | undefined>;
@@ -41,19 +44,22 @@ export default async function CommandCenterPage({ searchParams }: CommandCenterP
       ? tabParam
       : "overview";
 
-  const [snapshot, auditLog, automation, assignableStaff, quoteList, repairPipeline] =
+  const showPilotReadiness = isOwner(session.role);
+
+  const [snapshot, auditLog, automation, assignableStaff, quoteList, repairPipeline, pilotReadiness] =
     await Promise.all([
-    getCommandCenterSnapshot(session),
-    listAuditEvents(session, {
-      action: actionFilter || undefined,
-      entityType: entityFilter || undefined,
-      limit: 40,
-    }),
-    getAutomationVisibility(session.companyId),
-    listAssignableStaff(session),
-    listCompanyQuotesSafe(session),
-    listRepairPipelineRows(session),
-  ]);
+      getCommandCenterSnapshot(session),
+      listAuditEvents(session, {
+        action: actionFilter || undefined,
+        entityType: entityFilter || undefined,
+        limit: 40,
+      }),
+      getAutomationVisibility(session.companyId),
+      listAssignableStaff(session),
+      listCompanyQuotesSafe(session),
+      listRepairPipelineRows(session),
+      showPilotReadiness ? getPilotReadinessStatus() : Promise.resolve(null),
+    ]);
 
   const quotePipeline = computeQuotePipelineMetrics(quoteList.quotes);
 
@@ -66,6 +72,8 @@ export default async function CommandCenterPage({ searchParams }: CommandCenterP
       assignableStaff={assignableStaff}
       quotePipeline={quotePipeline}
       outboundChannels={getOutboundChannelsStatus()}
+      pilotReadiness={pilotReadiness}
+      cronConfigured={getCronSecretStatus().configured}
       repairPipeline={repairPipeline}
       defaultTab={defaultTab}
     />

@@ -30,3 +30,15 @@ export function isSupabaseStorageConfigured(): boolean {
       process.env.SUPABASE_SERVICE_ROLE_KEY?.trim(),
   );
 }
+
+export type SupabaseStorageStatus = {
+  configured: boolean;
+  bucket: string;
+};
+
+export function getSupabaseStorageStatus(): SupabaseStorageStatus {
+  return {
+    configured: isSupabaseStorageConfigured(),
+    bucket: process.env.SUPABASE_STORAGE_BUCKET?.trim() || "inspection-photos",
+  };
+}

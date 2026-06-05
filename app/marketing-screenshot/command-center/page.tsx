@@ -33,6 +33,8 @@ export default function MarketingCommandCenterPage() {
           ]}
           quotePipeline={marketingQuotePipelineMetrics}
           outboundChannels={getOutboundChannelsStatus()}
+          pilotReadiness={null}
+          cronConfigured
           repairPipeline={marketingRepairPipelinePreview}
           defaultTab="repairs"
         />

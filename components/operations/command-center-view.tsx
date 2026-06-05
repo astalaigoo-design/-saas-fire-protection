@@ -16,7 +16,9 @@ import { CommandCenterImportHealth } from "@/components/operations/command-cente
 import { CommandCenterOutbound } from "@/components/operations/command-center-outbound";
 import { CommandCenterPermitsSection } from "@/components/operations/command-center-permits-section";
 import { CommandCenterWorkOrdersSection } from "@/components/operations/command-center-work-orders-section";
+import { PilotReadinessChecklist } from "@/components/dashboard/pilot-readiness-checklist";
 import type { OutboundChannelsStatus } from "@/lib/outbound/channels";
+import type { PilotReadinessStatus } from "@/lib/pilot-readiness/status";
 import { CommandCenterQuotesTab } from "@/components/operations/command-center-quotes-tab";
 import { CommandCenterRepairPipelineTab } from "@/components/operations/command-center-repair-pipeline-tab";
 import type { QuotePipelineMetrics } from "@/lib/quotes/pipeline";
@@ -128,6 +130,8 @@ type CommandCenterViewProps = {
   assignableStaff: AssignableStaff[];
   quotePipeline: QuotePipelineMetrics;
   outboundChannels: OutboundChannelsStatus;
+  pilotReadiness: PilotReadinessStatus | null;
+  cronConfigured: boolean;
   repairPipeline: RepairPipelineSnapshot;
   defaultTab: CommandCenterTab;
 };
@@ -140,6 +144,8 @@ export function CommandCenterView({
   assignableStaff,
   quotePipeline,
   outboundChannels,
+  pilotReadiness,
+  cronConfigured,
   repairPipeline,
   defaultTab,
 }: CommandCenterViewProps) {
@@ -272,6 +278,9 @@ export function CommandCenterView({
         </div>
 
         <TabsContent value="overview" className="mt-6 space-y-8">
+          {pilotReadiness && !pilotReadiness.ready ? (
+            <PilotReadinessChecklist status={pilotReadiness} compact />
+          ) : null}
           <CommandCenterOutbound channels={outboundChannels} />
           <CommandCenterImportHealth health={snapshot.importHealth} />
           <CommandCenterPermitsSection
@@ -368,7 +377,11 @@ export function CommandCenterView({
         </TabsContent>
 
         <TabsContent value="activity" className="mt-6 space-y-8">
-          <AutomationPanel automation={automation} />
+          <AutomationPanel
+            automation={automation}
+            emailConfigured={outboundChannels.email.configured}
+            cronConfigured={cronConfigured}
+          />
           <AuditLogFeed
             key={`${auditFilters.action}|${auditFilters.entityType}`}
             initialEvents={auditLog.events}

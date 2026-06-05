@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
-import { isOutboundEmailConfigured } from "@/lib/email/env";
 import {
   formatAutomationRunSummary,
   formatRecentDueReminderLine,
@@ -12,10 +11,15 @@ import { cn } from "@/lib/utils";
 
 type AutomationPanelProps = {
   automation: AutomationVisibility;
+  emailConfigured: boolean;
+  cronConfigured: boolean;
 };
 
-export function AutomationPanel({ automation }: AutomationPanelProps) {
-  const emailConfigured = isOutboundEmailConfigured();
+export function AutomationPanel({
+  automation,
+  emailConfigured,
+  cronConfigured,
+}: AutomationPanelProps) {
 
   return (
     <section aria-labelledby="automation-heading" className="space-y-3">
@@ -28,17 +32,22 @@ export function AutomationPanel({ automation }: AutomationPanelProps) {
           your report email and every owner/admin address. Trial-ending notices run on a separate
           schedule.
         </p>
-        {!emailConfigured ? (
+        {!emailConfigured || !cronConfigured ? (
           <p
             role="status"
             className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-950 dark:text-amber-100"
           >
-            Cron runs but sends nothing until Resend is configured.{" "}
+            {!cronConfigured
+              ? "Cron routes return 401 until CRON_SECRET is set on Vercel Production. "
+              : null}
+            {!emailConfigured
+              ? "Cron runs but sends nothing until Resend is configured. "
+              : null}
             <Link
-              href="/dashboard/settings#outbound-email"
+              href="/dashboard/settings#pilot-readiness"
               className="font-medium text-primary underline-offset-2 hover:underline"
             >
-              Set up outbound email
+              Pilot readiness checklist
             </Link>
           </p>
         ) : null}
