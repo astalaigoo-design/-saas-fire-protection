@@ -1,5 +1,6 @@
 import type { OutboundEmailStatus } from "@/lib/email/env";
 import type { SmsConfigStatus } from "@/lib/sms/env";
+import { NATIVE_APP_PILOT_THRESHOLD } from "@/lib/mobile/scope";
 import { cn } from "@/lib/utils";
 
 type TechnicianAlertsSettingsSectionProps = {
@@ -68,7 +69,9 @@ export function TechnicianAlertsSettingsSection({
           <div>
             <p className="font-medium text-foreground">Push notifications</p>
             <p className="text-muted-foreground">
-              Web Push or native app — not started. Would complement SMS for assign/reschedule.
+              Web Push via the installed PWA first — native iOS/Android apps deferred until{" "}
+              {NATIVE_APP_PILOT_THRESHOLD}+ pilots request them. Would complement SMS for
+              assign/reschedule.
             </p>
           </div>
         </li>

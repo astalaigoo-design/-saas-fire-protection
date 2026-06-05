@@ -13,6 +13,7 @@ import { getUnreadJobAssignmentAlerts } from "@/lib/notifications/job-alerts";
 import { prisma } from "@/lib/prisma";
 import { pickPromotedResumeJobId } from "@/lib/inspect/resume-job";
 import { CacheRouteOnVisit } from "@/components/offline/cache-route-on-visit";
+import { FieldAppScopeNotice } from "@/components/mobile/field-app-scope-notice";
 import { MyWorkOrdersSection } from "@/components/dashboard/my-work-orders-section";
 import { partitionTechnicianJobsByToday } from "@/lib/inspect/my-jobs-today";
 import { getMyAssignedInspections, toJobCatalogEntry } from "@/lib/inspect/my-jobs";
@@ -53,6 +54,8 @@ export default async function MyJobsPage() {
             : "Inspections use checklists below; assigned work orders let you start, note, and complete repairs on site."
         }
       />
+
+      <FieldAppScopeNotice variant="inline" />
 
       <MyJobsAlertsBanner alerts={jobAlerts} />
 
