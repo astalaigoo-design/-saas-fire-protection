@@ -62,9 +62,9 @@ export function IntegrationsSettingsSection({ data }: IntegrationsSettingsSectio
           CMMS &amp; accounting integrations
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Connect external systems with a read-only REST API and signed outbound webhooks. API keys
-          and webhook secrets are shown once when created — store them in your CMMS or accounting
-          tool. Requests are scoped to your company only.{" "}
+          Connect external systems with a REST API and signed outbound webhooks. API keys and
+          webhook secrets are shown once when created — store them in your CMMS or accounting tool.
+          Requests are scoped to your company only.{" "}
           <span className="text-foreground">
             Repair quote webhooks sync status only — not QuickBooks invoices or Stripe payments.
           </span>{" "}
@@ -83,19 +83,24 @@ export function IntegrationsSettingsSection({ data }: IntegrationsSettingsSectio
       ) : null}
 
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-foreground">REST API (read)</h3>
+        <h3 className="text-sm font-semibold text-foreground">REST API</h3>
         <p className="text-sm text-muted-foreground">
           Base URL: <span className="font-mono text-xs">{origin}/api/v1</span>. Send{" "}
           <span className="font-mono text-xs">Authorization: Bearer ff_live_…</span> or{" "}
-          <span className="font-mono text-xs">X-Api-Key</span>. Optional query:{" "}
+          <span className="font-mono text-xs">X-Api-Key</span>. Optional query on GET:{" "}
           <span className="font-mono text-xs">?limit=50&amp;since=2026-01-01T00:00:00.000Z</span>.
+          POST requests accept optional{" "}
+          <span className="font-mono text-xs">X-Idempotency-Key</span> for safe retries.
         </p>
         <ul className="list-inside list-disc text-sm text-muted-foreground">
           <li>
-            <span className="font-mono text-xs">GET /inspections</span>
+            <span className="font-mono text-xs">GET /inspections</span> ·{" "}
+            <span className="font-mono text-xs">POST /inspections</span> schedule a visit
           </li>
           <li>
-            <span className="font-mono text-xs">GET /customers</span>
+            <span className="font-mono text-xs">GET /customers</span> ·{" "}
+            <span className="font-mono text-xs">POST /customers</span> create account (+ optional
+            building)
           </li>
           <li>
             <span className="font-mono text-xs">GET /buildings</span>

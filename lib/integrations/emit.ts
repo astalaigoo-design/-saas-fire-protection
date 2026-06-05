@@ -165,3 +165,90 @@ export async function emitDeficiencyCreatedWebhook(
     },
   });
 }
+
+export async function emitCustomerCreatedWebhook(
+  companyId: string,
+  customerId: string,
+): Promise<void> {
+  const customer = await prisma.customer.findFirst({
+    where: { id: customerId, companyId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      branchId: true,
+      createdAt: true,
+      buildings: {
+        select: { id: true, addressLine1: true, city: true },
+        take: 1,
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+  if (!customer) return;
+
+  const building = customer.buildings[0] ?? null;
+
+  await dispatchCompanyWebhooks({
+    companyId,
+    event: "customer_created",
+    data: {
+      customerId: customer.id,
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone,
+      branchId: customer.branchId,
+      buildingId: building?.id ?? null,
+      buildingAddress: building
+        ? `${building.addressLine1}, ${building.city}`
+        : null,
+      createdAt: customer.createdAt.toISOString(),
+    },
+  });
+}
+
+export async function emitInspectionScheduledWebhook(
+  companyId: string,
+  inspectionId: string,
+): Promise<void> {
+  const inspection = await prisma.inspection.findFirst({
+    where: { id: inspectionId, companyId },
+    select: {
+      id: true,
+      buildingId: true,
+      status: true,
+      scheduledAt: true,
+      assignedToUserId: true,
+      notes: true,
+      building: {
+        select: {
+          customerId: true,
+          name: true,
+          addressLine1: true,
+          city: true,
+        },
+      },
+      inspectionType: { select: { name: true, code: true } },
+    },
+  });
+  if (!inspection) return;
+
+  await dispatchCompanyWebhooks({
+    companyId,
+    event: "inspection_scheduled",
+    data: {
+      inspectionId: inspection.id,
+      buildingId: inspection.buildingId,
+      customerId: inspection.building.customerId,
+      buildingName: inspection.building.name,
+      buildingAddress: `${inspection.building.addressLine1}, ${inspection.building.city}`,
+      status: inspection.status,
+      inspectionType: inspection.inspectionType.name,
+      inspectionTypeCode: inspection.inspectionType.code,
+      scheduledAt: inspection.scheduledAt.toISOString(),
+      assignedToUserId: inspection.assignedToUserId,
+      notes: inspection.notes,
+    },
+  });
+}

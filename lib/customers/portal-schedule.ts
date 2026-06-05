@@ -1,6 +1,10 @@
 import { InspectionStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import {
+  PORTAL_SCHEDULE_MAX_DAYS_AHEAD,
+  PORTAL_TIME_SLOTS,
+} from "@/lib/customers/portal-schedule-constants";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { resolveCompanyAccess } from "@/lib/billing/access";
 import { syncBuildingComplianceStatus } from "@/lib/buildings/sync-compliance";
@@ -14,18 +18,7 @@ import {
   toDateInputValue,
 } from "@/lib/scheduling/calendar";
 
-export const PORTAL_TIME_SLOTS = [
-  "08:00",
-  "09:00",
-  "10:00",
-  "11:00",
-  "13:00",
-  "14:00",
-  "15:00",
-  "16:00",
-] as const;
-
-export const PORTAL_SCHEDULE_MAX_DAYS_AHEAD = 90;
+export { PORTAL_SCHEDULE_MAX_DAYS_AHEAD, PORTAL_TIME_SLOTS } from "@/lib/customers/portal-schedule-constants";
 
 export const portalScheduleRequestSchema = z.object({
   buildingId: z.string().trim().min(1, "Select a building"),

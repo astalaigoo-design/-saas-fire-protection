@@ -84,4 +84,11 @@ export async function notifyInspectionScheduled(input: {
   } catch (error) {
     console.warn("notifyCustomerVisitScheduled failed", error);
   }
+
+  try {
+    const { emitInspectionScheduledWebhook } = await import("@/lib/integrations/emit");
+    await emitInspectionScheduledWebhook(input.companyId, inspection.id);
+  } catch (error) {
+    console.warn("emitInspectionScheduledWebhook failed", error);
+  }
 }

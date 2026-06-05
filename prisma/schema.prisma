@@ -116,6 +116,8 @@ enum IntegrationWebhookEvent {
   report_finalized
   quote_updated
   deficiency_created
+  customer_created
+  inspection_scheduled
 }
 
 // --- Core tenant -----------------------------------------------------------
@@ -199,7 +201,7 @@ model Jurisdiction {
   @@map("jurisdictions")
 }
 
-/// Company-scoped API key for read-only REST (`/api/v1/*`).
+/// Company-scoped API key for REST (`/api/v1/*`) read and write.
 model CompanyApiKey {
   id        String  @id @default(cuid())
   companyId String

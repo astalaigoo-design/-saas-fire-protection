@@ -29,6 +29,8 @@ const webhookEventSchema = z.enum([
   "report_finalized",
   "quote_updated",
   "deficiency_created",
+  "customer_created",
+  "inspection_scheduled",
 ]);
 
 const createWebhookSchema = z.object({

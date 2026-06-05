@@ -14,6 +14,7 @@ import { canFilterBranchesByCookie } from "@/lib/branches/scope";
 import { requiresAssignedBranch } from "@/lib/branches/user-branch";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { captureServerActionError } from "@/lib/monitoring/capture";
+import { emitCustomerCreatedWebhook } from "@/lib/integrations/emit";
 import { prisma } from "@/lib/prisma";
 
 export type CreateCustomerFormState =
@@ -115,6 +116,12 @@ export async function createCustomer(
         name: customer.name,
       },
     });
+
+    try {
+      await emitCustomerCreatedWebhook(session.companyId, customer.id);
+    } catch (error) {
+      console.error("emitCustomerCreatedWebhook failed", error);
+    }
 
     revalidatePath("/dashboard/customers");
     redirect(`/dashboard/customers/${customer.id}`);

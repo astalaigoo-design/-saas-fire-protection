@@ -6,6 +6,8 @@ export const WEBHOOK_EVENT_WIRE: Record<IntegrationWebhookEvent, string> = {
   report_finalized: "report.finalized",
   quote_updated: "quote.updated",
   deficiency_created: "deficiency.created",
+  customer_created: "customer.created",
+  inspection_scheduled: "inspection.scheduled",
 };
 
 export const ALL_WEBHOOK_EVENTS: IntegrationWebhookEvent[] = [
@@ -13,6 +15,8 @@ export const ALL_WEBHOOK_EVENTS: IntegrationWebhookEvent[] = [
   "report_finalized",
   "quote_updated",
   "deficiency_created",
+  "customer_created",
+  "inspection_scheduled",
 ];
 
 export const WEBHOOK_EVENT_LABELS: Record<IntegrationWebhookEvent, string> = {
@@ -20,6 +24,8 @@ export const WEBHOOK_EVENT_LABELS: Record<IntegrationWebhookEvent, string> = {
   report_finalized: "Compliance report finalized",
   quote_updated: "Quote status updated",
   deficiency_created: "Deficiency opened",
+  customer_created: "Customer created (API or dashboard)",
+  inspection_scheduled: "Inspection scheduled (API or dashboard)",
 };
 
 export const API_KEY_PREFIX = "ff_live_";

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { PORTAL_TIME_SLOTS } from "@/lib/customers/portal-schedule";
+import { PORTAL_TIME_SLOTS } from "@/lib/customers/portal-schedule-constants";
 import { cn } from "@/lib/utils";
 
 type PortalSchedulePanelProps = {
