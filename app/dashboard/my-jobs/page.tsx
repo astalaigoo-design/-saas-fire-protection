@@ -50,7 +50,7 @@ export default async function MyJobsPage() {
         description={
           jobAlerts.length > 0
             ? "New assign or schedule updates below — also check the notification bell (top right)."
-            : "Search by site, customer, or address. Open a job for the checklist, or use Directions without leaving the app."
+            : "Inspections use checklists below; assigned work orders let you start, note, and complete repairs on site."
         }
       />
 

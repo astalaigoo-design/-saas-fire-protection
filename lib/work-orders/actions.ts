@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { WorkOrderStatus, type Prisma } from "@prisma/client";
+import { WorkOrderStatus } from "@prisma/client";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
 import { canViewAssignedJobs } from "@/lib/auth/permissions";
 import { requireWritableTenant } from "@/lib/billing/guards";
@@ -19,7 +19,7 @@ import {
   removeWorkOrderPartLineSchema,
   updateWorkOrderSchema,
 } from "@/lib/work-orders/schemas";
-import { applyWorkOrderAssetServiceOnComplete } from "@/lib/work-orders/asset-service-on-complete";
+import { completeWorkOrder } from "@/lib/work-orders/complete-work-order";
 import { getWorkOrderById } from "@/lib/work-orders/queries";
 
 export type WorkOrderActionResult = { ok: true } | { ok: false; error: string };
@@ -49,37 +49,6 @@ function parseOptionalDate(value: string | undefined): Date | null | "invalid" {
   const parsed = parseDateInputValue(value);
   if (!parsed) return "invalid";
   return parsed;
-}
-
-async function decrementInventoryForLines(
-  workOrderId: string,
-  tx: Prisma.TransactionClient,
-): Promise<{ ok: true } | { ok: false; error: string }> {
-  const lines = await tx.workOrderPartLine.findMany({
-    where: { workOrderId, partId: { not: null } },
-    select: { partId: true, quantity: true, label: true },
-  });
-
-  for (const line of lines) {
-    if (!line.partId) continue;
-    const part = await tx.part.findUnique({
-      where: { id: line.partId },
-      select: { quantityOnHand: true, sku: true },
-    });
-    if (!part) continue;
-    if (part.quantityOnHand < line.quantity) {
-      return {
-        ok: false,
-        error: `Insufficient stock for ${part.sku} (need ${line.quantity}, have ${part.quantityOnHand}).`,
-      };
-    }
-    await tx.part.update({
-      where: { id: line.partId },
-      data: { quantityOnHand: { decrement: line.quantity } },
-    });
-  }
-
-  return { ok: true };
 }
 
 export async function createWorkOrder(
@@ -206,32 +175,23 @@ export async function updateWorkOrder(
 
   try {
     if (completing) {
-      const lines = await prisma.workOrderPartLine.findMany({
-        where: { workOrderId: existing.id, partId: { not: null } },
-        select: { partId: true, quantity: true },
+      const completeResult = await completeWorkOrder(existing.id, {
+        requireInProgress: false,
       });
-      for (const line of lines) {
-        if (!line.partId) continue;
-        const part = await prisma.part.findUnique({
-          where: { id: line.partId },
-          select: { quantityOnHand: true, sku: true },
-        });
-        if (part && part.quantityOnHand < line.quantity) {
-          return {
-            ok: false,
-            error: `Insufficient stock for ${part.sku} (need ${line.quantity}, have ${part.quantityOnHand}).`,
-          };
-        }
-      }
-    }
+      if (!completeResult.ok) return completeResult;
 
-    await prisma.$transaction(async (tx) => {
-      if (completing) {
-        const stock = await decrementInventoryForLines(existing.id, tx);
-        if (!stock.ok) throw new Error("STOCK");
-      }
-
-      await tx.workOrder.update({
+      await prisma.workOrder.update({
+        where: { id: existing.id },
+        data: {
+          title: parsed.data.title,
+          description: parsed.data.description || null,
+          assignedToUserId: parsed.data.assignedToUserId || null,
+          scheduledAt,
+          notes: parsed.data.notes || null,
+        },
+      });
+    } else {
+      await prisma.workOrder.update({
         where: { id: existing.id },
         data: {
           title: parsed.data.title,
@@ -240,17 +200,8 @@ export async function updateWorkOrder(
           assignedToUserId: parsed.data.assignedToUserId || null,
           scheduledAt,
           notes: parsed.data.notes || null,
-          completedAt: completing ? new Date() : undefined,
         },
       });
-    });
-
-    if (completing) {
-      try {
-        await applyWorkOrderAssetServiceOnComplete(existing.id);
-      } catch (error) {
-        captureServerActionError("applyWorkOrderAssetServiceOnComplete", error);
-      }
     }
 
     revalidatePath(`/dashboard/work-orders/${existing.id}`);

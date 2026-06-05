@@ -57,4 +57,13 @@ export const removeWorkOrderPartLineSchema = z.object({
   lineId: z.string().cuid(),
 });
 
+export const technicianWorkOrderIdSchema = z.object({
+  workOrderId: z.string().cuid(),
+});
+
+export const technicianWorkOrderNotesSchema = z.object({
+  workOrderId: z.string().cuid(),
+  notes: z.string().trim().max(5000).optional().or(z.literal("")),
+});
+
 export { workOrderStatusValues };

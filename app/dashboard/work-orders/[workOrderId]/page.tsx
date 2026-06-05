@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { TechnicianWorkOrderPanel } from "@/components/work-orders/technician-work-order-panel";
 import { WorkOrderDetailPanel } from "@/components/work-orders/work-order-detail-panel";
 import { canManageJobs } from "@/lib/auth/permissions";
 import { listAssignableStaff } from "@/lib/deficiencies/queries";
@@ -14,13 +15,19 @@ export default async function WorkOrderDetailPage({ params }: WorkOrderDetailPag
   const session = await getDashboardSession();
   if (!session) redirect("/sign-in");
 
+  const isTechnician = session.role === "technician";
   const canEdit = canManageJobs(session.role);
   const workOrder = await getWorkOrderForSession(session, params.workOrderId);
   if (!workOrder) notFound();
 
+  if (isTechnician) {
+    const parts = await listCompanyParts(session);
+    return <TechnicianWorkOrderPanel workOrder={workOrder} parts={parts} />;
+  }
+
   const [technicians, parts] = await Promise.all([
-    canEdit ? listAssignableStaff(session) : Promise.resolve([]),
-    canEdit ? listCompanyParts(session) : Promise.resolve([]),
+    listAssignableStaff(session),
+    listCompanyParts(session),
   ]);
 
   return (
