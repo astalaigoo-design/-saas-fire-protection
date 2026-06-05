@@ -51,9 +51,25 @@ export function SetupPipelineEmptyState({
           })}
         </div>
         {nextStep ? (
-          <Link href={nextStep.href} className={cn(buttonVariants({ size: "lg" }), "min-h-11")}>
-            Continue: {nextStep.label}
-          </Link>
+          <div className="flex flex-col items-center gap-2">
+            <Link href={nextStep.href} className={cn(buttonVariants({ size: "lg" }), "min-h-11")}>
+              Continue: {nextStep.label}
+            </Link>
+            {nextStep.id === "schedule" ? (
+              <Link
+                href={
+                  nextStep.href === "/dashboard/jobs/import"
+                    ? "/dashboard/jobs/new"
+                    : "/dashboard/jobs/import"
+                }
+                className={cn(buttonVariants({ variant: "link", size: "sm" }), "min-h-10")}
+              >
+                {nextStep.href === "/dashboard/jobs/import"
+                  ? "Or schedule one job"
+                  : "Or import many visits from CSV"}
+              </Link>
+            ) : null}
+          </div>
         ) : null}
       </div>
     </EmptyState>

@@ -32,8 +32,8 @@ export function buildSetupPipeline(input: {
     },
     {
       id: "schedule",
-      label: "Schedule job",
-      href: "/dashboard/jobs/new",
+      label: input.buildingCount >= 2 ? "Import schedule (CSV)" : "Schedule one job",
+      href: input.buildingCount >= 2 ? "/dashboard/jobs/import" : "/dashboard/jobs/new",
       done: input.inspectionCount > 0,
     },
   ];

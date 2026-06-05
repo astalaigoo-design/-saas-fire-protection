@@ -83,7 +83,7 @@ async function loadImportContext(companyId: string) {
         orderBy: { name: "asc" },
       }),
       prisma.user.findMany({
-        where: { companyId, role: "technician", active: true },
+        where: { companyId, role: { in: ["technician", "admin"] }, active: true },
         select: { id: true, name: true, email: true },
       }),
       prisma.inspection.findMany({
@@ -118,12 +118,24 @@ function parseImportRows(csv: string) {
   }
 
   const canonicalHeaders = parsed.headers.map(canonicalizeScheduleImportHeader);
-  const required = ["customer", "inspection_type", "scheduled_date"];
+  const required = ["inspection_type", "scheduled_date"];
   const missing = required.filter((key) => !canonicalHeaders.includes(key));
   if (missing.length > 0) {
     return {
       ok: false as const,
       error: `Missing required column(s): ${missing.join(", ")}.`,
+    };
+  }
+
+  const hasSiteColumn =
+    canonicalHeaders.includes("building_name") ||
+    (canonicalHeaders.includes("address_line1") &&
+      canonicalHeaders.includes("city") &&
+      canonicalHeaders.includes("postal_code"));
+  if (!hasSiteColumn) {
+    return {
+      ok: false as const,
+      error: "Missing site column: building (or building_name), or address_line1 + city + postal_code.",
     };
   }
 
@@ -212,7 +224,7 @@ export async function runScheduleImport(input: unknown): Promise<ScheduleImportR
     customers: ctx.customers,
     buildings: ctx.buildings,
     inspectionTypes: ctx.inspectionTypes,
-    technicians: ctx.technicians,
+    assignees: ctx.technicians,
     existingSlotKeys: ctx.existingSlotKeys,
     defaultBranchId,
     role: session.role,

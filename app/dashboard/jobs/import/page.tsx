@@ -23,7 +23,7 @@ export default async function ScheduleImportPage() {
     <div className="space-y-6">
       <PageHeader
         title="Import schedule"
-        description="Bulk-schedule inspections across your portfolio after sites are loaded."
+        description="Upload a CSV to schedule dozens of visits at once — building, type, date, and optional technician per row."
         actions={
           <Link
             href="/dashboard/jobs"

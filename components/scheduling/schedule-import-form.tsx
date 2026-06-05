@@ -95,13 +95,17 @@ export function ScheduleImportForm({ branchHint }: ScheduleImportFormProps) {
       <Card className="mx-auto max-w-4xl">
         <CardContent className="space-y-6 pt-6">
           <p className="text-sm text-muted-foreground">
-            Schedule many visits after customers and buildings are in FlareFlow. Each row needs{" "}
-            <strong className="font-medium text-foreground">branch</strong> ({branchHint}), site,{" "}
-            <strong className="font-medium text-foreground">inspection_type</strong> (type code or
+            Bulk-load a quarter of work — e.g. 40 annuals for Q3 across a property manager portfolio.
+            Import after customers and buildings are in FlareFlow. Each row needs{" "}
+            <strong className="font-medium text-foreground">building</strong> (site name),{" "}
+            <strong className="font-medium text-foreground">inspection_type</strong> (
+            <span className="font-mono text-xs">annual</span>, quarterly, monthly, or exact type
             name), <strong className="font-medium text-foreground">scheduled_date</strong> (
-            YYYY-MM-DD), and optional <strong className="font-medium text-foreground">technician_email</strong>
-            . Recurrence can be none, monthly, quarterly, or annual (max {SCHEDULE_IMPORT_MAX_VISITS}{" "}
-            total visits per file). Up to {SCHEDULE_IMPORT_MAX_ROWS} rows.
+            YYYY-MM-DD), and optional <strong className="font-medium text-foreground">technician</strong>{" "}
+            (email or name). <strong className="font-medium text-foreground">customer</strong> is
+            optional when the building name is unique in{" "}
+            <strong className="font-medium text-foreground">branch</strong> ({branchHint}). Up to{" "}
+            {SCHEDULE_IMPORT_MAX_ROWS} rows / {SCHEDULE_IMPORT_MAX_VISITS} visits per file.
           </p>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">

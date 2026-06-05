@@ -27,12 +27,20 @@ export function DashboardActions({ role }: DashboardActionsProps) {
         </Link>
       )}
       {showSchedule && (
-        <Link
-          href="/dashboard/jobs/new"
-          className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-11 px-5")}
-        >
-          Schedule inspection
-        </Link>
+        <>
+          <Link
+            href="/dashboard/jobs/import"
+            className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-5")}
+          >
+            Import schedule
+          </Link>
+          <Link
+            href="/dashboard/jobs/new"
+            className={cn(buttonVariants({ variant: "outline", size: "lg" }), "min-h-11 px-5")}
+          >
+            Schedule one job
+          </Link>
+        </>
       )}
     </div>
   );

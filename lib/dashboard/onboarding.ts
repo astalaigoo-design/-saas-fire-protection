@@ -137,7 +137,7 @@ export async function getOnboardingProgress(
       id: "import-schedule",
       title: "Import schedule from CSV",
       description:
-        "Bulk-schedule visits: branch, site, inspection type, date/time, optional technician and recurrence.",
+        "Bulk-load a quarter — building, type, date, optional technician (e.g. 40 annuals for Q3).",
       href: "/dashboard/jobs/import",
       done: scheduledInspectionCount > 0,
     },

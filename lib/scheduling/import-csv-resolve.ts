@@ -4,7 +4,10 @@ import {
   normalizeNameKey,
   resolveBranchId,
 } from "@/lib/buildings/import-csv-resolve";
-import { resolveBuildingForImportRow } from "@/lib/import/resolve-building-for-customer";
+import {
+  resolveBuildingForImportRow,
+  resolveBuildingInBranch,
+} from "@/lib/import/resolve-building-for-customer";
 import type { ScheduleImportRow } from "@/lib/scheduling/import-csv-schemas";
 import {
   combineDateAndTime,
@@ -62,7 +65,7 @@ type BuildingRow = {
   postalCode: string;
 };
 type InspectionTypeRow = { id: string; code: string; name: string };
-type TechnicianRow = { id: string; name: string | null; email: string | null };
+type AssigneeRow = { id: string; name: string | null; email: string | null };
 
 function scheduleSlotKey(buildingId: string, scheduledAt: Date, inspectionTypeId: string): string {
   const iso = scheduledAt.toISOString().slice(0, 16);
@@ -91,28 +94,30 @@ function resolveInspectionTypeId(
   return { error: `Ambiguous inspection type “${input}”. Use the type code.` };
 }
 
-function resolveTechnicianId(
+function resolveAssigneeId(
   input: string | undefined,
-  technicians: TechnicianRow[],
+  assignees: AssigneeRow[],
 ): { id: string; label: string } | { id: null } | { error: string } {
   if (!input?.trim()) return { id: null };
   const email = input.trim().toLowerCase();
-  const byEmail = technicians.filter((t) => t.email?.trim().toLowerCase() === email);
+  const byEmail = assignees.filter((row) => row.email?.trim().toLowerCase() === email);
   if (byEmail.length === 1) {
     return {
       id: byEmail[0]!.id,
-      label: byEmail[0]!.name ?? byEmail[0]!.email ?? "Technician",
+      label: byEmail[0]!.name ?? byEmail[0]!.email ?? "Assignee",
     };
   }
   const key = normalizeNameKey(input);
-  const byName = technicians.filter((t) => normalizeNameKey(t.name ?? "") === key);
+  const byName = assignees.filter((row) => normalizeNameKey(row.name ?? "") === key);
   if (byName.length === 1) {
-    return { id: byName[0]!.id, label: byName[0]!.name ?? "Technician" };
+    return { id: byName[0]!.id, label: byName[0]!.name ?? "Assignee" };
   }
   if (byEmail.length + byName.length === 0) {
-    return { error: `Technician “${input}” not found. Use their sign-in email.` };
+    return {
+      error: `Assignee “${input}” not found. Use a team member email from Organization → Team.`,
+    };
   }
-  return { error: `Multiple technicians match “${input}”. Use email.` };
+  return { error: `Multiple team members match “${input}”. Use email.` };
 }
 
 export function resolveScheduleImportRows(input: {
@@ -121,7 +126,7 @@ export function resolveScheduleImportRows(input: {
   customers: CustomerRow[];
   buildings: BuildingRow[];
   inspectionTypes: InspectionTypeRow[];
-  technicians: TechnicianRow[];
+  assignees: AssigneeRow[];
   existingSlotKeys: Set<string>;
   defaultBranchId: string;
   role: AppRole;
@@ -147,7 +152,7 @@ export function resolveScheduleImportRows(input: {
       line,
       status: "error",
       branch: data.branch || "—",
-      customer: data.customer,
+      customer: data.customer || "—",
       site: data.buildingName ?? data.addressLine1 ?? "—",
       inspectionType: data.inspectionTypeInput,
       when: `${data.scheduledDate} ${data.scheduledTime}`,
@@ -173,55 +178,104 @@ export function resolveScheduleImportRows(input: {
       continue;
     }
 
-    const customerKey = normalizeNameKey(data.customer);
-    const customerMatches = customersByBranch.get(branchResult.branchId)?.get(customerKey) ?? [];
+    let buildingResult:
+      | { buildingId: string; siteLabel: string }
+      | { error: string };
+    let resolvedCustomerName = data.customer || "—";
 
-    if (customerMatches.length > 1) {
-      errors += 1;
-      resolved.push({
-        line,
-        status: "error",
-        preview: {
-          ...basePreview,
-          branch: branchResult.branchLabel,
-          detail: `Multiple customers named “${data.customer}” in ${branchResult.branchLabel}.`,
-        },
+    if (!data.customer.trim()) {
+      if (!data.buildingName) {
+        errors += 1;
+        resolved.push({
+          line,
+          status: "error",
+          preview: {
+            ...basePreview,
+            branch: branchResult.branchLabel,
+            detail: "building is required when customer is omitted.",
+          },
+        });
+        continue;
+      }
+
+      const branchBuilding = resolveBuildingInBranch({
+        buildingName: data.buildingName,
+        branchId: branchResult.branchId,
+        customers: input.customers,
+        buildings: input.buildings,
       });
-      continue;
-    }
 
-    if (customerMatches.length === 0) {
-      errors += 1;
-      resolved.push({
-        line,
-        status: "error",
-        preview: {
-          ...basePreview,
-          branch: branchResult.branchLabel,
-          detail: "Customer not found. Import customers and buildings first.",
-        },
+      if ("error" in branchBuilding) {
+        errors += 1;
+        resolved.push({
+          line,
+          status: "error",
+          preview: {
+            ...basePreview,
+            branch: branchResult.branchLabel,
+            site: data.buildingName,
+            detail: branchBuilding.error,
+          },
+        });
+        continue;
+      }
+
+      buildingResult = branchBuilding;
+      resolvedCustomerName = branchBuilding.customerName;
+    } else {
+      const customerKey = normalizeNameKey(data.customer);
+      const customerMatches = customersByBranch.get(branchResult.branchId)?.get(customerKey) ?? [];
+
+      if (customerMatches.length > 1) {
+        errors += 1;
+        resolved.push({
+          line,
+          status: "error",
+          preview: {
+            ...basePreview,
+            branch: branchResult.branchLabel,
+            detail: `Multiple customers named “${data.customer}” in ${branchResult.branchLabel}.`,
+          },
+        });
+        continue;
+      }
+
+      if (customerMatches.length === 0) {
+        errors += 1;
+        resolved.push({
+          line,
+          status: "error",
+          preview: {
+            ...basePreview,
+            branch: branchResult.branchLabel,
+            detail: "Customer not found. Import customers and buildings first.",
+          },
+        });
+        continue;
+      }
+
+      const customerId = customerMatches[0]!.id;
+      const customerBuilding = resolveBuildingForImportRow({
+        row: data,
+        buildingsForCustomer: buildingsByCustomerId.get(customerId) ?? [],
       });
-      continue;
-    }
 
-    const customerId = customerMatches[0]!.id;
-    const buildingResult = resolveBuildingForImportRow({
-      row: data,
-      buildingsForCustomer: buildingsByCustomerId.get(customerId) ?? [],
-    });
+      if ("error" in customerBuilding) {
+        errors += 1;
+        resolved.push({
+          line,
+          status: "error",
+          preview: {
+            ...basePreview,
+            branch: branchResult.branchLabel,
+            detail: customerBuilding.error,
+          },
+        });
+        continue;
+      }
 
-    if ("error" in buildingResult) {
-      errors += 1;
-      resolved.push({
-        line,
-        status: "error",
-        preview: {
-          ...basePreview,
-          branch: branchResult.branchLabel,
-          detail: buildingResult.error,
-        },
-      });
-      continue;
+      buildingResult = customerBuilding;
+      resolvedCustomerName = data.customer;
     }
 
     const typeResult = resolveInspectionTypeId(data.inspectionTypeInput, input.inspectionTypes);
@@ -274,7 +328,7 @@ export function resolveScheduleImportRows(input: {
       continue;
     }
 
-    const techResult = resolveTechnicianId(data.technicianEmail, input.technicians);
+    const techResult = resolveAssigneeId(data.technicianEmail, input.assignees);
     if ("error" in techResult) {
       errors += 1;
       resolved.push({
@@ -283,6 +337,7 @@ export function resolveScheduleImportRows(input: {
         preview: {
           ...basePreview,
           branch: branchResult.branchLabel,
+          customer: resolvedCustomerName,
           site: buildingResult.siteLabel,
           inspectionType: typeResult.label,
           detail: techResult.error,
@@ -303,6 +358,7 @@ export function resolveScheduleImportRows(input: {
         preview: {
           ...basePreview,
           branch: branchResult.branchLabel,
+          customer: resolvedCustomerName,
           site: buildingResult.siteLabel,
           inspectionType: typeResult.label,
           technician: techResult.id ? techResult.label : "Unassigned",
@@ -321,6 +377,7 @@ export function resolveScheduleImportRows(input: {
         preview: {
           ...basePreview,
           branch: branchResult.branchLabel,
+          customer: resolvedCustomerName,
           site: buildingResult.siteLabel,
           inspectionType: typeResult.label,
           technician: techResult.id ? techResult.label : "Unassigned",
@@ -342,6 +399,7 @@ export function resolveScheduleImportRows(input: {
       preview: {
         ...basePreview,
         branch: branchResult.branchLabel,
+        customer: resolvedCustomerName,
         site: buildingResult.siteLabel,
         inspectionType: typeResult.label,
         technician: techLabel,

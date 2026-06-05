@@ -36,7 +36,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
     <div className="space-y-6">
       <PageHeader
         title="Calendar"
-        description="Drag jobs between days, bulk-reschedule multiple visits, or open a job to change assignee and time. Technicians are notified on changes."
+        description="Drag jobs between days, import a CSV to schedule a full quarter, or open a job to change assignee and time. Technicians are notified on changes."
         actions={
           <div className="flex flex-wrap gap-2">
             <Link

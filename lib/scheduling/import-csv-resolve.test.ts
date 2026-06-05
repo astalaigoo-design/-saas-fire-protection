@@ -34,7 +34,7 @@ describe("resolveScheduleImportRows", () => {
         },
       ],
       inspectionTypes: [{ id: "t1", code: "annual", name: "Annual Inspection" }],
-      technicians: [],
+      assignees: [],
       existingSlotKeys: new Set(),
       defaultBranchId: "b1",
       role: "owner",
@@ -43,5 +43,49 @@ describe("resolveScheduleImportRows", () => {
 
     expect(summary.ready).toBe(1);
     expect(summary.totalVisits).toBe(1);
+  });
+
+  it("resolves building without customer when site name is unique in branch", () => {
+    const { resolved, summary } = resolveScheduleImportRows({
+      rows: [
+        {
+          line: 2,
+          data: { ...baseRow, customer: "", buildingName: "Riverside Plaza" },
+        },
+      ],
+      branches: [{ id: "b1", name: "Main", isDefault: true }],
+      customers: [
+        { id: "c1", name: "Acme PM", branchId: "b1" },
+        { id: "c2", name: "Other PM", branchId: "b1" },
+      ],
+      buildings: [
+        {
+          id: "bd1",
+          customerId: "c2",
+          name: "Riverside Plaza",
+          addressLine1: "50 River Rd",
+          city: "Boston",
+          postalCode: "02101",
+        },
+        {
+          id: "bd2",
+          customerId: "c1",
+          name: "Tower A",
+          addressLine1: "100 Main",
+          city: "Boston",
+          postalCode: "02101",
+        },
+      ],
+      inspectionTypes: [{ id: "t1", code: "annual", name: "Annual Inspection" }],
+      assignees: [],
+      existingSlotKeys: new Set(),
+      defaultBranchId: "b1",
+      role: "owner",
+      userBranchId: null,
+    });
+
+    expect(summary.ready).toBe(1);
+    expect(resolved[0]?.preview.customer).toBe("Other PM");
+    expect(resolved[0]?.preview.site).toContain("Riverside");
   });
 });

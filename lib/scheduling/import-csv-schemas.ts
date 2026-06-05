@@ -12,6 +12,7 @@ const HEADER_ALIASES: Record<string, string> = {
   customer: "customer",
   customer_name: "customer",
   building_name: "building_name",
+  building: "building_name",
   site_name: "building_name",
   site: "building_name",
   address_line1: "address_line1",
@@ -30,6 +31,8 @@ const HEADER_ALIASES: Record<string, string> = {
   technician_email: "technician_email",
   assigned_technician: "technician_email",
   technician: "technician_email",
+  assignee: "technician_email",
+  assignee_email: "technician_email",
   recurrence: "recurrence",
   notes: "notes",
 };
@@ -41,7 +44,7 @@ export function canonicalizeScheduleImportHeader(header: string): string {
 export const scheduleImportRowSchema = z
   .object({
     branch: z.string().trim().max(100).optional().default(""),
-    customer: z.string().trim().min(1, "Customer is required").max(200),
+    customer: z.string().trim().max(200).optional().default(""),
     building_name: z.string().trim().max(200).optional().default(""),
     address_line1: z.string().trim().max(200).optional().default(""),
     city: z.string().trim().max(100).optional().default(""),
@@ -54,6 +57,7 @@ export const scheduleImportRowSchema = z
     notes: z.string().trim().max(2000).optional().default(""),
   })
   .superRefine((data, ctx) => {
+    const hasCustomer = Boolean(data.customer.trim());
     const hasName = Boolean(data.building_name.trim());
     const hasAddress =
       Boolean(data.address_line1.trim()) &&
@@ -62,8 +66,16 @@ export const scheduleImportRowSchema = z
     if (!hasName && !hasAddress) {
       ctx.addIssue({
         code: "custom",
-        message: "Provide building_name or address_line1 + city + postal_code to find the site.",
+        message:
+          "Provide building (or building_name) or address_line1 + city + postal_code to find the site.",
         path: ["building_name"],
+      });
+    }
+    if (!hasCustomer && !hasName) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Without customer, building name is required and must be unique in the branch.",
+        path: ["customer"],
       });
     }
   })
