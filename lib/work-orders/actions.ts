@@ -19,6 +19,7 @@ import {
   removeWorkOrderPartLineSchema,
   updateWorkOrderSchema,
 } from "@/lib/work-orders/schemas";
+import { applyWorkOrderAssetServiceOnComplete } from "@/lib/work-orders/asset-service-on-complete";
 import { getWorkOrderById } from "@/lib/work-orders/queries";
 
 export type WorkOrderActionResult = { ok: true } | { ok: false; error: string };
@@ -244,8 +245,17 @@ export async function updateWorkOrder(
       });
     });
 
+    if (completing) {
+      try {
+        await applyWorkOrderAssetServiceOnComplete(existing.id);
+      } catch (error) {
+        captureServerActionError("applyWorkOrderAssetServiceOnComplete", error);
+      }
+    }
+
     revalidatePath(`/dashboard/work-orders/${existing.id}`);
     revalidatePath("/dashboard/work-orders");
+    revalidatePath(`/dashboard/buildings/${existing.building.id}`);
     revalidatePath("/dashboard/parts");
     revalidatePath("/dashboard/operations");
     return { ok: true };

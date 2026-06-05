@@ -4,7 +4,7 @@ import {
   normalizeScanValue,
   type BuildingAssetScanRow,
 } from "@/lib/assets/scan-match";
-import { computeNextServiceDueForAsset } from "@/lib/assets/service-intervals";
+import { stampBuildingAssetsServiced } from "@/lib/assets/apply-service-stamp";
 import { ensureInspectionAssetChecks } from "@/lib/inspect/ensure-asset-checks";
 import { prisma } from "@/lib/prisma";
 
@@ -180,45 +180,26 @@ export async function applyInspectionAssetLinkageOnSubmit(input: {
     if (check) checkUpdates.push({ id: check.id });
   }
 
-  const assetById = new Map(assets.map((asset) => [asset.id, asset]));
-  const assetUpdates = await Promise.all(
-    servicedAssetIds.map(async (assetId) => {
-      const asset = assetById.get(assetId);
-      if (!asset) return null;
-      const nextServiceDue = await computeNextServiceDueForAsset({
-        branchId,
-        assetType: asset.assetType,
-        lastServiceAt: input.completedAt,
-      });
-      return {
-        assetId,
-        nextServiceDue,
-      };
-    }),
-  );
-
-  await prisma.$transaction([
-    ...checkUpdates.map((check) =>
-      prisma.inspectionAssetCheck.update({
-        where: { id: check.id },
-        data: {
-          result: InspectionItemResult.pass,
-          servicedAt: input.completedAt,
-        },
-      }),
-    ),
-    ...assetUpdates
-      .filter((row): row is NonNullable<typeof row> => row != null)
-      .map((row) =>
-        prisma.buildingAsset.update({
-          where: { id: row.assetId },
+  if (checkUpdates.length > 0) {
+    await prisma.$transaction(
+      checkUpdates.map((check) =>
+        prisma.inspectionAssetCheck.update({
+          where: { id: check.id },
           data: {
-            lastServiceAt: input.completedAt,
-            ...(row.nextServiceDue ? { nextServiceDue: row.nextServiceDue } : {}),
+            result: InspectionItemResult.pass,
+            servicedAt: input.completedAt,
           },
         }),
       ),
-  ]);
+    );
+  }
+
+  await stampBuildingAssetsServiced({
+    buildingId: inspection.buildingId,
+    branchId,
+    assetIds: servicedAssetIds,
+    servicedAt: input.completedAt,
+  });
 }
 
 /** @deprecated Import from asset-linkage directly. */
