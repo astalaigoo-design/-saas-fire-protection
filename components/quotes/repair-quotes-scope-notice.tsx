@@ -23,9 +23,10 @@ export function RepairQuotesScopeNotice({
           className,
         )}
       >
-        <span className="font-medium text-foreground">Internal repair quotes, not invoicing.</span>{" "}
-        Email PDFs and collect accept/decline on /q/… links. No QuickBooks, Stripe, or card
-        charges — bill customers in your accounting system after acceptance.
+        <span className="font-medium text-foreground">Internal repair quotes.</span>{" "}
+        Email PDFs and collect accept/decline on /q/… links. After acceptance, create a repair
+        invoice on the Invoices page — separate from Flareflow subscription (Paddle) and
+        QuickBooks.
       </p>
     );
   }

@@ -161,6 +161,20 @@ export function formatAuditEventSummary(event: AuditEventForDisplay): string {
       if (building) return `Customer requested changes · ${building}`;
       return "Customer requested quote changes";
     }
+    case "repair_invoice.created": {
+      const number = metaString(meta, "invoiceNumber");
+      return number ? `Invoice ${number} created` : "Repair invoice created";
+    }
+    case "repair_invoice.sent": {
+      const to = metaString(meta, "sentTo");
+      const number = metaString(meta, "invoiceNumber");
+      if (number && to) return `Invoice ${number} emailed to ${to}`;
+      return to ? `Repair invoice emailed to ${to}` : "Repair invoice sent";
+    }
+    case "repair_invoice.paid": {
+      const number = metaString(meta, "invoiceNumber");
+      return number ? `Invoice ${number} marked paid` : "Repair invoice marked paid";
+    }
     case "deficiency.created": {
       const label = metaString(meta, "label");
       return label ? `Deficiency opened · ${label}` : "Deficiency opened";
@@ -234,6 +248,8 @@ export function auditEventHref(event: AuditEventForDisplay): string | null {
       return `/dashboard/customers/${event.entityId}`;
     case "quote":
       return "/dashboard/quotes";
+    case "repair_invoice":
+      return "/dashboard/invoices";
     case "deficiency":
       return "/dashboard/operations?tab=deficiencies";
     case "company":

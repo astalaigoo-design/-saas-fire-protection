@@ -72,6 +72,22 @@ export function quoteWhereFromScope(
   };
 }
 
+export function repairInvoiceWhereFromScope(
+  scope: BranchScope,
+  companyId: string,
+): Prisma.RepairInvoiceWhereInput {
+  const base: Prisma.RepairInvoiceWhereInput = { companyId };
+  if (scope.mode === "all") return base;
+  return {
+    ...base,
+    quote: {
+      inspection: {
+        building: { customer: { companyId, branchId: scope.branchId } },
+      },
+    },
+  };
+}
+
 export function workOrderWhereFromScope(
   scope: BranchScope,
   companyId: string,

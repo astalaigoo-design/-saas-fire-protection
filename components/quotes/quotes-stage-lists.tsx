@@ -2,6 +2,7 @@ import { QuoteStatus } from "@prisma/client";
 import { QuoteLineItemsEditor } from "@/components/quotes/quote-line-items-editor";
 import { QuoteSendPanel } from "@/components/quotes/quote-send-panel";
 import { QuoteShareLink } from "@/components/quotes/quote-share-link";
+import { RepairInvoicePanel } from "@/components/repair-invoices/repair-invoice-panel";
 import { ScheduleJobFromQuotePanel } from "@/components/quotes/schedule-job-from-quote-panel";
 import {
   markQuoteAccepted,
@@ -194,6 +195,14 @@ export function QuotesStageLists({
                       <ScheduleJobFromQuotePanel
                         quoteId={quote.id}
                         scheduledInspectionId={quote.scheduledInspectionId}
+                      />
+                      <RepairInvoicePanel
+                        quoteId={quote.id}
+                        customerEmail={quote.inspection.building.customer.email}
+                        totalLabel={formatQuoteCurrency(quote.totalCents, quote.currency)}
+                        totalCents={quote.totalCents}
+                        currency={quote.currency}
+                        repairInvoice={quote.repairInvoice}
                       />
                     </CardContent>
                   </Card>

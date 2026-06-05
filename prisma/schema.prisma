@@ -80,6 +80,14 @@ enum QuoteStatus {
   declined
 }
 
+/// Customer repair invoice — separate from Paddle subscription billing.
+enum RepairInvoiceStatus {
+  draft
+  sent
+  paid
+  void
+}
+
 enum SubscriptionStatus {
   trialing
   active
@@ -154,6 +162,10 @@ model Company {
   certificateNumberPrefix String?
   nextCertificateNumber   Int     @default(1)
 
+  /// Sequential repair invoice numbers (customer billing, not Paddle).
+  repairInvoiceNumberPrefix String?
+  nextRepairInvoiceNumber   Int     @default(1)
+
   users           User[]
   jurisdictions   Jurisdiction[]
   reports         Report[]
@@ -162,6 +174,7 @@ model Company {
   inspectionTypes InspectionType[]
   inspections     Inspection[]
   quotes          Quote[]
+  repairInvoices  RepairInvoice[]
   auditEvents         AuditEvent[]
   staffNotifications  StaffNotification[]
   deficiencies        Deficiency[]
@@ -751,12 +764,50 @@ model Quote {
 
   lineItems QuoteLineItem[]
   workOrders WorkOrder[]
+  repairInvoice RepairInvoice?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([companyId, status])
   @@map("quotes")
+}
+
+/// Formal repair invoice generated from an accepted quote (customer billing).
+model RepairInvoice {
+  id String @id @default(cuid())
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  quoteId String @unique
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  invoiceNumber String
+  status        RepairInvoiceStatus @default(draft)
+
+  currency           String @default("USD")
+  subtotalCents      Int    @default(0)
+  taxRateBasisPoints Int    @default(0)
+  taxCents           Int    @default(0)
+  discountCents      Int    @default(0)
+  totalCents         Int    @default(0)
+
+  issuedAt DateTime  @default(now())
+  dueAt    DateTime?
+
+  sentTo        String?
+  sentAt        DateTime?
+  sentMessageId String?
+  paidAt        DateTime?
+
+  notes String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId, status])
+  @@map("repair_invoices")
 }
 
 /// Company parts catalog (stock on hand for field repairs).

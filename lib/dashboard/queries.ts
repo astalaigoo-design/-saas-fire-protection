@@ -165,6 +165,19 @@ const quoteListSelect = {
   acceptedAt: true,
   declinedAt: true,
   scheduledInspectionId: true,
+  repairInvoice: {
+    select: {
+      id: true,
+      invoiceNumber: true,
+      status: true,
+      totalCents: true,
+      currency: true,
+      sentTo: true,
+      sentAt: true,
+      paidAt: true,
+      dueAt: true,
+    },
+  },
   lineItems: {
     orderBy: { sortOrder: "asc" },
     select: {

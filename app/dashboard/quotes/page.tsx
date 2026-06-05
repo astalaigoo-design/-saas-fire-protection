@@ -65,10 +65,10 @@ export default async function QuotesPage({ searchParams }: QuotesPageProps) {
 
       <PageHeader
         title="Repair quotes"
-        description="Internal repair pipeline — draft, email to customer, accept/decline on /q/… links. Not QuickBooks, Stripe, or invoicing."
+        description="Draft repair estimates, email to customers, accept/decline on /q/… links. Invoice accepted quotes separately on Repair invoices."
         actions={
-          <Link href="/dashboard/reports" className={cn(buttonVariants({ variant: "outline" }), "min-h-10")}>
-            Compliance reports
+          <Link href="/dashboard/invoices" className={cn(buttonVariants({ variant: "outline" }), "min-h-10")}>
+            Repair invoices
           </Link>
         }
       />
