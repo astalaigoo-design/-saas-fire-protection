@@ -1,7 +1,7 @@
 import {
   canManageCustomers,
   canManageJobs,
-  canManageOrgSettings,
+  canAccessOrgSettings,
   canViewBilling,
 } from "@/lib/auth/permissions";
 import type { AppRole } from "@/lib/auth/roles";
@@ -46,8 +46,12 @@ export function getDashboardNavItems(role: AppRole): DashboardNavItem[] {
     items.push({ href: "/dashboard/billing", label: "Billing", icon: "credit-card" });
   }
 
-  if (canManageOrgSettings(role)) {
-    items.push({ href: "/dashboard/settings", label: "Organization", icon: "settings" });
+  if (canAccessOrgSettings(role)) {
+    items.push({
+      href: "/dashboard/settings",
+      label: role === "owner" ? "Organization" : "Branch settings",
+      icon: "settings",
+    });
   }
 
   return items;

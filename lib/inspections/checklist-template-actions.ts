@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { canManageOrgSettings } from "@/lib/auth/permissions";
+import { canManageChecklistTemplates } from "@/lib/auth/permissions";
 import {
   addChecklistTemplateItemSchema,
   checklistTemplateItemIdSchema,
@@ -73,7 +73,7 @@ async function assertInspectionTypeForCompany(
   return { ok: true, type };
 }
 
-async function guardOwnerSession(): Promise<
+async function guardChecklistEditorSession(): Promise<
   | { ok: true; companyId: string }
   | { ok: false; error: string }
 > {
@@ -81,8 +81,8 @@ async function guardOwnerSession(): Promise<
   if (!session) {
     return { ok: false, error: "You must be signed in." };
   }
-  if (!canManageOrgSettings(session.role)) {
-    return { ok: false, error: "Only the owner can edit checklist templates." };
+  if (!canManageChecklistTemplates(session.role)) {
+    return { ok: false, error: "You do not have permission to edit checklist templates." };
   }
   return { ok: true, companyId: session.companyId };
 }
@@ -91,7 +91,7 @@ export async function addChecklistTemplateItem(
   _prev: ChecklistTemplateActionState | undefined,
   formData: FormData,
 ): Promise<ChecklistTemplateActionState> {
-  const guard = await guardOwnerSession();
+  const guard = await guardChecklistEditorSession();
   if (!guard.ok) return guard;
 
   const parsed = addChecklistTemplateItemSchema.safeParse(formDataToObject(formData));
@@ -135,7 +135,7 @@ export async function updateChecklistTemplateItem(
   _prev: ChecklistTemplateActionState | undefined,
   formData: FormData,
 ): Promise<ChecklistTemplateActionState> {
-  const guard = await guardOwnerSession();
+  const guard = await guardChecklistEditorSession();
   if (!guard.ok) return guard;
 
   const parsed = updateChecklistTemplateItemSchema.safeParse(formDataToObject(formData));
@@ -168,7 +168,7 @@ export async function toggleChecklistTemplateItemHidden(
   _prev: ChecklistTemplateActionState | undefined,
   formData: FormData,
 ): Promise<ChecklistTemplateActionState> {
-  const guard = await guardOwnerSession();
+  const guard = await guardChecklistEditorSession();
   if (!guard.ok) return guard;
 
   const parsed = checklistTemplateItemIdSchema.safeParse(formDataToObject(formData));
@@ -197,7 +197,7 @@ export async function reorderChecklistTemplateItem(
   _prev: ChecklistTemplateActionState | undefined,
   formData: FormData,
 ): Promise<ChecklistTemplateActionState> {
-  const guard = await guardOwnerSession();
+  const guard = await guardChecklistEditorSession();
   if (!guard.ok) return guard;
 
   const parsed = reorderChecklistTemplateItemSchema.safeParse(formDataToObject(formData));
@@ -251,7 +251,7 @@ export async function resetChecklistTemplateToDefaults(
   _prev: ChecklistTemplateActionState | undefined,
   formData: FormData,
 ): Promise<ChecklistTemplateActionState> {
-  const guard = await guardOwnerSession();
+  const guard = await guardChecklistEditorSession();
   if (!guard.ok) return guard;
 
   const parsed = checklistTemplateTypeIdSchema.safeParse(formDataToObject(formData));

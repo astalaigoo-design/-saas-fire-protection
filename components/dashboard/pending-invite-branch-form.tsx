@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 type PendingInviteBranchFormProps = {
   invite: PendingTeamInviteRow;
   branches: BranchListItem[];
+  allowBranchReassign?: boolean;
 };
 
 function SaveBranchButton() {
@@ -31,7 +32,11 @@ function SaveBranchButton() {
   );
 }
 
-export function PendingInviteBranchForm({ invite, branches }: PendingInviteBranchFormProps) {
+export function PendingInviteBranchForm({
+  invite,
+  branches,
+  allowBranchReassign = true,
+}: PendingInviteBranchFormProps) {
   const [state, formAction] = useFormState<
     ReassignPendingInviteBranchState | undefined,
     FormData
@@ -39,6 +44,14 @@ export function PendingInviteBranchForm({ invite, branches }: PendingInviteBranc
 
   if (invite.role === "owner") {
     return <span className="text-muted-foreground">All locations</span>;
+  }
+
+  if (!allowBranchReassign || branches.length < 2) {
+    return (
+      <span className="text-xs text-muted-foreground">
+        {invite.branchName ?? "Default branch"}
+      </span>
+    );
   }
 
   if (branches.length === 0) {

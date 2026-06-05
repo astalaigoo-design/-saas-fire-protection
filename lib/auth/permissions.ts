@@ -39,9 +39,24 @@ export function canViewAssignedJobs(role: AppRole | null): boolean {
   return role === "owner" || role === "admin" || role === "technician";
 }
 
-/** Organization / destructive settings — owner only. */
+/** Full organization settings — owner only (billing, API keys, branches, company profile). */
 export function canManageOrgSettings(role: AppRole | null): boolean {
   return role === "owner";
+}
+
+/** Organization settings page — owner or branch admin (limited sections). */
+export function canAccessOrgSettings(role: AppRole | null): boolean {
+  return role === "owner" || role === "admin";
+}
+
+/** Invite and manage technicians on a branch — owner (all) or admin (own branch). */
+export function canManageBranchTeam(role: AppRole | null): boolean {
+  return role === "owner" || role === "admin";
+}
+
+/** Edit inspection checklist templates — owner or admin. */
+export function canManageChecklistTemplates(role: AppRole | null): boolean {
+  return role === "owner" || role === "admin";
 }
 
 /** View subscription status and trial — owner or admin (read-only for admin). */
@@ -58,7 +73,9 @@ export function permissionSummary(role: AppRole | null): string[] {
   if (!role) return ["No role in public metadata — assign `role` in Clerk."];
   const lines: string[] = [];
   if (canManageOrgSettings(role)) {
-    lines.push("Organization settings");
+    lines.push("Organization settings (full)");
+  } else if (canAccessOrgSettings(role)) {
+    lines.push("Branch team & checklist templates");
   }
   if (canManageBilling(role)) {
     lines.push("Billing & subscriptions (manage)");

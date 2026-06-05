@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 type TeamMemberBranchFormProps = {
   member: TeamMemberRow;
   branches: BranchListItem[];
+  allowBranchReassign?: boolean;
 };
 
 function SaveBranchButton() {
@@ -31,7 +32,11 @@ function SaveBranchButton() {
   );
 }
 
-export function TeamMemberBranchForm({ member, branches }: TeamMemberBranchFormProps) {
+export function TeamMemberBranchForm({
+  member,
+  branches,
+  allowBranchReassign = true,
+}: TeamMemberBranchFormProps) {
   const [state, formAction] = useFormState<
     ReassignTeamMemberBranchState | undefined,
     FormData
@@ -39,6 +44,14 @@ export function TeamMemberBranchForm({ member, branches }: TeamMemberBranchFormP
 
   if (member.role === "owner") {
     return <span className="text-muted-foreground">All locations</span>;
+  }
+
+  if (!allowBranchReassign || branches.length < 2) {
+    return (
+      <span className="text-xs text-muted-foreground">
+        {member.branchName ?? "Unassigned"}
+      </span>
+    );
   }
 
   if (branches.length === 0) {

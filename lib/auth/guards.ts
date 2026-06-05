@@ -5,6 +5,7 @@ import {
   canManageCustomers,
   canManageJobs,
   canManageOrgSettings,
+  canAccessOrgSettings,
   canViewBilling,
 } from "./permissions";
 
@@ -25,6 +26,11 @@ export function ensureCanManageCustomers(role: AppRole | null): void {
 export function ensureCanManageOrgSettings(role: AppRole | null): void {
   requireAppRole(role);
   if (!canManageOrgSettings(role)) redirect("/dashboard");
+}
+
+export function ensureCanAccessOrgSettings(role: AppRole | null): void {
+  requireAppRole(role);
+  if (!canAccessOrgSettings(role)) redirect("/dashboard");
 }
 
 export function ensureCanViewBilling(role: AppRole | null): void {

@@ -2,7 +2,7 @@
 
 import { clerkClient } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
-import { canManageOrgSettings } from "@/lib/auth/permissions";
+import { canManageBranchTeam } from "@/lib/auth/permissions";
 import { createTeamInvitation } from "@/lib/clerk/create-team-invitation";
 import { getPendingInvitation } from "@/lib/clerk/get-pending-invitation";
 import { syncClerkPublicMetadata } from "@/lib/clerk/sync-public-metadata";
@@ -16,6 +16,11 @@ import {
   inviteTeamMemberSchema,
   isInvitableTeamRole,
 } from "@/lib/team/invite-schemas";
+import {
+  assertBranchAssignmentAllowed,
+  assertTeamMemberManageable,
+  canInviteTeamRole,
+} from "@/lib/team/branch-team-access";
 import {
   readInviteBranchId,
   readInviteCompanyId,
@@ -40,14 +45,19 @@ export async function inviteTeamMember(
   if (!session) {
     return { ok: false, error: "You must be signed in." };
   }
-  if (!canManageOrgSettings(session.role)) {
-    return { ok: false, error: "Only the owner can invite team members." };
+  if (!canManageBranchTeam(session.role)) {
+    return { ok: false, error: "You do not have permission to invite team members." };
   }
 
   const roleInput = String(formData.get("role") ?? "technician");
+  const inviteRole = isInvitableTeamRole(roleInput) ? roleInput : "technician";
+  if (!canInviteTeamRole(session, inviteRole)) {
+    return { ok: false, error: "You can only invite technicians to your branch." };
+  }
+
   const parsed = inviteTeamMemberSchema.safeParse({
     email: formData.get("email"),
-    role: isInvitableTeamRole(roleInput) ? roleInput : "technician",
+    role: inviteRole,
   });
 
   if (!parsed.success) {
@@ -92,6 +102,11 @@ export async function inviteTeamMember(
     branchId = await getDefaultBranchId(session.companyId);
   }
 
+  const branchCheck = assertBranchAssignmentAllowed(session, branchId);
+  if (!branchCheck.ok) {
+    return { ok: false, error: branchCheck.error };
+  }
+
   const invite = await createTeamInvitation({
     emailAddress: parsed.data.email,
     role: parsed.data.role,
@@ -119,7 +134,7 @@ export async function reassignTeamMemberBranch(
   if (!session) {
     return { ok: false, error: "You must be signed in." };
   }
-  if (!canManageOrgSettings(session.role)) {
+  if (!canManageBranchTeam(session.role)) {
     return { ok: false, error: "Only the owner can change team branch assignments." };
   }
 
@@ -147,6 +162,11 @@ export async function reassignTeamMemberBranch(
 
   if (!member) {
     return { ok: false, error: "Team member not found." };
+  }
+
+  const branchCheck = assertBranchAssignmentAllowed(session, parsed.data.branchId);
+  if (!branchCheck.ok) {
+    return { ok: false, error: branchCheck.error };
   }
 
   if (!requiresAssignedBranch(member.role)) {
@@ -203,8 +223,8 @@ export async function reassignPendingInviteBranch(
   if (!session) {
     return { ok: false, error: "You must be signed in." };
   }
-  if (!canManageOrgSettings(session.role)) {
-    return { ok: false, error: "Only the owner can change pending invitation branches." };
+  if (!canManageBranchTeam(session.role)) {
+    return { ok: false, error: "You do not have permission to change pending invitation branches." };
   }
 
   const parsed = reassignPendingInviteBranchSchema.safeParse({
@@ -237,6 +257,11 @@ export async function reassignPendingInviteBranch(
   });
   if (!branch) {
     return { ok: false, error: "Choose a valid branch." };
+  }
+
+  const branchCheck = assertBranchAssignmentAllowed(session, branch.id);
+  if (!branchCheck.ok) {
+    return { ok: false, error: branchCheck.error };
   }
 
   const currentBranchId =
@@ -282,8 +307,8 @@ export async function syncTeamMemberEmailFromClerk(
 ): Promise<SyncTeamMemberEmailState> {
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
-  if (!canManageOrgSettings(session.role)) {
-    return { ok: false, error: "Only the owner can sync team emails." };
+  if (!canManageBranchTeam(session.role)) {
+    return { ok: false, error: "You do not have permission to sync team emails." };
   }
 
   const userId = String(formData.get("userId") ?? "").trim();
@@ -291,9 +316,11 @@ export async function syncTeamMemberEmailFromClerk(
 
   const member = await prisma.user.findFirst({
     where: { id: userId, companyId: session.companyId, active: true },
-    select: { id: true, role: true, clerkUserId: true },
+    select: { id: true, role: true, branchId: true, clerkUserId: true },
   });
   if (!member) return { ok: false, error: "Team member not found." };
+  const access = assertTeamMemberManageable(session, member);
+  if (!access.ok) return access;
   if (member.role !== "technician") {
     return { ok: false, error: "Job alert email sync applies to technicians only." };
   }
@@ -332,8 +359,8 @@ export async function updateTeamMemberPhone(
 ): Promise<UpdateTeamMemberPhoneState> {
   const session = await getDashboardSession();
   if (!session) return { ok: false, error: "You must be signed in." };
-  if (!canManageOrgSettings(session.role)) {
-    return { ok: false, error: "Only the owner can update team phone numbers." };
+  if (!canManageBranchTeam(session.role)) {
+    return { ok: false, error: "You do not have permission to update team phone numbers." };
   }
 
   const parsed = updateTeamMemberPhoneSchema.safeParse({
@@ -346,9 +373,11 @@ export async function updateTeamMemberPhone(
 
   const member = await prisma.user.findFirst({
     where: { id: parsed.data.userId, companyId: session.companyId, active: true },
-    select: { id: true, role: true },
+    select: { id: true, role: true, branchId: true },
   });
   if (!member) return { ok: false, error: "Team member not found." };
+  const access = assertTeamMemberManageable(session, member);
+  if (!access.ok) return access;
   if (member.role !== "technician") {
     return { ok: false, error: "SMS alerts apply to technicians only." };
   }

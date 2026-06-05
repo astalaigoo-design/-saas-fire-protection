@@ -15,8 +15,8 @@ import { TeamInviteSection } from "@/components/dashboard/team-invite-section";
 import { RepairQuotesSettingsSection } from "@/components/dashboard/repair-quotes-settings-section";
 import { IntegrationsSettingsSection } from "@/components/dashboard/integrations-settings-section";
 import { getIntegrationsSettingsData } from "@/lib/integrations/queries";
-import { listBranchesForCompany } from "@/lib/branches/queries";
-import { ensureCanManageOrgSettings } from "@/lib/auth/guards";
+import { listBranchesForCompany, type BranchListItem } from "@/lib/branches/queries";
+import { ensureCanAccessOrgSettings } from "@/lib/auth/guards";
 import { getInspectionTypePacksData } from "@/lib/companies/inspection-type-queries";
 import { getChecklistTemplatesEditorData } from "@/lib/inspections/checklist-template-queries";
 import { JurisdictionsSettingsSection } from "@/components/dashboard/jurisdictions-settings-section";
@@ -30,55 +30,77 @@ import { getOutboundEmailStatus } from "@/lib/email/env";
 import { getSmsConfigStatus } from "@/lib/sms/env";
 import { getTeamManagementData } from "@/lib/team/queries";
 
+async function branchesForTeamSection(
+  companyId: string,
+  teamScope: Awaited<ReturnType<typeof getTeamManagementData>>["scope"],
+  ownerView: boolean,
+): Promise<BranchListItem[]> {
+  const branches = await listBranchesForCompany(companyId);
+  if (ownerView) return branches;
+  if (teamScope.mode !== "branch") return [];
+  return branches.filter((branch) => branch.id === teamScope.branchId);
+}
+
 export default async function OrgSettingsPage() {
   const session = await getDashboardSession();
   if (!session) redirect("/sign-in");
-  ensureCanManageOrgSettings(session.role);
+  ensureCanAccessOrgSettings(session.role);
+
+  const ownerView = isOwner(session.role);
 
   const [
     company,
     team,
     inspectionTypePacks,
     checklistTemplates,
-    branches,
     integrations,
     jurisdictions,
     pilotReadiness,
     customerNotifications,
   ] = await Promise.all([
-    getCompanyProfile(session),
+    ownerView ? getCompanyProfile(session) : Promise.resolve(null),
     getTeamManagementData(session),
-    getInspectionTypePacksData(session),
+    ownerView ? getInspectionTypePacksData(session) : Promise.resolve(null),
     getChecklistTemplatesEditorData(session),
-    listBranchesForCompany(session.companyId),
-    getIntegrationsSettingsData(session.companyId),
-    getJurisdictionsSettingsData(session),
-    isOwner(session.role) ? getPilotReadinessStatus() : Promise.resolve(null),
-    getCustomerNotificationSettings(session.companyId),
+    ownerView ? getIntegrationsSettingsData(session.companyId) : Promise.resolve(null),
+    ownerView ? getJurisdictionsSettingsData(session) : Promise.resolve(null),
+    ownerView ? getPilotReadinessStatus() : Promise.resolve(null),
+    ownerView ? getCustomerNotificationSettings(session.companyId) : Promise.resolve(null),
   ]);
-  if (!company) redirect("/dashboard");
+
+  const teamBranches = await branchesForTeamSection(session.companyId, team.scope, ownerView);
+  const branchName =
+    team.scope.mode === "branch"
+      ? (teamBranches[0]?.name ?? "your branch")
+      : null;
 
   return (
     <div className="space-y-10">
       <PageHeader
-        title="Organization"
-        description="Manage branches, reassign team members and customers between locations, and configure company details."
+        title={ownerView ? "Organization" : "Branch settings"}
+        description={
+          ownerView
+            ? "Manage branches, reassign team members and customers between locations, and configure company details."
+            : `Manage technicians and checklist templates for ${branchName ?? "your branch"}. Billing, API keys, and company-wide settings are owner-only.`
+        }
       />
 
-      {pilotReadiness ? <PilotReadinessChecklist status={pilotReadiness} /> : null}
+      {ownerView && pilotReadiness ? <PilotReadinessChecklist status={pilotReadiness} /> : null}
 
-      <BranchesSettingsSection branches={branches} />
+      {ownerView ? <BranchesSettingsSection branches={teamBranches} /> : null}
 
-      <OutboundEmailSettingsSection status={getOutboundEmailStatus()} />
+      {ownerView ? <OutboundEmailSettingsSection status={getOutboundEmailStatus()} /> : null}
 
-      <RepairQuotesSettingsSection />
+      {ownerView ? <RepairQuotesSettingsSection /> : null}
 
-      <TechnicianAlertsSettingsSection
-        emailStatus={getOutboundEmailStatus()}
-        smsStatus={getSmsConfigStatus()}
-      />
+      {ownerView ? (
+        <TechnicianAlertsSettingsSection
+          emailStatus={getOutboundEmailStatus()}
+          smsStatus={getSmsConfigStatus()}
+        />
+      ) : null}
 
-      {customerNotifications ? (
+      {ownerView && customerNotifications ? (
         <CustomerNotificationsSettingsSection
           settings={customerNotifications}
           emailStatus={getOutboundEmailStatus()}
@@ -89,38 +111,45 @@ export default async function OrgSettingsPage() {
       <TeamInviteSection
         members={team.members}
         pendingInvites={team.pendingInvites}
-        branches={branches}
+        branches={teamBranches}
         outboundEmailConfigured={getOutboundEmailStatus().configured}
+        teamScope={team.scope}
       />
 
-      <InspectionTypePacksSection packs={inspectionTypePacks.packs} />
+      {ownerView && inspectionTypePacks ? (
+        <InspectionTypePacksSection packs={inspectionTypePacks.packs} />
+      ) : null}
 
       <ChecklistTemplatesSection data={checklistTemplates} />
 
-      <section className="max-w-lg rounded-xl border border-border bg-card p-5 shadow-sm">
-        <h2 className="font-heading text-base font-semibold text-foreground">
-          Billing & subscription
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          View your trial, subscribe with Paddle, or manage your plan and payment method.
-        </p>
-        <Link
-          href="/dashboard/billing"
-          className={cn(buttonVariants(), "mt-4 inline-flex min-h-10")}
-        >
-          Open billing
-        </Link>
-      </section>
+      {ownerView ? (
+        <section className="max-w-lg rounded-xl border border-border bg-card p-5 shadow-sm">
+          <h2 className="font-heading text-base font-semibold text-foreground">
+            Billing & subscription
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            View your trial, subscribe with Paddle, or manage your plan and payment method.
+          </p>
+          <Link
+            href="/dashboard/billing"
+            className={cn(buttonVariants(), "mt-4 inline-flex min-h-10")}
+          >
+            Open billing
+          </Link>
+        </section>
+      ) : null}
 
-      <IntegrationsSettingsSection data={integrations} />
+      {ownerView && integrations ? <IntegrationsSettingsSection data={integrations} /> : null}
 
-      <JurisdictionsSettingsSection
-        jurisdictions={jurisdictions.jurisdictions}
-        certificateNumberPrefix={jurisdictions.certificateNumberPrefix}
-        nextCertificateNumber={jurisdictions.nextCertificateNumber}
-      />
+      {ownerView && jurisdictions ? (
+        <JurisdictionsSettingsSection
+          jurisdictions={jurisdictions.jurisdictions}
+          certificateNumberPrefix={jurisdictions.certificateNumberPrefix}
+          nextCertificateNumber={jurisdictions.nextCertificateNumber}
+        />
+      ) : null}
 
-      <CompanySettingsForm company={company} />
+      {ownerView && company ? <CompanySettingsForm company={company} /> : null}
     </div>
   );
 }

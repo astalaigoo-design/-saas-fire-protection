@@ -8,6 +8,11 @@ import {
   readInviteCompanyId,
   readInviteRole,
 } from "@/lib/team/invite-metadata";
+import {
+  branchTeamScopeFromSession,
+  pendingInviteVisibleToSession,
+  teamMemberVisibleToSession,
+} from "@/lib/team/branch-team-access";
 
 export type TeamMemberRow = {
   id: string;
@@ -44,21 +49,24 @@ export async function listTeamMembers(session: DashboardSession): Promise<TeamMe
     },
     orderBy: [{ role: "asc" }, { createdAt: "asc" }],
   });
-  return rows.map((row) => ({
-    id: row.id,
-    clerkUserId: row.clerkUserId,
-    name: row.name,
-    email: row.email,
-    phone: row.phone,
-    role: row.role,
-    branchId: row.branchId,
-    branchName: row.branch?.name ?? (row.role === "owner" ? "All locations" : null),
-  }));
+  return rows
+    .filter((row) => teamMemberVisibleToSession(session, row))
+    .map((row) => ({
+      id: row.id,
+      clerkUserId: row.clerkUserId,
+      name: row.name,
+      email: row.email,
+      phone: row.phone,
+      role: row.role,
+      branchId: row.branchId,
+      branchName: row.branch?.name ?? (row.role === "owner" ? "All locations" : null),
+    }));
 }
 
 export async function listPendingTeamInvites(
-  companyId: string,
+  session: DashboardSession,
 ): Promise<PendingTeamInviteRow[]> {
+  const companyId = session.companyId;
   try {
     const client = await clerkClient();
     const response = await client.invitations.getInvitationList({
@@ -94,7 +102,8 @@ export async function listPendingTeamInvites(
       ? (branchNameById.get(defaultBranchId) ?? null)
       : null;
 
-    return companyInvites.map((invite) => {
+    return companyInvites
+      .map((invite) => {
       const role = readInviteRole(invite.publicMetadata);
       const branchId =
         role === "owner" ? null : (readInviteBranchId(invite.publicMetadata) ?? defaultBranchId);
@@ -113,7 +122,8 @@ export async function listPendingTeamInvites(
         branchName,
         createdAt: new Date(invite.createdAt),
       };
-    });
+    })
+      .filter((invite) => pendingInviteVisibleToSession(session, invite));
   } catch (error) {
     console.error("listPendingTeamInvites failed", error);
     return [];
@@ -123,6 +133,7 @@ export async function listPendingTeamInvites(
 export type TeamManagementData = {
   members: TeamMemberRow[];
   pendingInvites: PendingTeamInviteRow[];
+  scope: ReturnType<typeof branchTeamScopeFromSession>;
 };
 
 export async function getTeamManagementData(
@@ -130,7 +141,11 @@ export async function getTeamManagementData(
 ): Promise<TeamManagementData> {
   const [members, pendingInvites] = await Promise.all([
     listTeamMembers(session),
-    listPendingTeamInvites(session.companyId),
+    listPendingTeamInvites(session),
   ]);
-  return { members, pendingInvites };
+  return {
+    members,
+    pendingInvites,
+    scope: branchTeamScopeFromSession(session),
+  };
 }

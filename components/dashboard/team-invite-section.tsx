@@ -11,6 +11,7 @@ import { TeamMemberContactStatus } from "@/components/dashboard/team-member-cont
 import { TeamMemberPhoneForm } from "@/components/dashboard/team-member-phone-form";
 import { technicianContactGaps } from "@/lib/notifications/technician-contact";
 import type { BranchListItem } from "@/lib/branches/queries";
+import type { BranchTeamScope } from "@/lib/team/branch-team-access";
 import type { PendingTeamInviteRow, TeamMemberRow } from "@/lib/team/queries";
 import { INVITABLE_TEAM_ROLES } from "@/lib/team/invite-schemas";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ type TeamInviteSectionProps = {
   pendingInvites: PendingTeamInviteRow[];
   branches: BranchListItem[];
   outboundEmailConfigured: boolean;
+  teamScope: BranchTeamScope;
 };
 
 function roleLabel(role: string): string {
@@ -51,8 +53,13 @@ export function TeamInviteSection({
   pendingInvites,
   branches,
   outboundEmailConfigured,
+  teamScope,
 }: TeamInviteSectionProps) {
-  const defaultBranchId = branches.find((b) => b.isDefault)?.id ?? branches[0]?.id ?? "";
+  const branchScoped = teamScope.mode === "branch";
+  const defaultBranchId =
+    teamScope.mode === "branch"
+      ? teamScope.branchId
+      : (branches.find((b) => b.isDefault)?.id ?? branches[0]?.id ?? "");
   const techniciansMissingContact = members.filter(
     (m) => technicianContactGaps(m).length > 0,
   ).length;
@@ -72,14 +79,20 @@ export function TeamInviteSection({
           Team
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Invite technicians or admins, then use the branch dropdown in Current team to move someone
-          after they join. Technicians need an email on file for job emails (invite address or Clerk
-          sign-in) and a mobile for SMS.
+          {branchScoped
+            ? "Invite technicians to your branch and keep their job alert contact up to date."
+            : "Invite technicians or admins, then use the branch dropdown in Current team to move someone after they join. Technicians need an email on file for job emails (invite address or Clerk sign-in) and a mobile for SMS."}
         </p>
       </div>
 
       <form action={formAction} className="space-y-4 rounded-xl border border-border p-4">
         <legend className="sr-only">Invite team member</legend>
+        {branchScoped ? (
+          <input type="hidden" name="role" value="technician" />
+        ) : null}
+        {branchScoped && defaultBranchId ? (
+          <input type="hidden" name="branchId" value={defaultBranchId} />
+        ) : null}
         <div className="space-y-2">
           <Label htmlFor="invite-email">Email</Label>
           <Input
@@ -92,26 +105,29 @@ export function TeamInviteSection({
             className="min-h-11"
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="invite-role">Role</Label>
-          <select
-            id="invite-role"
-            name="role"
-            defaultValue="technician"
-            className="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-          >
-            {INVITABLE_TEAM_ROLES.map((role) => (
-              <option key={role} value={role}>
-                {roleLabel(role)}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-muted-foreground">
-            Technicians see assigned inspections only. Admins manage customers and jobs; choose a
-            branch above to keep them on one location (same admin role — not a separate branch-admin).
-          </p>
-        </div>
-        {branches.length > 0 ? (
+        {branchScoped ? null : (
+          <div className="space-y-2">
+            <Label htmlFor="invite-role">Role</Label>
+            <select
+              id="invite-role"
+              name="role"
+              defaultValue="technician"
+              className="flex min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              {INVITABLE_TEAM_ROLES.map((role) => (
+                <option key={role} value={role}>
+                  {roleLabel(role)}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Technicians see assigned inspections only. Admins manage customers and jobs; choose a
+              branch above to keep them on one location (same admin role — not a separate
+              branch-admin).
+            </p>
+          </div>
+        )}
+        {!branchScoped && branches.length > 0 ? (
           <div className="space-y-2">
             <Label htmlFor="invite-branch">Branch</Label>
             <select
@@ -151,9 +167,9 @@ export function TeamInviteSection({
         <div className="rounded-xl border border-border p-4">
           <h3 className="text-sm font-medium text-foreground">Current team</h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Fix a wrong-branch invite: pick a new branch for each admin or technician, then Save.
-            Owners stay company-wide. Check job alert contact for each technician — missing email is
-            the most common reason assign emails do not send.
+            {branchScoped
+              ? "Technicians on your branch. Update mobile numbers for SMS job alerts."
+              : "Fix a wrong-branch invite: pick a new branch for each admin or technician, then Save. Owners stay company-wide. Check job alert contact for each technician — missing email is the most common reason assign emails do not send."}
           </p>
           {techniciansMissingContact > 0 ? (
             <p role="status" className="mt-2 text-xs font-medium text-amber-800 dark:text-amber-200">
@@ -185,7 +201,11 @@ export function TeamInviteSection({
                     <p className="mb-1 text-xs font-medium text-muted-foreground sm:sr-only">
                       Branch
                     </p>
-                    <TeamMemberBranchForm member={member} branches={branches} />
+                    <TeamMemberBranchForm
+                      member={member}
+                      branches={branches}
+                      allowBranchReassign={!branchScoped}
+                    />
                     <TeamMemberContactStatus
                       member={member}
                       outboundEmailConfigured={outboundEmailConfigured}
@@ -230,7 +250,11 @@ export function TeamInviteSection({
                     <p className="mb-1 text-xs font-medium text-muted-foreground sm:sr-only">
                       Branch
                     </p>
-                    <PendingInviteBranchForm invite={invite} branches={branches} />
+                    <PendingInviteBranchForm
+                      invite={invite}
+                      branches={branches}
+                      allowBranchReassign={!branchScoped}
+                    />
                   </div>
                 </div>
               </li>
