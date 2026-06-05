@@ -9,6 +9,7 @@ export const COMPLIANCE_PDF_CAPABILITIES = [
 /** Explicitly out of scope — large content / integration projects. */
 export const COMPLIANCE_PDF_NOT_INCLUDED = [
   "City- or county-specific AHJ PDF forms (e.g. individual fire marshal layouts)",
-  "Pre-filled municipal inspection forms or e-filing portals",
+  "Pre-filled municipal inspection forms",
+  "Built-in AHJ e-filing — use report.finalized webhooks with a certified partner instead",
   "Scan/OCR of legacy paper forms",
 ] as const;

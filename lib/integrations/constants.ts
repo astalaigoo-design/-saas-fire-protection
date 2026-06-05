@@ -21,7 +21,7 @@ export const ALL_WEBHOOK_EVENTS: IntegrationWebhookEvent[] = [
 
 export const WEBHOOK_EVENT_LABELS: Record<IntegrationWebhookEvent, string> = {
   inspection_completed: "Inspection completed",
-  report_finalized: "Compliance report finalized",
+  report_finalized: "Compliance report finalized (AHJ filing partners)",
   quote_updated: "Quote status updated",
   deficiency_created: "Deficiency opened",
   customer_created: "Customer created (API or dashboard)",

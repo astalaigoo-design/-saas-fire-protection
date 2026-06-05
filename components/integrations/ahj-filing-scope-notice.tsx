@@ -1,18 +1,19 @@
 import {
-  COMPLIANCE_PDF_CAPABILITIES,
-  COMPLIANCE_PDF_NOT_INCLUDED,
-} from "@/lib/reports/scope";
+  AHJ_FILING_CAPABILITIES,
+  AHJ_FILING_NOT_INCLUDED,
+  AHJ_FILING_WEBHOOK_EVENT,
+} from "@/lib/integrations/ahj-filing-scope";
 import { cn } from "@/lib/utils";
 
-type CompliancePdfScopeNoticeProps = {
+type AhjFilingScopeNoticeProps = {
   variant?: "inline" | "full";
   className?: string;
 };
 
-export function CompliancePdfScopeNotice({
+export function AhjFilingScopeNotice({
   variant = "inline",
   className,
-}: CompliancePdfScopeNoticeProps) {
+}: AhjFilingScopeNoticeProps) {
   if (variant === "inline") {
     return (
       <p
@@ -22,10 +23,10 @@ export function CompliancePdfScopeNotice({
           className,
         )}
       >
-        <span className="font-medium text-foreground">Flareflow-native NFPA layouts.</span>{" "}
-        Certificate PDFs include AHJ and permit metadata from building profiles. Not
-        city-specific fire marshal forms — AHJ e-filing is partner-specific via Integrations
-        webhooks.
+        <span className="font-medium text-foreground">AHJ e-filing is partner-specific.</span>{" "}
+        Flareflow emits <span className="font-mono text-xs">{AHJ_FILING_WEBHOOK_EVENT}</span>{" "}
+        webhooks with jurisdiction and PDF URLs — your integration partner maps each AHJ to its
+        municipal portal. No built-in fire marshal submission in core Flareflow.
       </p>
     );
   }
@@ -36,19 +37,18 @@ export function CompliancePdfScopeNotice({
         "max-w-2xl space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm",
         className,
       )}
-      aria-labelledby="compliance-pdf-scope-heading"
+      aria-labelledby="ahj-filing-scope-heading"
     >
       <div>
         <h2
-          id="compliance-pdf-scope-heading"
+          id="ahj-filing-scope-heading"
           className="font-heading text-lg font-semibold text-foreground"
         >
-          Compliance PDFs
+          AHJ electronic filing
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Inspection data renders into Flareflow certificate layouts. Jurisdiction records drive
-          certificate numbering and optional NFPA form overrides — not a full library of municipal
-          AHJ forms.
+          Municipal fire marshal portals differ by city and county. Flareflow supplies certificate
+          data and webhooks; certified partners build jurisdiction-specific filing adapters.
         </p>
       </div>
 
@@ -57,7 +57,7 @@ export function CompliancePdfScopeNotice({
           Included
         </p>
         <ul className="mt-2 space-y-1.5 text-sm text-foreground">
-          {COMPLIANCE_PDF_CAPABILITIES.map((line) => (
+          {AHJ_FILING_CAPABILITIES.map((line) => (
             <li key={line} className="flex gap-2">
               <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden />
               {line}
@@ -71,7 +71,7 @@ export function CompliancePdfScopeNotice({
           Not included
         </p>
         <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
-          {COMPLIANCE_PDF_NOT_INCLUDED.map((line) => (
+          {AHJ_FILING_NOT_INCLUDED.map((line) => (
             <li key={line} className="flex gap-2">
               <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-muted-foreground/50" aria-hidden />
               {line}

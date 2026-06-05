@@ -1,5 +1,6 @@
 import { InspectionItemResult } from "@prisma/client";
-import { publicQuoteUrl, publicReportUrl } from "@/lib/app-url";
+import { publicQuoteUrl } from "@/lib/app-url";
+import { buildReportFinalizedWebhookPayload } from "@/lib/integrations/build-report-finalized-payload";
 import { dispatchCompanyWebhooks } from "@/lib/integrations/dispatch";
 import { prisma } from "@/lib/prisma";
 
@@ -68,26 +69,54 @@ export async function emitReportFinalizedWebhook(input: {
   shareToken: string;
   certificateNumber?: string | null;
 }): Promise<void> {
+  const report = await prisma.report.findFirst({
+    where: { id: input.reportId, companyId: input.companyId },
+    select: { reportTemplateKey: true },
+  });
+
   const inspection = await prisma.inspection.findFirst({
     where: { id: input.inspectionId, companyId: input.companyId },
     select: {
+      completedAt: true,
       buildingId: true,
-      building: { select: { customerId: true } },
+      building: {
+        select: {
+          customerId: true,
+          name: true,
+          addressLine1: true,
+          city: true,
+          fireDistrict: true,
+          permitNumber: true,
+          permitExpiresAt: true,
+          jurisdiction: {
+            select: {
+              id: true,
+              code: true,
+              name: true,
+              reportTemplateKey: true,
+            },
+          },
+        },
+      },
+      inspectionType: { select: { name: true, code: true } },
+      items: { select: { result: true } },
     },
   });
   if (!inspection) return;
 
+  const data = buildReportFinalizedWebhookPayload({
+    reportId: input.reportId,
+    inspectionId: input.inspectionId,
+    shareToken: input.shareToken,
+    certificateNumber: input.certificateNumber ?? null,
+    reportTemplateKey: report?.reportTemplateKey ?? "default",
+    inspection,
+  });
+
   await dispatchCompanyWebhooks({
     companyId: input.companyId,
     event: "report_finalized",
-    data: {
-      reportId: input.reportId,
-      inspectionId: input.inspectionId,
-      buildingId: inspection.buildingId,
-      customerId: inspection.building.customerId,
-      publicReportUrl: publicReportUrl(input.shareToken),
-      certificateNumber: input.certificateNumber ?? null,
-    },
+    data,
   });
 }
 

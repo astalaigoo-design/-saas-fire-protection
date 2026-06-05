@@ -5,6 +5,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AhjFilingScopeNotice } from "@/components/integrations/ahj-filing-scope-notice";
 import { getAppOrigin } from "@/lib/app-url";
 import {
   ALL_WEBHOOK_EVENTS,
@@ -75,6 +76,8 @@ export function IntegrationsSettingsSection({ data }: IntegrationsSettingsSectio
           below.
         </p>
       </div>
+
+      <AhjFilingScopeNotice variant="inline" />
 
       {actionError ? (
         <p role="alert" className="text-sm text-destructive">
@@ -147,7 +150,9 @@ export function IntegrationsSettingsSection({ data }: IntegrationsSettingsSectio
         <p className="text-sm text-muted-foreground">
           Flareflow POSTs JSON to your HTTPS endpoint with header{" "}
           <span className="font-mono text-xs">X-Flareflow-Signature: sha256=…</span> (HMAC-SHA256 of
-          the raw body using your endpoint secret).
+          the raw body using your endpoint secret). Subscribe to{" "}
+          <span className="font-mono text-xs">report.finalized</span> for certificate number, AHJ /
+          permit fields, and public PDF URLs when building partner e-filing adapters.
         </p>
 
         {webhooksList(data, startTransition, setActionError, pending)}

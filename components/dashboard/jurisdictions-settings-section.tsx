@@ -279,6 +279,14 @@ export function JurisdictionsSettingsSection({
                   </a>
                 </span>
               ))}
+              . Municipal e-filing is partner-specific — see{" "}
+              <a
+                href="#integrations"
+                className="font-medium text-primary underline-offset-2 hover:underline"
+              >
+                Integrations
+              </a>{" "}
+              (<span className="font-mono text-xs">report.finalized</span> webhook).
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
