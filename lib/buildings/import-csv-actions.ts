@@ -1,5 +1,6 @@
 "use server";
 
+import { CustomerContactRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { canManageCustomers } from "@/lib/auth/permissions";
 import { getDefaultBranchId } from "@/lib/branches/default-branch";
@@ -244,6 +245,18 @@ export async function runBuildingImport(
                 name: row.customer,
                 email: row.customerEmail ?? null,
                 phone: row.customerPhone ?? null,
+                ...(row.customerEmail || row.customerPhone
+                  ? {
+                      contacts: {
+                        create: {
+                          name: row.customer,
+                          email: row.customerEmail ?? null,
+                          phone: row.customerPhone ?? null,
+                          role: CustomerContactRole.billing,
+                        },
+                      },
+                    }
+                  : {}),
               },
               select: { id: true },
             });

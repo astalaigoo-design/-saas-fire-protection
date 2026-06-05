@@ -23,7 +23,7 @@ export default async function CustomerImportPage() {
     <div className="space-y-6">
       <PageHeader
         title="Import customers"
-        description="Bulk-load property managers and facility owners before importing buildings."
+        description="Bulk-load customers only, or customers and buildings together from one CSV."
         actions={
           <Link
             href="/dashboard/customers"

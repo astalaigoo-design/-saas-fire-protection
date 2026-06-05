@@ -97,7 +97,7 @@ export async function getOnboardingProgress(
       id: "import-customers",
       title: "Import customers from CSV",
       description:
-        "Property managers and facility owners — branch, name, optional email and phone. Best before bulk building import.",
+        "Customers only, or customers plus sites in one file — optional building address columns per row.",
       href: "/dashboard/customers/import",
       done: customerCount > 0 || buildingCount > 0,
     },
@@ -112,7 +112,7 @@ export async function getOnboardingProgress(
       id: "import-csv",
       title: "Import buildings from CSV",
       description:
-        "Best for multi-site portfolios: download the template, one row per site (customer + address columns).",
+        "One row per site — creates new customers automatically when the name is not in your branch.",
       href: "/dashboard/buildings/import",
       done: buildingCount > 0,
     },

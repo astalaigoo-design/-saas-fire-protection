@@ -23,7 +23,7 @@ export default async function BuildingImportPage() {
     <div className="space-y-6">
       <PageHeader
         title="Import buildings"
-        description="Bulk-load sites from a CSV instead of adding them one at a time."
+        description="Bulk-load sites from a CSV. New customers are created automatically when needed."
         actions={
           <Link
             href="/dashboard/buildings"

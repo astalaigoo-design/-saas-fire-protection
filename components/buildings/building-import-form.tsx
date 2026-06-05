@@ -87,18 +87,19 @@ export function BuildingImportForm({ branchHint }: BuildingImportFormProps) {
       <Card className="mx-auto max-w-3xl">
         <CardContent className="space-y-6 pt-6">
           <p className="text-sm text-muted-foreground">
-            Upload a spreadsheet with one row per building. Include a{" "}
-            <strong className="font-medium text-foreground">branch</strong> column when you
-            have multiple offices ({branchHint}). Repeat the same customer name on multiple rows
-            to add many sites under one property manager — up to {BUILDING_IMPORT_MAX_ROWS} rows
-            per file.{" "}
+            Upload a spreadsheet with one row per building. New customers are created
+            automatically when the name is not already in your branch — no separate customer import
+            required. Include a{" "}
+            <strong className="font-medium text-foreground">branch</strong> column when you have
+            multiple offices ({branchHint}). Repeat the same customer name on multiple rows to add
+            many sites under one property manager — up to {BUILDING_IMPORT_MAX_ROWS} rows per file.{" "}
             <Link
               href="/dashboard/customers/import"
               className="font-medium text-primary underline-offset-4 hover:underline"
             >
               Import customers
             </Link>{" "}
-            first if your roster is not in FlareFlow yet.
+            when you need account-only rows or customers and sites in one mixed file.
           </p>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">

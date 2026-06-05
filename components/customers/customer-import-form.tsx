@@ -87,13 +87,22 @@ export function CustomerImportForm({ branchHint }: CustomerImportFormProps) {
       <Card className="mx-auto max-w-3xl">
         <CardContent className="space-y-6 pt-6">
           <p className="text-sm text-muted-foreground">
-            Load property managers and facility owners before adding sites. Include a{" "}
+            One file can load customers only or customers with sites. Leave address columns blank for
+            account-only rows; include{" "}
+            <strong className="font-medium text-foreground">address_line1</strong>,{" "}
+            <strong className="font-medium text-foreground">city</strong>,{" "}
+            <strong className="font-medium text-foreground">region</strong>, and{" "}
+            <strong className="font-medium text-foreground">postal_code</strong> to create buildings
+            on the same row. Repeat the same customer name across rows to add many sites. Include a{" "}
             <strong className="font-medium text-foreground">branch</strong> column when you have
-            multiple offices ({branchHint}). Then use{" "}
-            <Link href="/dashboard/buildings/import" className="font-medium text-primary underline-offset-4 hover:underline">
+            multiple offices ({branchHint}) — up to {CUSTOMER_IMPORT_MAX_ROWS} rows per file. Or use{" "}
+            <Link
+              href="/dashboard/buildings/import"
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
               Import buildings
             </Link>{" "}
-            to bulk-add sites — up to {CUSTOMER_IMPORT_MAX_ROWS} customers per file.
+            to bulk-load sites only (new customers are created automatically).
           </p>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
@@ -161,7 +170,11 @@ export function CustomerImportForm({ branchHint }: CustomerImportFormProps) {
               className="rounded-lg border border-emerald-900/50 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200"
             >
               Imported {commitResult.createdCustomers} customer
-              {commitResult.createdCustomers === 1 ? "" : "s"}.
+              {commitResult.createdCustomers === 1 ? "" : "s"}
+              {commitResult.createdBuildings > 0
+                ? ` and ${commitResult.createdBuildings} building${commitResult.createdBuildings === 1 ? "" : "s"}`
+                : ""}
+              .
             </p>
           ) : null}
         </CardContent>
@@ -174,6 +187,12 @@ export function CustomerImportForm({ branchHint }: CustomerImportFormProps) {
               {preview.summary.ready} ready · {preview.summary.errors} error
               {preview.summary.errors === 1 ? "" : "s"} · {preview.summary.duplicates} duplicate
               {preview.summary.duplicates === 1 ? "" : "s"}
+              {preview.summary.newCustomers > 0
+                ? ` · ${preview.summary.newCustomers} new customer${preview.summary.newCustomers === 1 ? "" : "s"}`
+                : ""}
+              {preview.summary.newBuildings > 0
+                ? ` · ${preview.summary.newBuildings} new building${preview.summary.newBuildings === 1 ? "" : "s"}`
+                : ""}
             </p>
             <button
               type="button"
@@ -181,18 +200,19 @@ export function CustomerImportForm({ branchHint }: CustomerImportFormProps) {
               onClick={handleCommit}
               className={cn(buttonVariants({ size: "lg" }), "min-h-11 px-5 disabled:opacity-60")}
             >
-              {isPending ? "Importing…" : `Import ${preview.summary.ready} customers`}
+              {isPending ? "Importing…" : `Import ${preview.summary.ready} rows`}
             </button>
           </div>
 
           <div className="overflow-x-auto rounded-xl border border-border">
-            <table className="w-full min-w-[560px] text-left text-sm">
+            <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="border-b border-border bg-muted/40 text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2 font-medium">Row</th>
                   <th className="px-3 py-2 font-medium">Status</th>
                   <th className="px-3 py-2 font-medium">Branch</th>
                   <th className="px-3 py-2 font-medium">Customer</th>
+                  <th className="px-3 py-2 font-medium">Site</th>
                   <th className="px-3 py-2 font-medium">Email</th>
                   <th className="px-3 py-2 font-medium">Notes</th>
                 </tr>
@@ -200,7 +220,7 @@ export function CustomerImportForm({ branchHint }: CustomerImportFormProps) {
               <tbody>
                 {preview.rows.map((row) => (
                   <tr
-                    key={`${row.line}-${row.customer}-${row.branch}`}
+                    key={`${row.line}-${row.customer}-${row.site}`}
                     className="border-b border-border/60"
                   >
                     <td className="px-3 py-2 tabular-nums text-muted-foreground">{row.line}</td>
@@ -209,6 +229,7 @@ export function CustomerImportForm({ branchHint }: CustomerImportFormProps) {
                     </td>
                     <td className="px-3 py-2">{row.branch}</td>
                     <td className="px-3 py-2 font-medium text-foreground">{row.customer}</td>
+                    <td className="px-3 py-2 text-muted-foreground">{row.site}</td>
                     <td className="px-3 py-2 text-muted-foreground">{row.email}</td>
                     <td className="px-3 py-2 text-muted-foreground">{row.detail}</td>
                   </tr>

@@ -1,11 +1,14 @@
 "use server";
 
-import { CustomerContactRole } from "@prisma/client";
+import { CustomerContactRole, type Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { canManageCustomers } from "@/lib/auth/permissions";
 import { getDefaultBranchId } from "@/lib/branches/default-branch";
 import { resolveImportDefaultBranchId } from "@/lib/branches/import-default";
-import { normalizeNameKey } from "@/lib/buildings/import-csv-resolve";
+import {
+  buildingAddressKey,
+  normalizeNameKey,
+} from "@/lib/buildings/import-csv-resolve";
 import { requireWritableTenant } from "@/lib/billing/guards";
 import {
   CUSTOMER_IMPORT_MAX_ROWS,
@@ -40,12 +43,13 @@ export type CustomerImportCommitResult =
       ok: true;
       mode: "commit";
       createdCustomers: number;
+      createdBuildings: number;
     };
 
 export type CustomerImportResult = CustomerImportPreviewResult | CustomerImportCommitResult;
 
 async function loadImportContext(companyId: string) {
-  const [branches, customers] = await Promise.all([
+  const [branches, customers, buildings] = await Promise.all([
     prisma.branch.findMany({
       where: { companyId },
       orderBy: [{ isDefault: "desc" }, { name: "asc" }],
@@ -55,10 +59,29 @@ async function loadImportContext(companyId: string) {
       where: { companyId },
       select: { id: true, name: true, branchId: true },
     }),
+    prisma.building.findMany({
+      where: { customer: { companyId } },
+      select: {
+        customerId: true,
+        addressLine1: true,
+        city: true,
+        postalCode: true,
+      },
+    }),
   ]);
 
+  const existingBuildingKeys = new Set(
+    buildings.map((b) =>
+      `${b.customerId}|${buildingAddressKey({
+        addressLine1: b.addressLine1,
+        city: b.city,
+        postalCode: b.postalCode,
+      })}`,
+    ),
+  );
+
   const defaultBranchId = await getDefaultBranchId(companyId);
-  return { branches, customers, defaultBranchId };
+  return { branches, customers, existingBuildingKeys, defaultBranchId };
 }
 
 function parseImportRows(csv: string) {
@@ -81,7 +104,7 @@ function parseImportRows(csv: string) {
   if (parsed.rows.length > CUSTOMER_IMPORT_MAX_ROWS) {
     return {
       ok: false as const,
-      error: `Import up to ${CUSTOMER_IMPORT_MAX_ROWS} customers per file.`,
+      error: `Import up to ${CUSTOMER_IMPORT_MAX_ROWS} rows per file.`,
     };
   }
 
@@ -114,8 +137,55 @@ function parseErrorPreviewRows(
     branch: row.record.branch?.trim() || "—",
     customer: row.record.customer?.trim() || row.record.name?.trim() || "—",
     email: row.record.email?.trim() || "—",
+    site: row.record.building_name?.trim() || row.record.address_line1?.trim() || "—",
     detail: row.error,
+    willCreateCustomer: false,
+    willCreateBuilding: false,
   }));
+}
+
+async function createCustomerFromImportRow(
+  tx: Prisma.TransactionClient,
+  input: {
+    companyId: string;
+    branchId: string;
+    row: ReturnType<typeof customerImportRowSchema.parse>;
+    actorUserId: string;
+  },
+): Promise<string> {
+  const created = await tx.customer.create({
+    data: {
+      companyId: input.companyId,
+      branchId: input.branchId,
+      name: input.row.name,
+      email: input.row.email ?? null,
+      phone: input.row.phone ?? null,
+      ...(input.row.email || input.row.phone
+        ? {
+            contacts: {
+              create: {
+                name: input.row.name,
+                email: input.row.email ?? null,
+                phone: input.row.phone ?? null,
+                role: CustomerContactRole.billing,
+              },
+            },
+          }
+        : {}),
+    },
+    select: { id: true },
+  });
+
+  await writeAuditEvent({
+    companyId: input.companyId,
+    actorUserId: input.actorUserId,
+    action: "customer.created",
+    entityType: "customer",
+    entityId: created.id,
+    metadata: { name: input.row.name, source: "customer_csv_import" },
+  });
+
+  return created.id;
 }
 
 export async function runCustomerImport(input: unknown): Promise<CustomerImportResult> {
@@ -155,6 +225,7 @@ export async function runCustomerImport(input: unknown): Promise<CustomerImportR
     rows: validRows,
     branches: ctx.branches,
     customers: ctx.customers,
+    existingBuildingKeys: ctx.existingBuildingKeys,
     defaultBranchId,
     role: session.role,
     userBranchId: session.userBranchId,
@@ -190,54 +261,73 @@ export async function runCustomerImport(input: unknown): Promise<CustomerImportR
     return { ok: false, error: "Import data could not be validated. Preview again." };
   }
 
-  const createdInBatch = new Map<string, string>();
+  const customersCreatedInBatch = new Map<string, string>();
 
   try {
-    const createdCustomers = await prisma.$transaction(async (tx) => {
-      let count = 0;
+    const result = await prisma.$transaction(async (tx) => {
+      let createdCustomers = 0;
+      let createdBuildings = 0;
 
       for (const item of readyRows) {
         const row = item.row!;
         const branchId = item.branchId!;
-        const batchKey = `${branchId}|${normalizeNameKey(row.name)}`;
-        if (createdInBatch.has(batchKey)) continue;
+        let customerId = item.customerId;
 
-        const created = await tx.customer.create({
+        if (!customerId) {
+          const batchKey = `${branchId}|${normalizeNameKey(row.name)}`;
+          const existingInBatch = customersCreatedInBatch.get(batchKey);
+          if (existingInBatch) {
+            customerId = existingInBatch;
+          } else {
+            customerId = await createCustomerFromImportRow(tx, {
+              companyId: session.companyId,
+              branchId,
+              row,
+              actorUserId: session.appUserId,
+            });
+            customersCreatedInBatch.set(batchKey, customerId);
+            createdCustomers += 1;
+          }
+        }
+
+        if (!row.hasBuildingSite) continue;
+
+        const building = await tx.building.create({
           data: {
-            companyId: session.companyId,
-            branchId,
-            name: row.name,
-            email: row.email ?? null,
-            phone: row.phone ?? null,
-            ...(row.email || row.phone
-              ? {
-                  contacts: {
-                    create: {
-                      name: row.name,
-                      email: row.email ?? null,
-                      phone: row.phone ?? null,
-                      role: CustomerContactRole.billing,
-                    },
-                  },
-                }
-              : {}),
+            customerId,
+            name: row.buildingName ?? null,
+            addressLine1: row.addressLine1!,
+            addressLine2: row.addressLine2 ?? null,
+            city: row.city!,
+            region: row.region!,
+            postalCode: row.postalCode!,
+            country: row.country,
+            fireDistrict: row.fireDistrict ?? null,
+            permitNumber: row.permitNumber ?? null,
+            permitExpiresAt: row.permitExpiresAt ?? null,
           },
           select: { id: true },
         });
-        createdInBatch.set(batchKey, created.id);
-        count += 1;
+        createdBuildings += 1;
 
         await writeAuditEvent({
           companyId: session.companyId,
           actorUserId: session.appUserId,
-          action: "customer.created",
-          entityType: "customer",
-          entityId: created.id,
-          metadata: { name: row.name, source: "customer_csv_import" },
+          action: "building.created",
+          entityType: "building",
+          entityId: building.id,
+          metadata: { customerId, source: "customer_csv_import" },
         });
+
+        const dbKey = `${customerId}|${buildingAddressKey({
+          addressLine1: row.addressLine1!,
+          city: row.city!,
+          postalCode: row.postalCode!,
+        })}`;
+        ctx.existingBuildingKeys.add(dbKey);
       }
 
-      return count;
+      return { createdCustomers, createdBuildings };
     });
 
     revalidatePath("/dashboard/customers");
@@ -249,7 +339,8 @@ export async function runCustomerImport(input: unknown): Promise<CustomerImportR
     return {
       ok: true,
       mode: "commit",
-      createdCustomers,
+      createdCustomers: result.createdCustomers,
+      createdBuildings: result.createdBuildings,
     };
   } catch (error) {
     captureServerActionError("runCustomerImport", error);
