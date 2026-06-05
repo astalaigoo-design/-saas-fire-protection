@@ -3,7 +3,7 @@
 import { InspectionItemResult, InspectionStatus } from "@prisma/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { BuildingHeader } from "@/components/inspect/building-header";
 import { PreJobBriefCard } from "@/components/inspect/pre-job-brief-card";
 import { ChecklistCarousel } from "@/components/inspect/checklist-carousel";
@@ -17,7 +17,9 @@ import { OfflineBadge } from "@/components/inspect/offline-badge";
 import { InspectBillingBlock } from "@/components/inspect/inspect-billing-block";
 import { SignaturePad } from "@/components/inspect/signature-pad";
 import { VisitArrivalPanel } from "@/components/inspect/visit-arrival-panel";
+import { InspectionServiceRecordedSummary } from "@/components/inspect/inspection-service-recorded-summary";
 import { VisitProofSummary } from "@/components/inspect/visit-proof-summary";
+import { collectServiceRecordedRows } from "@/lib/inspect/job-equipment";
 import { captureDeviceGps } from "@/lib/inspect/capture-gps";
 import type { AppRole } from "@/lib/auth/roles";
 import type { ChecklistItemState } from "@/components/inspect/checklist-item-card";
@@ -222,12 +224,21 @@ export function InspectionForm({
     (item) =>
       item.result !== InspectionItemResult.fail || Boolean(item.notes?.trim()),
   );
-  const allAssetsComplete =
-    assetChecks.length === 0 ||
-    assetChecks.every((check) => check.result !== InspectionItemResult.pending);
   const assetFailNotesValid = assetChecks.every(
     (check) =>
       check.result !== InspectionItemResult.fail || Boolean(check.notes?.trim()),
+  );
+
+  const serviceRecordedRows = useMemo(
+    () =>
+      collectServiceRecordedRows(
+        assetChecks.map((check) => ({
+          result: check.result,
+          servicedAt: check.servicedAt,
+          buildingAsset: check.asset,
+        })),
+      ),
+    [assetChecks],
   );
 
   const handleDone = () => {
@@ -240,10 +251,6 @@ export function InspectionForm({
     }
     if (!failNotesValid) {
       setSubmitError("Every failed item needs a note.");
-      return;
-    }
-    if (!allAssetsComplete) {
-      setSubmitError("Mark every equipment item in the register before finishing.");
       return;
     }
     if (!assetFailNotesValid) {
@@ -336,16 +343,19 @@ export function InspectionForm({
         ) : null}
 
         {formLocked ? (
-          <VisitProofSummary
-            startedAt={inspection.startedAt}
-            arrivedAt={inspection.arrivedAt ?? localArrivedAt}
-            completedAt={displayInspection.completedAt}
-            mileageMiles={inspection.mileageMiles}
-            arrivalLatitude={inspection.arrivalLatitude}
-            arrivalLongitude={inspection.arrivalLongitude}
-            submitLatitude={inspection.submitLatitude}
-            submitLongitude={inspection.submitLongitude}
-          />
+          <>
+            <VisitProofSummary
+              startedAt={inspection.startedAt}
+              arrivedAt={inspection.arrivedAt ?? localArrivedAt}
+              completedAt={displayInspection.completedAt}
+              mileageMiles={inspection.mileageMiles}
+              arrivalLatitude={inspection.arrivalLatitude}
+              arrivalLongitude={inspection.arrivalLongitude}
+              submitLatitude={inspection.submitLatitude}
+              submitLongitude={inspection.submitLongitude}
+            />
+            <InspectionServiceRecordedSummary rows={serviceRecordedRows} />
+          </>
         ) : null}
 
         {!awaitingCheckIn ? (
@@ -389,8 +399,8 @@ export function InspectionForm({
                 {submittedOffline
                   ? "Inspection saved on this device. It will sync when you are back online."
                   : "Inspection submitted and locked."}
-                {assetChecks.length > 0
-                  ? " Equipment service dates updated for passed items."
+                {serviceRecordedRows.length > 0
+                  ? ` Service recorded for ${serviceRecordedRows.length} equipment item${serviceRecordedRows.length === 1 ? "" : "s"}.`
                   : null}
               </p>
             </div>

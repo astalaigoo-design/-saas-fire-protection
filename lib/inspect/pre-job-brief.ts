@@ -9,6 +9,8 @@ import {
   formatBuildingAddress,
 } from "@/lib/customers/format";
 import type { DashboardSession } from "@/lib/dashboard/session";
+import { listBuildingEquipmentPreview } from "@/lib/inspect/job-equipment";
+import type { JobEquipmentPreviewRow } from "@/lib/inspect/job-equipment";
 import { prisma } from "@/lib/prisma";
 
 export type PreJobBriefDeficiency = {
@@ -18,6 +20,7 @@ export type PreJobBriefDeficiency = {
 };
 
 export type PreJobBrief = {
+  buildingId: string;
   buildingLabel: string;
   buildingAddress: string;
   contactName: string;
@@ -28,13 +31,23 @@ export type PreJobBrief = {
     inspectionTypeName: string;
   } | null;
   deficiencies: PreJobBriefDeficiency[];
+  equipment: JobEquipmentPreviewRow[];
 };
 
-export type ClientPreJobBrief = Omit<PreJobBrief, "lastInspection"> & {
+export type ClientPreJobBriefEquipmentRow = Omit<
+  JobEquipmentPreviewRow,
+  "lastServiceAt" | "nextServiceDue"
+> & {
+  lastServiceAt: string | null;
+  nextServiceDue: string | null;
+};
+
+export type ClientPreJobBrief = Omit<PreJobBrief, "lastInspection" | "equipment"> & {
   lastInspection: {
     completedAt: string;
     inspectionTypeName: string;
   } | null;
+  equipment: ClientPreJobBriefEquipmentRow[];
 };
 
 export function serializePreJobBrief(brief: PreJobBrief): ClientPreJobBrief {
@@ -46,6 +59,11 @@ export function serializePreJobBrief(brief: PreJobBrief): ClientPreJobBrief {
           inspectionTypeName: brief.lastInspection.inspectionTypeName,
         }
       : null,
+    equipment: brief.equipment.map((row) => ({
+      ...row,
+      lastServiceAt: row.lastServiceAt?.toISOString() ?? null,
+      nextServiceDue: row.nextServiceDue?.toISOString() ?? null,
+    })),
   };
 }
 
@@ -58,6 +76,11 @@ export function hydratePreJobBrief(brief: ClientPreJobBrief): PreJobBrief {
           inspectionTypeName: brief.lastInspection.inspectionTypeName,
         }
       : null,
+    equipment: brief.equipment.map((row) => ({
+      ...row,
+      lastServiceAt: row.lastServiceAt ? new Date(row.lastServiceAt) : null,
+      nextServiceDue: row.nextServiceDue ? new Date(row.nextServiceDue) : null,
+    })),
   };
 }
 
@@ -115,8 +138,10 @@ export async function getPreJobBriefForInspection(
   });
 
   const building = inspection.building;
+  const equipment = await listBuildingEquipmentPreview(inspection.buildingId);
 
   return {
+    buildingId: inspection.buildingId,
     buildingLabel: buildingLabel(building),
     buildingAddress: formatBuildingAddress(building),
     contactName: building.customer.name,
@@ -133,5 +158,6 @@ export async function getPreJobBriefForInspection(
       description: item.description,
       notes: item.notes,
     })),
+    equipment,
   };
 }

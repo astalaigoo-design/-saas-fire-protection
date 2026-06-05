@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PageHeader } from "@/components/dashboard/page-header";
+import { JobEquipmentSection } from "@/components/dashboard/job-equipment-section";
 import { InspectionJobEditForm } from "@/components/scheduling/inspection-job-edit-form";
+import { listBuildingEquipmentPreview } from "@/lib/inspect/job-equipment";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
@@ -32,6 +34,7 @@ export default async function JobEditPage({ params }: JobEditPageProps) {
       },
       select: {
         id: true,
+        buildingId: true,
         scheduledAt: true,
         assignedToUserId: true,
         status: true,
@@ -62,6 +65,7 @@ export default async function JobEditPage({ params }: JobEditPageProps) {
   }
 
   const label = buildingLabel(inspection.building);
+  const equipment = await listBuildingEquipmentPreview(inspection.buildingId);
 
   return (
     <div className="space-y-8">
@@ -69,6 +73,7 @@ export default async function JobEditPage({ params }: JobEditPageProps) {
         title="Assign & reschedule"
         description="Update who performs this visit and when. The assigned technician receives email and an in-app alert."
       />
+      <JobEquipmentSection buildingId={inspection.buildingId} rows={equipment} />
       <InspectionJobEditForm
         inspectionId={inspection.id}
         scheduledAt={inspection.scheduledAt}

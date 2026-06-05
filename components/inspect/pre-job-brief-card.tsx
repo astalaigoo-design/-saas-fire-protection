@@ -1,3 +1,4 @@
+import { JobEquipmentPreview } from "@/components/inspect/job-equipment-preview";
 import { formatDate } from "@/lib/dashboard/dates";
 import type { PreJobBrief } from "@/lib/inspect/pre-job-brief";
 
@@ -50,6 +51,23 @@ export function PreJobBriefCard({ brief }: PreJobBriefCardProps) {
               <li className="text-slate-500">No email on file</li>
             )}
           </ul>
+        </div>
+
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Equipment register
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            Mark items you service in the field — optional; pass updates last service on submit.
+          </p>
+          <div className="mt-3">
+            <JobEquipmentPreview
+              rows={brief.equipment}
+              buildingId={brief.buildingId}
+              variant="field"
+              emptyMessage="No equipment on file for this building."
+            />
+          </div>
         </div>
 
         <div>

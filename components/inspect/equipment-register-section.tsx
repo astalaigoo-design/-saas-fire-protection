@@ -305,11 +305,10 @@ export function EquipmentRegisterSection({
           Equipment register
         </h2>
         <p className="mt-1 text-sm text-slate-400">
-          Mark each item on site. Pass updates last service on submit.
+          Optional — mark items you serviced. Pass updates last service on submit; leave
+          unmarked items unchanged.
           {offlineMode ? " Saves locally when offline." : null}
-          {pendingCount > 0 && !locked
-            ? ` ${pendingCount} remaining.`
-            : null}
+          {pendingCount > 0 && !locked ? ` ${pendingCount} not marked yet.` : null}
         </p>
         {!locked && !offlineMode ? (
           <div className="mt-3">

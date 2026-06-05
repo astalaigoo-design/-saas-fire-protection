@@ -467,16 +467,6 @@ export async function submitInspection(
     return { ok: false, error: "Inspection not found." };
   }
 
-  const pendingAssets = inspectionAfterLinkage.assetChecks.filter(
-    (check) => check.result === InspectionItemResult.pending,
-  );
-  if (pendingAssets.length > 0) {
-    return {
-      ok: false,
-      error: `Mark every equipment item (${pendingAssets.length} remaining).`,
-    };
-  }
-
   const failedAssetsWithoutNotes = inspectionAfterLinkage.assetChecks.filter(
     (check) =>
       check.result === InspectionItemResult.fail &&
