@@ -10,6 +10,7 @@ import { listAuditEvents } from "@/lib/audit/queries";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
 import { getAutomationVisibility } from "@/lib/operations/automation-visibility";
 import { getCommandCenterSnapshot } from "@/lib/operations/queries";
+import { listRepairPipelineRows } from "@/lib/operations/repair-pipeline";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { getOutboundChannelsStatus } from "@/lib/outbound/channels";
 
@@ -32,6 +33,7 @@ export default async function CommandCenterPage({ searchParams }: CommandCenterP
   const tabParam = firstQueryValue(searchParams.tab);
   const defaultTab: CommandCenterTab =
     tabParam === "equipment" ||
+    tabParam === "repairs" ||
     tabParam === "deficiencies" ||
     tabParam === "quotes" ||
     tabParam === "activity" ||
@@ -39,7 +41,8 @@ export default async function CommandCenterPage({ searchParams }: CommandCenterP
       ? tabParam
       : "overview";
 
-  const [snapshot, auditLog, automation, assignableStaff, quoteList] = await Promise.all([
+  const [snapshot, auditLog, automation, assignableStaff, quoteList, repairPipeline] =
+    await Promise.all([
     getCommandCenterSnapshot(session),
     listAuditEvents(session, {
       action: actionFilter || undefined,
@@ -49,6 +52,7 @@ export default async function CommandCenterPage({ searchParams }: CommandCenterP
     getAutomationVisibility(session.companyId),
     listAssignableStaff(session),
     listCompanyQuotesSafe(session),
+    listRepairPipelineRows(session),
   ]);
 
   const quotePipeline = computeQuotePipelineMetrics(quoteList.quotes);
@@ -62,6 +66,7 @@ export default async function CommandCenterPage({ searchParams }: CommandCenterP
       assignableStaff={assignableStaff}
       quotePipeline={quotePipeline}
       outboundChannels={getOutboundChannelsStatus()}
+      repairPipeline={repairPipeline}
       defaultTab={defaultTab}
     />
   );

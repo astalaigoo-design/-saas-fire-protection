@@ -18,10 +18,12 @@ import { CommandCenterPermitsSection } from "@/components/operations/command-cen
 import { CommandCenterWorkOrdersSection } from "@/components/operations/command-center-work-orders-section";
 import type { OutboundChannelsStatus } from "@/lib/outbound/channels";
 import { CommandCenterQuotesTab } from "@/components/operations/command-center-quotes-tab";
+import { CommandCenterRepairPipelineTab } from "@/components/operations/command-center-repair-pipeline-tab";
 import type { QuotePipelineMetrics } from "@/lib/quotes/pipeline";
 import type { AuditLogPage } from "@/lib/audit/queries";
 import type { AutomationVisibility } from "@/lib/operations/automation-visibility";
 import type { CommandCenterSnapshot } from "@/lib/operations/queries";
+import type { RepairPipelineSnapshot } from "@/lib/operations/repair-pipeline";
 import type { DueInspectionRow } from "@/lib/operations/due-inspections";
 import { OperationsExportButtons } from "@/components/operations/operations-export-buttons";
 import { DUE_REMINDER_DAYS } from "@/lib/scheduling/recurrence-policy";
@@ -113,6 +115,7 @@ type AssignableStaff = { id: string; name: string | null; role: string };
 export type CommandCenterTab =
   | "overview"
   | "equipment"
+  | "repairs"
   | "deficiencies"
   | "quotes"
   | "activity";
@@ -125,6 +128,7 @@ type CommandCenterViewProps = {
   assignableStaff: AssignableStaff[];
   quotePipeline: QuotePipelineMetrics;
   outboundChannels: OutboundChannelsStatus;
+  repairPipeline: RepairPipelineSnapshot;
   defaultTab: CommandCenterTab;
 };
 
@@ -136,6 +140,7 @@ export function CommandCenterView({
   assignableStaff,
   quotePipeline,
   outboundChannels,
+  repairPipeline,
   defaultTab,
 }: CommandCenterViewProps) {
   const overdueTotal =
@@ -151,7 +156,7 @@ export function CommandCenterView({
     <div className="space-y-8">
       <PageHeader
         title="Command center"
-        description={`Track open violations, building inspection cadences, equipment service due dates, and quotes. Deficiencies move open → owned → resolved → verified (auto on pass re-inspection). Due-date emails send ${DUE_REMINDER_DAYS} days ahead.`}
+        description={`Track repairs end-to-end, inspection cadences, equipment due dates, and quotes. Deficiencies move open → owned → resolved → verified (auto on pass re-inspection). Due-date emails send ${DUE_REMINDER_DAYS} days ahead.`}
         actions={
           <div className="flex flex-col items-stretch gap-3 sm:items-end">
             <OperationsExportButtons />
@@ -253,6 +258,9 @@ export function CommandCenterView({
             <TabsTrigger value="equipment">
               Equipment ({equipmentAttention})
             </TabsTrigger>
+            <TabsTrigger value="repairs">
+              Repair pipeline ({repairPipeline.totals.active})
+            </TabsTrigger>
             <TabsTrigger value="deficiencies">
               Deficiencies ({snapshot.summary.openDeficiencies})
             </TabsTrigger>
@@ -329,6 +337,10 @@ export function CommandCenterView({
             dueAssets={snapshot.dueAssets}
             importHealth={snapshot.importHealth}
           />
+        </TabsContent>
+
+        <TabsContent value="repairs" className="mt-6">
+          <CommandCenterRepairPipelineTab pipeline={repairPipeline} />
         </TabsContent>
 
         <TabsContent value="deficiencies" className="mt-6 space-y-4">

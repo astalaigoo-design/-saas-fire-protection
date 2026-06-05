@@ -4,6 +4,7 @@ import {
   marketingAutomationPreview,
   marketingCommandCenterPreview,
   marketingQuotePipelineMetrics,
+  marketingRepairPipelinePreview,
 } from "@/lib/marketing/preview-data";
 import { getOutboundChannelsStatus } from "@/lib/outbound/channels";
 
@@ -32,7 +33,8 @@ export default function MarketingCommandCenterPage() {
           ]}
           quotePipeline={marketingQuotePipelineMetrics}
           outboundChannels={getOutboundChannelsStatus()}
-          defaultTab="quotes"
+          repairPipeline={marketingRepairPipelinePreview}
+          defaultTab="repairs"
         />
       </div>
     </main>

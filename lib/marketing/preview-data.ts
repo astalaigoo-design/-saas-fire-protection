@@ -1,5 +1,11 @@
 import { InspectionItemResult, InspectionStatus } from "@prisma/client";
+import {
+  DeficiencyStatus,
+  QuoteStatus,
+  WorkOrderStatus,
+} from "@prisma/client";
 import type { CommandCenterSnapshot } from "@/lib/operations/queries";
+import type { RepairPipelineSnapshot } from "@/lib/operations/repair-pipeline";
 import type { QuotePipelineMetrics } from "@/lib/quotes/pipeline";
 import type { AutomationVisibility } from "@/lib/operations/automation-visibility";
 import type { InspectionFormData } from "@/lib/inspect/queries";
@@ -293,6 +299,65 @@ export const marketingCommandCenterPreview: CommandCenterSnapshot = {
       },
     ],
     openCount: 2,
+  },
+};
+
+export const marketingRepairPipelinePreview: RepairPipelineSnapshot = {
+  rows: [
+    {
+      deficiencyId: "def-1",
+      label: "Gauges in operable range",
+      description: "NFPA 25 §5.2.4",
+      deficiencyStatus: DeficiencyStatus.owned,
+      dueAt: new Date("2026-06-03T00:00:00Z"),
+      buildingId: "b1",
+      buildingLabel: "Riverside Medical — Building A",
+      customerName: "Riverside Medical Group",
+      inspectionTypeName: "Monthly fire sprinkler",
+      sourceInspectionId: "insp-done",
+      sourceCompletedAt: new Date("2026-05-20T00:00:00Z"),
+      verifiedAt: null,
+      quoteId: "quote-1",
+      quoteStatus: QuoteStatus.draft,
+      quoteTitle: "Sprinkler gauge repair",
+      quoteTotalCents: 124_000,
+      quoteCurrency: "USD",
+      scheduledInspectionId: null,
+      workOrders: [
+        {
+          id: "wo-1",
+          title: "Replace dry pipe gauge",
+          status: WorkOrderStatus.scheduled,
+          scheduledAt: new Date("2026-06-12T09:00:00Z"),
+          completedAt: null,
+        },
+      ],
+      activeWorkOrder: {
+        id: "wo-1",
+        title: "Replace dry pipe gauge",
+        status: WorkOrderStatus.scheduled,
+        scheduledAt: new Date("2026-06-12T09:00:00Z"),
+        completedAt: null,
+      },
+      linkedAsset: {
+        id: "asset-1",
+        tagNumber: "FE-12",
+        assetTypeLabel: "Fire extinguisher",
+        lastServiceAt: new Date("2025-05-20T00:00:00Z"),
+      },
+      assetServiceStatus: "pending",
+      pipelineStage: "work_order",
+      pipelineStageLabel: "Work order scheduled",
+      isClosed: false,
+    },
+  ],
+  totals: {
+    active: 1,
+    awaitingQuote: 0,
+    quoteInFlight: 1,
+    workOrderOpen: 1,
+    awaitingVerification: 0,
+    verifiedRecently: 0,
   },
 };
 
