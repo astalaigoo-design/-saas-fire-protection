@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,7 @@ export function AuditLogFeed({
   initialEntityType,
 }: AuditLogFeedProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [events, setEvents] = useState(initialEvents);
@@ -64,15 +65,17 @@ export function AuditLogFeed({
 
   const applyFilters = useCallback(
     (nextAction: string, nextEntity: string) => {
-      const params = new URLSearchParams();
+      const params = new URLSearchParams(searchParams.toString());
       if (nextAction) params.set("action", nextAction);
+      else params.delete("action");
       if (nextEntity) params.set("entity", nextEntity);
+      else params.delete("entity");
       const query = params.toString();
       startTransition(() => {
-        router.push(query ? `/dashboard/operations?${query}` : "/dashboard/operations");
+        router.push(query ? `${pathname}?${query}` : pathname);
       });
     },
-    [router],
+    [pathname, router, searchParams],
   );
 
   const loadMore = async () => {

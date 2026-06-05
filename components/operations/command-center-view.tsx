@@ -30,6 +30,11 @@ import type { DueInspectionRow } from "@/lib/operations/due-inspections";
 import { OperationsExportButtons } from "@/components/operations/operations-export-buttons";
 import { DUE_REMINDER_DAYS } from "@/lib/scheduling/recurrence-policy";
 import { cn } from "@/lib/utils";
+import {
+  COMMAND_CENTER_TAB_VALUES,
+  type CommandCenterTab,
+} from "@/lib/operations/command-center-tabs";
+import { useUrlTab } from "@/lib/navigation/use-url-tab";
 
 function DueStatusBadge({ status }: { status: DueInspectionRow["status"] }) {
   const styles = {
@@ -114,13 +119,7 @@ function DueInspectionList({ rows }: { rows: DueInspectionRow[] }) {
 
 type AssignableStaff = { id: string; name: string | null; role: string };
 
-export type CommandCenterTab =
-  | "overview"
-  | "equipment"
-  | "repairs"
-  | "deficiencies"
-  | "quotes"
-  | "activity";
+export type { CommandCenterTab };
 
 type CommandCenterViewProps = {
   snapshot: CommandCenterSnapshot;
@@ -149,6 +148,7 @@ export function CommandCenterView({
   repairPipeline,
   defaultTab,
 }: CommandCenterViewProps) {
+  const { activeTab, setTab } = useUrlTab(COMMAND_CENTER_TAB_VALUES, defaultTab);
   const overdueTotal =
     snapshot.dueTotals.overdue + snapshot.dueTotals.neverInspected;
   const equipmentAttention =
@@ -257,7 +257,11 @@ export function CommandCenterView({
         </div>
       </section>
 
-      <Tabs defaultValue={defaultTab} className="w-full">
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setTab(value as CommandCenterTab)}
+        className="w-full"
+      >
         <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
           <TabsList variant="line" className="min-w-max">
             <TabsTrigger value="overview">Overview</TabsTrigger>

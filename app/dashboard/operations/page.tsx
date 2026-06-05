@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation";
-import {
-  CommandCenterView,
-  type CommandCenterTab,
-} from "@/components/operations/command-center-view";
+import { CommandCenterView } from "@/components/operations/command-center-view";
+import { resolveCommandCenterTab } from "@/lib/operations/command-center-tabs";
 import { listAssignableStaff } from "@/lib/deficiencies/queries";
 import { listCompanyQuotesSafe } from "@/lib/dashboard/queries";
 import { computeQuotePipelineMetrics } from "@/lib/quotes/pipeline";
@@ -33,16 +31,7 @@ export default async function CommandCenterPage({ searchParams }: CommandCenterP
 
   const actionFilter = firstQueryValue(searchParams.action);
   const entityFilter = firstQueryValue(searchParams.entity);
-  const tabParam = firstQueryValue(searchParams.tab);
-  const defaultTab: CommandCenterTab =
-    tabParam === "equipment" ||
-    tabParam === "repairs" ||
-    tabParam === "deficiencies" ||
-    tabParam === "quotes" ||
-    tabParam === "activity" ||
-    tabParam === "overview"
-      ? tabParam
-      : "overview";
+  const defaultTab = resolveCommandCenterTab(firstQueryValue(searchParams.tab));
 
   const showPilotReadiness = isOwner(session.role);
 

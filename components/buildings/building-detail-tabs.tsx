@@ -1,6 +1,7 @@
 "use client";
 
 import type { BuildingDetailPageData } from "@/lib/buildings/queries";
+import { BUILDING_TAB_VALUES, type BuildingTabValue } from "@/lib/buildings/detail-tabs";
 import { BuildingInspectionHistoryTab } from "@/components/buildings/building-inspection-history-tab";
 import { BuildingPhotosTab } from "@/components/buildings/building-photos-tab";
 import { BuildingReportsTab } from "@/components/buildings/building-reports-tab";
@@ -8,11 +9,12 @@ import { BuildingNotesTab } from "@/components/buildings/building-notes-tab";
 import { BuildingAssetsTab } from "@/components/buildings/building-assets-tab";
 import { BuildingDeficienciesTab } from "@/components/buildings/building-deficiencies-tab";
 import type { AssetType } from "@prisma/client";
+import { useUrlTab } from "@/lib/navigation/use-url-tab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type BuildingDetailTabsProps = {
   data: BuildingDetailPageData;
-  defaultTab?: "history" | "assets" | "deficiencies" | "photos" | "reports" | "notes";
+  defaultTab?: BuildingTabValue;
   assetTypeFilter?: AssetType;
 };
 
@@ -21,10 +23,21 @@ export function BuildingDetailTabs({
   defaultTab = "history",
   assetTypeFilter,
 }: BuildingDetailTabsProps) {
+  const { activeTab, setTab } = useUrlTab(BUILDING_TAB_VALUES, defaultTab);
   const photoCount = data.inspections.reduce((n, i) => n + i.photos.length, 0);
 
   return (
-    <Tabs defaultValue={defaultTab} className="w-full">
+    <Tabs
+      value={activeTab}
+      onValueChange={(value) => {
+        setTab(value as BuildingTabValue, (params) => {
+          if (value !== "assets") {
+            params.delete("assetType");
+          }
+        });
+      }}
+      className="w-full"
+    >
       <div className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
         <TabsList variant="line" className="min-w-max">
           <TabsTrigger value="history">Inspection history</TabsTrigger>

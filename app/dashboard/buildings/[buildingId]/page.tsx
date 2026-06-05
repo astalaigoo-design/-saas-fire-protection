@@ -8,25 +8,8 @@ import { ensureCanManageCustomers } from "@/lib/auth/guards";
 import { canManageJobs } from "@/lib/auth/permissions";
 import { AssetType } from "@prisma/client";
 import { getBuildingDetailPageData } from "@/lib/buildings/queries";
+import { resolveBuildingTab } from "@/lib/buildings/detail-tabs";
 import { getDashboardSession } from "@/lib/dashboard/session";
-
-const BUILDING_TAB_VALUES = [
-  "history",
-  "assets",
-  "deficiencies",
-  "photos",
-  "reports",
-  "notes",
-] as const;
-
-type BuildingTabValue = (typeof BUILDING_TAB_VALUES)[number];
-
-function resolveBuildingTab(tab: string | undefined): BuildingTabValue {
-  if (tab && BUILDING_TAB_VALUES.includes(tab as BuildingTabValue)) {
-    return tab as BuildingTabValue;
-  }
-  return "history";
-}
 
 const ASSET_TYPE_FILTER_VALUES = [
   AssetType.fire_hydrant,
