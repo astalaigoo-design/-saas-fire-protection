@@ -1,7 +1,7 @@
-import { AssetType } from "@prisma/client";
+import { AssetType, ComplianceStatus } from "@prisma/client";
 import { describe, expect, it } from "vitest";
-import { buildDueAssetsCsv } from "@/lib/operations/export-csv";
-import type { DueAssetExportRow } from "@/lib/operations/export-queries";
+import { buildDueAssetsCsv, buildPermitsExpiringCsv } from "@/lib/operations/export-csv";
+import type { DueAssetExportRow, PermitExpiringExportRow } from "@/lib/operations/export-queries";
 
 const sampleRow: DueAssetExportRow = {
   assetId: "asset_1",
@@ -24,6 +24,26 @@ const sampleRow: DueAssetExportRow = {
   country: "US",
 };
 
+const samplePermit: PermitExpiringExportRow = {
+  buildingId: "bld_1",
+  buildingLabel: "Tower A",
+  customerName: "Acme",
+  fireDistrict: "AFD",
+  permitNumber: "SP-2024-01",
+  permitExpiresAt: new Date("2026-05-01"),
+  status: "expired",
+  buildingName: "Tower A",
+  buildingTypeLabel: "Commercial",
+  addressLine1: "100 Market St",
+  addressLine2: null,
+  city: "Denver",
+  region: "CO",
+  postalCode: "80202",
+  country: "US",
+  buildingComplianceStatus: ComplianceStatus.OVERDUE,
+  permitStatusLabel: "Permit expired",
+};
+
 describe("buildDueAssetsCsv", () => {
   it("includes due status and equipment type columns", () => {
     const csv = buildDueAssetsCsv([sampleRow]);
@@ -34,5 +54,15 @@ describe("buildDueAssetsCsv", () => {
     expect(csv).toContain("fire_hydrant");
     expect(csv).toContain("Overdue");
     expect(csv).toContain("Acme");
+  });
+});
+
+describe("buildPermitsExpiringCsv", () => {
+  it("includes permit status and expiration columns", () => {
+    const csv = buildPermitsExpiringCsv([samplePermit]);
+    expect(csv).toContain("Permit status");
+    expect(csv).toContain("Permit expired");
+    expect(csv).toContain("SP-2024-01");
+    expect(csv).toContain("2026-05-01");
   });
 });

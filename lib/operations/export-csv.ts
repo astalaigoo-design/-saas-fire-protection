@@ -1,13 +1,16 @@
 import { exportFilename, formatCsvDate, rowsToCsv } from "@/lib/export/csv";
+import { createZipStore, exportBundleFilename, type ZipStoreEntry } from "@/lib/export/zip-store";
 import {
   dueAssetStatusLabelForExport,
   dueStatusLabelForExport,
   getDueAssetsExportRows,
   getDueBuildingsExportRows,
   getFailedItemsExportRows,
+  getPermitsExpiringExportRows,
   type DueAssetExportRow,
   type DueBuildingExportRow,
   type FailedItemExportRow,
+  type PermitExpiringExportRow,
 } from "@/lib/operations/export-queries";
 import type { DashboardSession } from "@/lib/dashboard/session";
 
@@ -122,6 +125,46 @@ export function buildDueAssetsCsv(rows: DueAssetExportRow[]): string {
   return rowsToCsv(headers, data);
 }
 
+export function buildPermitsExpiringCsv(rows: PermitExpiringExportRow[]): string {
+  const headers = [
+    "Customer",
+    "Building name",
+    "Site label",
+    "Street address",
+    "City",
+    "State",
+    "ZIP",
+    "Country",
+    "Building type",
+    "Fire district / AHJ",
+    "Permit number",
+    "Permit expires",
+    "Permit status",
+    "Building compliance",
+    "Building ID",
+  ] as const;
+
+  const data = rows.map((row) => [
+    row.customerName,
+    row.buildingName ?? "",
+    row.buildingLabel,
+    formatStreetAddress(row),
+    row.city,
+    row.region,
+    row.postalCode,
+    row.country,
+    row.buildingTypeLabel,
+    row.fireDistrict ?? "",
+    row.permitNumber ?? "",
+    formatCsvDate(row.permitExpiresAt),
+    row.permitStatusLabel,
+    complianceLabel(row.buildingComplianceStatus),
+    row.buildingId,
+  ]);
+
+  return rowsToCsv(headers, data);
+}
+
 export function buildFailedItemsCsv(rows: FailedItemExportRow[]): string {
   const headers = [
     "Customer",
@@ -168,9 +211,16 @@ export function buildFailedItemsCsv(rows: FailedItemExportRow[]): string {
   return rowsToCsv(headers, data);
 }
 
+export type OperationsExportType =
+  | "due"
+  | "deficiencies"
+  | "equipment-due"
+  | "permits-expiring"
+  | "bundle";
+
 export async function generateOperationsExport(input: {
   session: DashboardSession;
-  type: "due" | "deficiencies" | "equipment-due";
+  type: Exclude<OperationsExportType, "bundle">;
 }): Promise<{ csv: string; filename: string }> {
   if (input.type === "due") {
     const rows = await getDueBuildingsExportRows(input.session);
@@ -188,9 +238,52 @@ export async function generateOperationsExport(input: {
     };
   }
 
+  if (input.type === "permits-expiring") {
+    const rows = await getPermitsExpiringExportRows(input.session);
+    return {
+      csv: buildPermitsExpiringCsv(rows),
+      filename: exportFilename("permits-expiring"),
+    };
+  }
+
   const rows = await getFailedItemsExportRows(input.session);
   return {
     csv: buildFailedItemsCsv(rows),
     filename: exportFilename("failed-items"),
+  };
+}
+
+export async function generateOperationsExportBundle(input: {
+  session: DashboardSession;
+}): Promise<{ zip: Buffer; filename: string }> {
+  const [dueBuildings, dueAssets, failedItems, permits] = await Promise.all([
+    getDueBuildingsExportRows(input.session),
+    getDueAssetsExportRows(input.session),
+    getFailedItemsExportRows(input.session),
+    getPermitsExpiringExportRows(input.session),
+  ]);
+
+  const entries: ZipStoreEntry[] = [
+    {
+      name: exportFilename("buildings-due"),
+      data: Buffer.from(buildDueBuildingsCsv(dueBuildings), "utf8"),
+    },
+    {
+      name: exportFilename("equipment-due"),
+      data: Buffer.from(buildDueAssetsCsv(dueAssets), "utf8"),
+    },
+    {
+      name: exportFilename("failed-items"),
+      data: Buffer.from(buildFailedItemsCsv(failedItems), "utf8"),
+    },
+    {
+      name: exportFilename("permits-expiring"),
+      data: Buffer.from(buildPermitsExpiringCsv(permits), "utf8"),
+    },
+  ];
+
+  return {
+    zip: createZipStore(entries),
+    filename: exportBundleFilename("compliance-export"),
   };
 }

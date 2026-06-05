@@ -28,12 +28,20 @@ export function CommandCenterPermitsSection({
             profile or import via building CSV.
           </p>
         </div>
-        <a
-          href="/api/reports/export?type=ahj-permit-register"
-          className={cn(buttonVariants({ variant: "outline" }), "min-h-10 shrink-0")}
-        >
-          Export register (CSV)
-        </a>
+        <div className="flex flex-wrap gap-2">
+          <a
+            href="/api/operations/export?type=permits-expiring"
+            className={cn(buttonVariants({ variant: "outline" }), "min-h-10 shrink-0")}
+          >
+            Export expiring (CSV)
+          </a>
+          <a
+            href="/api/reports/export?type=ahj-permit-register"
+            className={cn(buttonVariants({ variant: "ghost" }), "min-h-10 shrink-0")}
+          >
+            Full register
+          </a>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">

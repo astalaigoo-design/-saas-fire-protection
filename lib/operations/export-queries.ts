@@ -22,6 +22,12 @@ import {
   type DueAssetStatus,
 } from "@/lib/operations/due-assets";
 import { assetTypeLabel } from "@/lib/assets/constants";
+import { buildingTypeLabel } from "@/lib/buildings/constants";
+import {
+  buildPermitTrackingRows,
+  type PermitTrackingRow,
+} from "@/lib/buildings/permit-tracking";
+import { permitStatusLabel, type PermitStatus } from "@/lib/buildings/permit-status";
 import { prisma } from "@/lib/prisma";
 
 export type DueBuildingExportRow = DueInspectionRow & {
@@ -222,6 +228,77 @@ export async function getDueAssetsExportRows(
       country: building?.country ?? "",
     };
   });
+}
+
+export type PermitExpiringExportRow = PermitTrackingRow & {
+  buildingName: string | null;
+  buildingTypeLabel: string;
+  addressLine1: string;
+  addressLine2: string | null;
+  city: string;
+  region: string;
+  postalCode: string;
+  country: string;
+  buildingComplianceStatus: ComplianceStatus;
+  permitStatusLabel: string;
+};
+
+const PERMIT_EXPORT_STATUSES: PermitStatus[] = ["expired", "expiring_soon"];
+
+export function permitNeedsExport(status: PermitStatus): boolean {
+  return PERMIT_EXPORT_STATUSES.includes(status);
+}
+
+export async function getPermitsExpiringExportRows(
+  session: DashboardSession,
+): Promise<PermitExpiringExportRow[]> {
+  const scope = branchScopeFromSession(session);
+  const buildingWhere = buildingWhereFromScope(scope, session.companyId);
+
+  const buildings = await prisma.building.findMany({
+    where: buildingWhere,
+    select: {
+      id: true,
+      name: true,
+      addressLine1: true,
+      addressLine2: true,
+      city: true,
+      region: true,
+      postalCode: true,
+      country: true,
+      buildingType: true,
+      fireDistrict: true,
+      permitNumber: true,
+      permitExpiresAt: true,
+      currentStatus: true,
+      customer: { select: { name: true } },
+    },
+    orderBy: [{ customer: { name: "asc" } }, { addressLine1: "asc" }],
+  });
+
+  const buildingById = new Map(buildings.map((building) => [building.id, building]));
+
+  return buildPermitTrackingRows(buildings)
+    .filter((row) => permitNeedsExport(row.status))
+    .map((row) => {
+      const building = buildingById.get(row.buildingId);
+      if (!building) {
+        throw new Error(`Permit export: building ${row.buildingId} not found.`);
+      }
+      return {
+        ...row,
+        buildingName: building.name,
+        buildingTypeLabel: buildingTypeLabel(building.buildingType),
+        addressLine1: building.addressLine1,
+        addressLine2: building.addressLine2,
+        city: building.city,
+        region: building.region,
+        postalCode: building.postalCode,
+        country: building.country,
+        buildingComplianceStatus: building.currentStatus,
+        permitStatusLabel: permitStatusLabel(row.status),
+      };
+    });
 }
 
 export async function getFailedItemsExportRows(

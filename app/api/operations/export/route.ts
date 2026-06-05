@@ -2,11 +2,14 @@ import { NextResponse } from "next/server";
 import { canManageJobs } from "@/lib/auth/permissions";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { captureRouteError } from "@/lib/monitoring/capture";
-import { generateOperationsExport } from "@/lib/operations/export-csv";
+import {
+  generateOperationsExport,
+  generateOperationsExportBundle,
+} from "@/lib/operations/export-csv";
 
 export const dynamic = "force-dynamic";
 
-const EXPORT_TYPES = ["due", "deficiencies", "equipment-due"] as const;
+const EXPORT_TYPES = ["due", "deficiencies", "equipment-due", "permits-expiring", "bundle"] as const;
 type ExportType = (typeof EXPORT_TYPES)[number];
 
 function isExportType(value: string | null): value is ExportType {
@@ -32,13 +35,25 @@ export async function GET(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Invalid export type. Use type=due, type=equipment-due, or type=deficiencies.",
+          "Invalid export type. Use type=bundle, type=due, type=equipment-due, type=permits-expiring, or type=deficiencies.",
       },
       { status: 400 },
     );
   }
 
   try {
+    if (typeParam === "bundle") {
+      const { zip, filename } = await generateOperationsExportBundle({ session });
+      return new NextResponse(new Uint8Array(zip), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/zip",
+          "Content-Disposition": contentDisposition(filename),
+          "Cache-Control": "private, no-cache",
+        },
+      });
+    }
+
     const { csv, filename } = await generateOperationsExport({
       session,
       type: typeParam,

@@ -52,12 +52,20 @@ export function CommandCenterEquipmentTab({
             advances the next due date.
           </p>
         </div>
-        <a
-          href="/api/operations/export?type=equipment-due"
-          className={cn(buttonVariants({ variant: "outline" }), "min-h-10 shrink-0")}
-        >
-          Export due report (CSV)
-        </a>
+        <div className="flex flex-wrap gap-2">
+          <a
+            href="/api/operations/export?type=bundle"
+            className={cn(buttonVariants({ variant: "default" }), "min-h-10 shrink-0")}
+          >
+            Compliance bundle (ZIP)
+          </a>
+          <a
+            href="/api/operations/export?type=equipment-due"
+            className={cn(buttonVariants({ variant: "outline" }), "min-h-10 shrink-0")}
+          >
+            Equipment due (CSV)
+          </a>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
