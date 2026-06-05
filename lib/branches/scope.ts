@@ -71,3 +71,16 @@ export function quoteWhereFromScope(
     },
   };
 }
+
+export function workOrderWhereFromScope(
+  scope: BranchScope,
+  companyId: string,
+  extra?: Prisma.WorkOrderWhereInput,
+): Prisma.WorkOrderWhereInput {
+  const base: Prisma.WorkOrderWhereInput = { companyId, ...extra };
+  if (scope.mode === "all") return base;
+  return {
+    ...base,
+    building: { customer: { companyId, branchId: scope.branchId } },
+  };
+}

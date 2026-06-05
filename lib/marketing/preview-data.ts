@@ -261,6 +261,29 @@ export const marketingCommandCenterPreview: CommandCenterSnapshot = {
     csvImportsLast90Days: 188,
     permitsNeedAttention: 3,
     waterSystemTestsDue: 3,
+    openWorkOrders: 2,
+  },
+  workOrders: {
+    open: [
+      {
+        id: "wo-1",
+        title: "Replace dry pipe gauge",
+        status: "scheduled" as const,
+        scheduledAt: new Date("2026-06-12T09:00:00Z"),
+        completedAt: null,
+        createdAt: new Date("2026-06-01T00:00:00Z"),
+        building: {
+          id: "b1",
+          name: "Building A",
+          addressLine1: "100 Main",
+          city: "Boston",
+          customer: { name: "Riverside Medical Group" },
+        },
+        assignedTo: { id: "user-tech", name: "Jordan Lee" },
+        buildingLabel: "Riverside Medical — Building A",
+      },
+    ],
+    openCount: 2,
   },
 };
 

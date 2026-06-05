@@ -11,8 +11,10 @@ import {
   Receipt,
   CreditCard,
   LayoutDashboard,
+  Package,
   Settings,
   Users,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -26,6 +28,8 @@ export type DashboardNavIcon =
   | "calendar"
   | "file-text"
   | "receipt"
+  | "wrench"
+  | "package"
   | "credit-card"
   | "settings";
 
@@ -51,6 +55,8 @@ const navIcons: Record<DashboardNavIcon, LucideIcon> = {
   calendar: Calendar,
   "file-text": FileText,
   receipt: Receipt,
+  wrench: Wrench,
+  package: Package,
   "credit-card": CreditCard,
   settings: Settings,
 };

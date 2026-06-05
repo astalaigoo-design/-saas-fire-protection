@@ -101,6 +101,15 @@ enum DeficiencyStatus {
   verified
 }
 
+/// Field repair / service ticket — not an NFPA inspection visit.
+enum WorkOrderStatus {
+  draft
+  scheduled
+  in_progress
+  completed
+  cancelled
+}
+
 /// Outbound integration events (CMMS / accounting webhooks).
 enum IntegrationWebhookEvent {
   inspection_completed
@@ -140,6 +149,8 @@ model Company {
   auditEvents         AuditEvent[]
   staffNotifications  StaffNotification[]
   deficiencies        Deficiency[]
+  parts               Part[]
+  workOrders          WorkOrder[]
   apiKeys             CompanyApiKey[]
   webhookEndpoints    CompanyWebhookEndpoint[]
 
@@ -251,6 +262,7 @@ model User {
 
   inspectionsAssigned     Inspection[]            @relation("InspectionAssignee")
   deficienciesAssigned    Deficiency[]            @relation("DeficiencyAssignee")
+  workOrdersAssigned      WorkOrder[]             @relation("WorkOrderAssignee")
   auditEvents             AuditEvent[]            @relation("AuditEventActor")
   staffNotificationReads  StaffNotificationRead[]
 
@@ -344,6 +356,7 @@ model Building {
   buildingNotes BuildingNote[]
   deficiencies  Deficiency[]
   assets        BuildingAsset[]
+  workOrders    WorkOrder[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -580,6 +593,8 @@ model Deficiency {
   verifiedInspectionId   String?
   verifiedInspection     Inspection? @relation("DeficiencyVerifiedInspection", fields: [verifiedInspectionId], references: [id], onDelete: SetNull)
 
+  workOrders WorkOrder[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -669,12 +684,95 @@ model Quote {
   scheduledInspection   Inspection? @relation("QuoteScheduledJob", fields: [scheduledInspectionId], references: [id], onDelete: SetNull)
 
   lineItems QuoteLineItem[]
+  workOrders WorkOrder[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([companyId, status])
   @@map("quotes")
+}
+
+/// Company parts catalog (stock on hand for field repairs).
+model Part {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  sku             String
+  name            String
+  description     String? @db.Text
+  unitCents       Int     @default(0)
+  quantityOnHand  Int     @default(0)
+  active          Boolean @default(true)
+
+  workOrderLines WorkOrderPartLine[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, sku])
+  @@index([companyId, active])
+  @@map("parts")
+}
+
+/// Repair or service work at a building — separate from inspections.
+model WorkOrder {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  buildingId String
+  building   Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String? @db.Text
+  status      WorkOrderStatus @default(draft)
+
+  deficiencyId String?
+  deficiency   Deficiency? @relation(fields: [deficiencyId], references: [id], onDelete: SetNull)
+
+  quoteId String?
+  quote   Quote? @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+
+  assignedToUserId String?
+  assignedTo       User? @relation("WorkOrderAssignee", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+
+  scheduledAt DateTime?
+  completedAt DateTime?
+  notes       String?   @db.Text
+
+  partLines WorkOrderPartLine[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId, status])
+  @@index([buildingId])
+  @@index([assignedToUserId])
+  @@index([scheduledAt])
+  @@map("work_orders")
+}
+
+/// Parts consumed or planned on a work order (catalog or ad-hoc line).
+model WorkOrderPartLine {
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  partId String?
+  part   Part? @relation(fields: [partId], references: [id], onDelete: SetNull)
+
+  label          String
+  quantity       Int @default(1)
+  unitCents      Int @default(0)
+  sortOrder      Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workOrderId])
+  @@map("work_order_part_lines")
 }
 
 model QuoteLineItem {

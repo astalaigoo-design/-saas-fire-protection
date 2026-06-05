@@ -110,6 +110,12 @@ export function DeficiencyWorkflowCard({
           {deficiency.quoteId ? "Review quote" : "Create quote"}
         </Link>
         <Link
+          href={`/dashboard/work-orders/new?buildingId=${deficiency.buildingId}&deficiencyId=${deficiency.id}${deficiency.quoteId ? `&quoteId=${deficiency.quoteId}` : ""}`}
+          className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+        >
+          Create work order
+        </Link>
+        <Link
           href={`/inspect/${deficiency.sourceInspectionId}`}
           className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
         >

@@ -34,6 +34,8 @@ import {
   type PermitTrackingRow,
   type PermitTrackingTotals,
 } from "@/lib/buildings/permit-tracking";
+import { listOpenWorkOrders, countOpenWorkOrders } from "@/lib/work-orders/queries";
+import type { WorkOrderListItem } from "@/lib/work-orders/queries";
 import { prisma } from "@/lib/prisma";
 
 /** @deprecated Use DeficiencyRow — kept for export/legacy references. */
@@ -97,6 +99,11 @@ export type CommandCenterSnapshot = {
     csvImportsLast90Days: number;
     permitsNeedAttention: number;
     waterSystemTestsDue: number;
+    openWorkOrders: number;
+  };
+  workOrders: {
+    open: WorkOrderListItem[];
+    openCount: number;
   };
 };
 
@@ -277,6 +284,11 @@ export async function getCommandCenterSnapshot(
   const dueAssetRows = computeDueAssets({ assets: registerAssets });
   const dueAssetTotals = countDueAssetTotals(dueAssetRows);
   const waterSystemTotals = countDueByWaterSystemType(dueAssetRows);
+
+  const [openWorkOrders, openWorkOrderCount] = await Promise.all([
+    listOpenWorkOrders(session, 12),
+    countOpenWorkOrders(session),
+  ]);
   const serviceMonthLabel = new Intl.DateTimeFormat("en-US", {
     month: "long",
     year: "numeric",
@@ -342,6 +354,11 @@ export async function getCommandCenterSnapshot(
         importHealth.recentImports.scheduleJobs,
       permitsNeedAttention: permitTotals.needsAttention,
       waterSystemTestsDue: waterSystemTotals.attentionTotal,
+      openWorkOrders: openWorkOrderCount,
+    },
+    workOrders: {
+      open: openWorkOrders,
+      openCount: openWorkOrderCount,
     },
   };
 }

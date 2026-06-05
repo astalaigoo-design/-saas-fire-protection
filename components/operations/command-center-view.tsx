@@ -15,6 +15,7 @@ import { CommandCenterEquipmentTab } from "@/components/operations/command-cente
 import { CommandCenterImportHealth } from "@/components/operations/command-center-import-health";
 import { CommandCenterOutbound } from "@/components/operations/command-center-outbound";
 import { CommandCenterPermitsSection } from "@/components/operations/command-center-permits-section";
+import { CommandCenterWorkOrdersSection } from "@/components/operations/command-center-work-orders-section";
 import type { OutboundChannelsStatus } from "@/lib/outbound/channels";
 import { CommandCenterQuotesTab } from "@/components/operations/command-center-quotes-tab";
 import type { QuotePipelineMetrics } from "@/lib/quotes/pipeline";
@@ -206,6 +207,11 @@ export function CommandCenterView({
               value={snapshot.summary.waterSystemTestsDue}
               hint="Hydrant, standpipe, sprinkler"
             />
+            <StatCard
+              label="Open work orders"
+              value={snapshot.summary.openWorkOrders}
+              hint="Repairs separate from inspections"
+            />
           </div>
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Quotes & imports
@@ -263,6 +269,10 @@ export function CommandCenterView({
           <CommandCenterPermitsSection
             rows={snapshot.permits.rows}
             totals={snapshot.permits.totals}
+          />
+          <CommandCenterWorkOrdersSection
+            workOrders={snapshot.workOrders.open}
+            openCount={snapshot.workOrders.openCount}
           />
 
           <div>

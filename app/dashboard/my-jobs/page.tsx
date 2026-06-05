@@ -12,7 +12,9 @@ import { getUnreadJobAssignmentAlerts } from "@/lib/notifications/job-alerts";
 import { prisma } from "@/lib/prisma";
 import { pickPromotedResumeJobId } from "@/lib/inspect/resume-job";
 import { CacheRouteOnVisit } from "@/components/offline/cache-route-on-visit";
+import { MyWorkOrdersSection } from "@/components/dashboard/my-work-orders-section";
 import { getMyAssignedInspections, toJobCatalogEntry } from "@/lib/inspect/my-jobs";
+import { listMyAssignedWorkOrders } from "@/lib/work-orders/queries";
 
 export default async function MyJobsPage() {
   const session = await getDashboardSession();
@@ -20,8 +22,9 @@ export default async function MyJobsPage() {
   if (session.role !== "technician") redirect("/dashboard/jobs");
 
   const emailStatus = getOutboundEmailStatus();
-  const [jobs, jobAlerts, smsStatus, me] = await Promise.all([
+  const [jobs, workOrders, jobAlerts, smsStatus, me] = await Promise.all([
     getMyAssignedInspections(session),
+    listMyAssignedWorkOrders(session),
     getUnreadJobAssignmentAlerts(session),
     Promise.resolve(getSmsConfigStatus()),
     prisma.user.findUnique({
@@ -59,6 +62,8 @@ export default async function MyJobsPage() {
 
       <CacheRouteOnVisit path="/dashboard/my-jobs" />
       <ContinueInspectionHero jobs={catalogJobs} serverResumeJobId={serverResumeJobId} />
+
+      <MyWorkOrdersSection workOrders={workOrders} />
 
       <MyJobsClient serverJobs={catalogJobs} promotedJobId={serverResumeJobId} />
     </div>
