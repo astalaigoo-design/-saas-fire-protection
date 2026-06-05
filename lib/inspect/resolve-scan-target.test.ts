@@ -33,7 +33,6 @@ describe("resolveInspectionScanTarget", () => {
         {
           id: "item-a",
           label: "Extinguisher visual",
-          description: null,
           linkedTagNumber: "FE-101",
           result: InspectionItemResult.pending,
           notes: null,
@@ -41,7 +40,6 @@ describe("resolveInspectionScanTarget", () => {
         {
           id: "item-b",
           label: "Hose cabinet",
-          description: null,
           linkedTagNumber: null,
           result: InspectionItemResult.pending,
           notes: null,
@@ -65,7 +63,6 @@ describe("resolveInspectionScanTarget", () => {
         {
           id: "item-done",
           label: "FE-101 — gauge",
-          description: null,
           linkedTagNumber: "FE-101",
           result: InspectionItemResult.pass,
           notes: null,
@@ -73,7 +70,6 @@ describe("resolveInspectionScanTarget", () => {
         {
           id: "item-pending",
           label: "FE-101 — bracket",
-          description: null,
           linkedTagNumber: "FE-101",
           result: InspectionItemResult.pending,
           notes: null,
@@ -93,7 +89,6 @@ describe("resolveInspectionScanTarget", () => {
         {
           id: "item-other",
           label: "Panel power",
-          description: null,
           linkedTagNumber: null,
           result: InspectionItemResult.pending,
           notes: null,
@@ -117,7 +112,6 @@ describe("resolveInspectionScanTarget", () => {
         {
           id: "item-a",
           label: "General walkthrough",
-          description: null,
           linkedTagNumber: null,
           result: InspectionItemResult.pending,
           notes: null,

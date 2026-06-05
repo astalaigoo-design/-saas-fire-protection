@@ -11,8 +11,8 @@ import {
 
 describe("asset linkage", () => {
   const tagIndex = buildAssetTagIndex([
-    { id: "asset-fe-1", tagNumber: "FE-101" },
-    { id: "asset-fe-2", tagNumber: "FE-1" },
+    { id: "asset-fe-1", tagNumber: "FE-101", barcodeValue: null },
+    { id: "asset-fe-2", tagNumber: "FE-1", barcodeValue: null },
   ]);
 
   it("normalizes tags for lookup", () => {

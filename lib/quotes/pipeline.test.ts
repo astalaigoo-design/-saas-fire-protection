@@ -22,6 +22,7 @@ function mockQuote(
     acceptedAt: null,
     declinedAt: null,
     scheduledInspectionId: null,
+    repairInvoice: null,
     shareToken: "tok",
     lineItems: [],
     inspection: {

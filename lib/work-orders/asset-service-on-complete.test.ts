@@ -4,8 +4,8 @@ import { resolveAssetIdForRepairCompletion } from "@/lib/work-orders/asset-servi
 
 describe("resolveAssetIdForRepairCompletion", () => {
   const assets = [
-    { id: "asset-fe-1", tagNumber: "FE-101" },
-    { id: "asset-fe-2", tagNumber: "FE-1" },
+    { id: "asset-fe-1", tagNumber: "FE-101", barcodeValue: null },
+    { id: "asset-fe-2", tagNumber: "FE-1", barcodeValue: null },
   ];
 
   it("resolves linked tag from deficiency inspection item", () => {

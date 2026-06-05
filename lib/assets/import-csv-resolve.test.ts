@@ -12,7 +12,14 @@ const baseRow: AssetImportRow = {
   postalCode: undefined,
   assetType: AssetType.fire_extinguisher,
   tagNumber: "FE-1",
+  barcodeValue: undefined,
   location: "Lobby",
+  manufacturer: undefined,
+  model: undefined,
+  serialNumber: undefined,
+  lastServiceAt: undefined,
+  nextServiceDue: undefined,
+  notes: undefined,
 };
 
 describe("resolveAssetImportRows", () => {
