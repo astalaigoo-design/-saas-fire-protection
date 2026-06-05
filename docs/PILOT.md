@@ -1,8 +1,17 @@
 # Pilot checklist — one real client
 
-Use this guide to onboard **one fire inspection company** (your tenant) with **one real customer**, **one building**, and **one inspection** on production.
+Use this guide to onboard **one fire inspection company** (your tenant) on production. Paths range from **single-site** (one customer, one building, one inspection) to **multi-site CSV** (customers, buildings, equipment, and schedule in bulk).
 
 **Production URL:** https://getflareflow.com
+
+After sign-in, owners and admins see a **Get started** card on **Dashboard**. Its steps, links, and completion rules match [`lib/dashboard/onboarding.ts`](../lib/dashboard/onboarding.ts) — treat that file as the source of truth when the app and this doc differ.
+
+**Typical paths:**
+
+| Pilot size | What to use |
+|------------|-------------|
+| **Single site** | Add one building (or one customer + one building), schedule one job, run field inspect — skip optional equipment. |
+| **Portfolio / PM** | Import customers (optionally with site columns), import buildings, optional equipment CSV, import schedule CSV. |
 
 ## Terms
 
@@ -82,30 +91,46 @@ Also:
 
 In-app bell notifications work **without** Resend. SMS is separate (Twilio). Pilots still need **customer email** on accounts they want to email.
 
-### 3. CSV import order (do not skip steps)
+### 3. Dashboard **Get started** checklist
 
-The dashboard **Get started** card follows this order. Each step depends on the previous unless noted.
+The **Dashboard → Get started** card lists these steps in order (see [`lib/dashboard/onboarding.ts`](../lib/dashboard/onboarding.ts)). **Equipment** is the only step marked **Optional** — it does not block the progress bar.
 
-1. **Organization → Branches** — create branch names if multi-location (omit `branch` column or use **Main** for single office).
-2. **Customers → Import CSV** — `branch`, `customer`, optional `email`, `phone`.  
-   - Set **email** now if you plan to send quotes or compliance PDFs.
-3. **Buildings → Import CSV** — `branch`, `customer`, `building_name`, address fields, optional `customer_email` / `customer_phone`.  
-   - `customer` must match step 2 (or import creates new customers).
-4. **Buildings → Import equipment** (optional) — sites must already exist.  
-   - Match rows by `branch` + `customer` + `building_name` (or address).  
-   - `asset_type`: `fire_extinguisher`, `fire_alarm_panel`, `sprinkler_component`, `fire_hydrant`, `standpipe`, `emergency_light`, `hose_cabinet`, `other` (aliases like `extinguisher`, `hydrant` work in preview).
-5. **Calendar → Import schedule** — buildings + inspection types must exist.  
-   - `inspection_type`: codes `annual`, `quarterly`, `monthly` or exact names from Organization.  
-   - Optional `technician_email` must match an active team member.
+| # | Step | Route | Counts as done when |
+|---|------|-------|---------------------|
+| 1 | Add your company logo | `/dashboard/settings` | Logo uploaded (shows on compliance PDFs). |
+| 2 | Import customers from CSV | `/dashboard/customers/import` | At least one customer **or** building exists. |
+| 3 | Or add a single customer | `/dashboard/customers/new` | Same as step 2 (either path satisfies both). |
+| 4 | Import buildings from CSV | `/dashboard/buildings/import` | At least one building exists. |
+| 5 | Or add a single building | `/dashboard/buildings/new` | Same as step 4. |
+| 6 | Import equipment (CSV) or add on a site | `/dashboard/buildings/import-equipment` | **Optional** — at least one active equipment row. Links to first building’s **Equipment** tab when sites exist. |
+| 7 | Import schedule from CSV | `/dashboard/jobs/import` | At least one inspection exists. |
+| 8 | Or schedule one inspection | `/dashboard/jobs/new` | Same as step 7. |
+| 9 | Run a field inspection on your phone | `/inspect/<id>` or `/dashboard/jobs` | At least one inspection **in progress** or **completed**. |
 
-**Preview before import** on every CSV — fix branch name typos and duplicates there.
+**Flexible order (within reason):**
 
-### 4. Equipment register (single site or bulk)
+- **Customers + sites in one file:** Customer import accepts optional `building_name`, `address_line1`, `city`, etc. per row — you can skip a separate building import when every site is in that file.
+- **Building CSV creates customers:** Building import can create new customer names automatically; you do not have to run customer import first.
+- **Preview before commit** on every CSV — fix branch typos and duplicates in preview.
+
+**Branches:** create names under **Organization → Branches** before CSV if you use a `branch` column (omit column or use **Main** for a single office).
+
+**CSV import reference (columns and migrations):**
+
+1. **Customers → Import CSV** — `branch`, `customer`, optional `email`, `phone`, optional site columns (`building_name`, address fields, permit fields).
+2. **Buildings → Import CSV** — `branch`, `customer`, `building_name`, address fields, optional `customer_email` / `customer_phone`.
+3. **Buildings → Import equipment** (optional) — sites must exist; match `branch` + `customer` + `building_name` (or address).
+4. **Calendar → Import schedule** — buildings + inspection types must exist; `inspection_type` codes (`annual`, `quarterly`, `monthly`) or exact Organization names; optional `technician_email`.
+
+### 4. Equipment register (optional)
+
+Equipment is **optional** in **Get started** — skip it for a minimal pilot unless the client tracks extinguishers, hydrants, etc.
 
 **After buildings exist:**
 
-- **Bulk:** **Buildings → Import equipment** (`/dashboard/buildings/import-equipment`) — up to 500 rows per file.
-- **Single site:** Building detail → **Equipment** tab → **Add equipment** (location required; tag # and barcode optional).
+- **Bulk:** **Buildings → Import equipment** (`/dashboard/buildings/import-equipment`) — up to 500 rows per file.  
+  - `asset_type`: `fire_extinguisher`, `fire_alarm_panel`, `sprinkler_component`, `fire_hydrant`, `standpipe`, `emergency_light`, `hose_cabinet`, `other` (aliases like `extinguisher`, `hydrant` work in preview).
+- **Single site:** Building detail → **Equipment** tab (`?tab=assets`) → **Add equipment** (location required; tag # and barcode optional).
 
 **Field inspection:** open `/inspect/...` on a building with equipment — **Equipment register** section appears when `inspection_asset_checks` migration is applied. Scan QR/barcode or link checklist rows by tag in Organization → checklist templates.
 
@@ -115,7 +140,7 @@ The dashboard **Get started** card follows this order. Each step depends on the 
 
 1. Open https://getflareflow.com/sign-up (or **Sign in** if the account already exists).
 2. Create the owner account (email + password or Google, per your Clerk settings).
-3. After sign-in you should land on **Dashboard** with nav: Dashboard, Customers, Buildings, Inspections, Calendar, Reports.
+3. After sign-in you should land on **Dashboard** with the **Get started** checklist and nav including: **Dashboard**, **Customers**, **Buildings**, **Command center**, **Inspections**, **Calendar**, **Quotes**, **Invoices**, **Work orders**, **Parts**, **Reports**, and **Organization** (owners).
 
 **First user on an empty database:** the Clerk webhook creates a bootstrap company and default inspection types (`annual`, `quarterly`, `monthly`).
 
@@ -158,67 +183,60 @@ Or step-by-step: `npm run create-company -- "Your Fire Inspection LLC" <clerk_us
 
 ---
 
-## 2. Add customers (CSV import or one-by-one)
+## 2. Logo and customers (Get started steps 1–3)
 
-### Multi-account — Import customers CSV (recommended for PM portfolios)
+### Company logo
+
+1. **Organization** → upload **Company logo** (`/dashboard/settings`) — appears on compliance PDFs.
+2. The **Get started** card marks this complete when a logo URL is saved.
+
+### Import customers CSV (portfolios — customers only or customers + sites)
 
 1. **Customers** → **Import CSV** (`/dashboard/customers/import`).
-2. **Download template** — columns: `branch`, `customer`, optional `email`, `phone`.
-3. Upload → **Preview import** (branch column resolves to Organization branches) → **Import N customers**.
-4. Duplicates (same name in branch) show as **duplicate** in preview — fix the file or skip those rows.
+2. **Download template** — minimum columns: `branch`, `customer`, optional `email`, `phone`.
+3. **Optional site columns on the same row:** `building_name`, `address_line1`, `city`, `region`, `postal_code`, permit fields — when present, FlareFlow creates the building during customer import (full address required).
+4. Upload → **Preview import** → **Import**.
 
-Then import buildings (§3) so each row’s `customer` name matches an account already in FlareFlow.
+You do **not** need a separate building import when every site is included here.
 
-### Single customer — New customer
+### Single customer
 
-1. **Customers** → **New customer**.
+1. **Customers** → **New customer** (`/dashboard/customers/new`).
 2. Fill in name, email (for compliance PDF / quotes when Resend is on), optional phone → Save.
 
-Building CSV import can still **create customers** from the building file if you skip this step — use customer import when you want the roster separate from sites.
+**Note:** **Buildings → Import CSV** can still create customers from new names if you skip customer import entirely.
 
 ---
 
-## 3. Add buildings (CSV import or one-by-one)
+## 3. Buildings and equipment (Get started steps 4–6)
 
-Most property managers onboard **many sites at once**. The dashboard checklist matches that path.
+Use **Get started** step 4 or 5 for buildings; step 6 (equipment) is **optional**.
 
-### Multi-site — Import CSV (recommended)
+### Import buildings CSV
 
 1. **Buildings** → **Import CSV** (`/dashboard/buildings/import`).
 2. **Download template** — columns include `branch`, `customer`, `building_name`, address fields, optional `customer_email` / `customer_phone`.
 3. Fill rows (one building per row; repeat the same `customer` name across rows for one portfolio).
 4. Upload → review preview → confirm import.
 
-Building CSV can still **create customers** when names are new — prefer **§2 Import customers** when you are loading dozens of property managers first.
+New `customer` names in the file are **created automatically** — no separate customer import required.
 
 Requires migration `20260602120000_add_branches` if you use the `branch` column (defaults to **Main** when omitted).
 
-### Single site — Add one building
+### Single building
 
-1. **Customers** → open the customer you created (or **Customers** → **New customer** first).
-2. **Buildings** → **Add building** (or add from the customer page).
-3. Fill in name, full address, optional building type / fire district / notes → Save.
+1. **Buildings** → **Add building** (`/dashboard/buildings/new`), or add from a customer profile.
+2. Fill in name, full address, optional building type / fire district / notes → Save.
 
 Confirm the site appears on the customer detail page and **Buildings** list.
 
-### Equipment register (optional, common for PM pilots)
+### Equipment (optional)
 
-**Bulk — Import equipment CSV**
-
-1. **Buildings** → **Import equipment** (`/dashboard/buildings/import-equipment`).
-2. Template columns: `branch`, `customer`, `building_name` (or address), `asset_type`, `location`, optional tag/service dates.
-3. Preview → import (sites and customers must already exist).
-
-**Single site — Equipment tab**
-
-1. Open a building → **Equipment** tab (or `?tab=assets` from onboarding).
-2. **Add equipment** — type, location (required), tag #, manufacturer, service dates, notes.
-
-Requires migrations in **§ Prerequisites** (`building_assets` + `inspection_asset_checks` for field register).
+See **§ Prerequisites — Equipment register** for bulk CSV and single-site **Equipment** tab (`?tab=assets`). Skip for a minimal single-inspection pilot.
 
 ---
 
-## 4. Schedule inspections (CSV import or one-by-one)
+## 4. Schedule inspections (Get started steps 7–8)
 
 ### Bulk — Import schedule CSV
 
@@ -242,9 +260,9 @@ The inspection should appear on **Inspections**, **Calendar**, and **Dashboard �
 
 ---
 
-## 5. Run the field inspection (mobile-friendly)
+## 5. Run the field inspection (Get started step 9)
 
-1. From **Dashboard** or **Inspections**, open the job (**Open inspection**).
+1. From **Dashboard** (**Get started** links the next open job), **Calendar**, or **Inspections**, open the job (**Open inspection**).
    - URL shape: `https://getflareflow.com/inspect/<inspectionId>`
 2. On a phone or narrow browser window:
    - Mark each checklist item **Pass**, **Fail**, or **N/A**.
@@ -295,10 +313,14 @@ After submit:
 
 ## Pilot success criteria
 
-- [ ] Owner signs in at https://getflareflow.com with full dashboard nav.
-- [ ] One customer + one building exist (real names, real customer email).
-- [ ] One inspection scheduled and completed with signature.
+Matches **Get started** completion in [`lib/dashboard/onboarding.ts`](../lib/dashboard/onboarding.ts) (equipment optional):
+
+- [ ] Owner signs in at https://getflareflow.com with full dashboard nav and **Get started** visible until complete.
+- [ ] Company logo uploaded (**Organization**).
+- [ ] At least one customer and building (real names; customer email for outbound mail).
+- [ ] At least one inspection scheduled and **completed** with signature (field step done).
 - [ ] Compliance PDF downloads from **Reports**.
+- [ ] (Optional) Equipment register populated — bulk or per building.
 - [ ] (Optional) Failed item → draft quote → save pricing → send email → customer accepts on `/q/…` → re-inspection auto-schedules (or **Schedule re-inspection** in Reports / acceptance email).
 
 ---
