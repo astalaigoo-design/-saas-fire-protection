@@ -17,6 +17,17 @@ import { captureServerActionError } from "@/lib/monitoring/capture";
 import { prisma } from "@/lib/prisma";
 import { parseDateInputValue } from "@/lib/scheduling/calendar";
 
+function parseOptionalPermitExpiresAt(
+  raw: string | undefined,
+): { ok: true; value: Date | null } | { ok: false; error: string } {
+  if (!raw) return { ok: true, value: null };
+  const parsedDate = parseDateInputValue(raw);
+  if (!parsedDate) {
+    return { ok: false, error: "Permit expiration must be a valid date (YYYY-MM-DD)." };
+  }
+  return { ok: true, value: parsedDate };
+}
+
 export type BuildingActionResult = { ok: true } | { ok: false; error: string };
 
 function revalidateBuildingPaths(buildingId: string, customerId: string) {
@@ -45,11 +56,17 @@ export async function createBuilding(
     region: formData.get("region"),
     postalCode: formData.get("postalCode"),
     country: formData.get("country") || "US",
+    fireDistrict: formData.get("fireDistrict"),
+    permitNumber: formData.get("permitNumber"),
+    permitExpiresAt: formData.get("permitExpiresAt"),
   });
 
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
+
+  const permitExpiry = parseOptionalPermitExpiresAt(parsed.data.permitExpiresAt);
+  if (!permitExpiry.ok) return { ok: false, error: permitExpiry.error };
 
   try {
     const customer = await prisma.customer.findFirst({
@@ -72,6 +89,9 @@ export async function createBuilding(
         region: parsed.data.region,
         postalCode: parsed.data.postalCode,
         country: parsed.data.country,
+        fireDistrict: parsed.data.fireDistrict || null,
+        permitNumber: parsed.data.permitNumber || null,
+        permitExpiresAt: permitExpiry.value,
       },
       select: { id: true },
     });
@@ -133,14 +153,9 @@ export async function updateBuilding(
   if (!existing) return { ok: false, error: "Building not found." };
 
   const d = parsed.data;
-  let permitExpiresAt: Date | null = null;
-  if (d.permitExpiresAt) {
-    const parsedDate = parseDateInputValue(d.permitExpiresAt);
-    if (!parsedDate) {
-      return { ok: false, error: "Permit expiration must be a valid date (YYYY-MM-DD)." };
-    }
-    permitExpiresAt = parsedDate;
-  }
+  const permitExpiry = parseOptionalPermitExpiresAt(d.permitExpiresAt);
+  if (!permitExpiry.ok) return { ok: false, error: permitExpiry.error };
+  const permitExpiresAt = permitExpiry.value;
 
   await prisma.building.update({
     where: { id: d.buildingId },

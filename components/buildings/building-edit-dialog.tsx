@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
+import { BuildingAhjFields } from "@/components/buildings/building-ahj-fields";
 import { updateBuilding, type BuildingActionResult } from "@/lib/buildings/actions";
 import { BUILDING_TYPES } from "@/lib/buildings/constants";
 import type { BuildingDetailRecord } from "@/lib/buildings/queries";
@@ -121,39 +122,13 @@ export function BuildingEditDialog({ building }: BuildingEditDialogProps) {
                 ))}
               </select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-district">Fire district / jurisdiction</Label>
-              <Input
-                id="edit-district"
-                name="fireDistrict"
-                defaultValue={building.fireDistrict ?? ""}
-              />
-            </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="edit-permit-number">Permit / approval number</Label>
-              <Input
-                id="edit-permit-number"
-                name="permitNumber"
-                defaultValue={building.permitNumber ?? ""}
-                placeholder="AHJ permit or system approval ID"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-permit-expires">Permit expires</Label>
-              <Input
-                id="edit-permit-expires"
-                name="permitExpiresAt"
-                type="date"
-                defaultValue={
-                  building.permitExpiresAt
-                    ? building.permitExpiresAt.toISOString().slice(0, 10)
-                    : ""
-                }
-              />
-            </div>
-          </div>
+          <BuildingAhjFields
+            idPrefix="edit"
+            fireDistrict={building.fireDistrict}
+            permitNumber={building.permitNumber}
+            permitExpiresAt={building.permitExpiresAt}
+          />
           <div className="space-y-2">
             <Label htmlFor="edit-notes">General notes</Label>
             <Textarea

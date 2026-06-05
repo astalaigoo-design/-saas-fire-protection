@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useFormState, useFormStatus } from "react-dom";
+import { BuildingAhjFields } from "@/components/buildings/building-ahj-fields";
 import { createBuilding, type BuildingActionResult } from "@/lib/buildings/actions";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -121,6 +122,8 @@ export function NewBuildingForm({ customers, initialCustomerId }: NewBuildingFor
             <Label htmlFor="country">Country</Label>
             <Input id="country" type="text" name="country" defaultValue="US" className="min-h-11" />
           </div>
+
+          <BuildingAhjFields idPrefix="new-building" />
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <SubmitButton />

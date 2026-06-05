@@ -17,6 +17,9 @@ const baseRow: BuildingImportRow = {
   country: "US",
   customerEmail: undefined,
   customerPhone: undefined,
+  fireDistrict: undefined,
+  permitNumber: undefined,
+  permitExpiresAt: null,
 };
 
 describe("resolveBuildingImportRows", () => {

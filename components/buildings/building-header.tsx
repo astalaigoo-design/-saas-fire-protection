@@ -4,6 +4,8 @@ import { buildingDisplayName, buildingFullAddress } from "@/lib/buildings/format
 import { formatDate } from "@/lib/dashboard/dates";
 import type { BuildingDetailPageData } from "@/lib/buildings/queries";
 import { BuildingEditDialog } from "@/components/buildings/building-edit-dialog";
+import { PermitStatusBadge } from "@/components/buildings/permit-status-badge";
+import { computePermitStatus } from "@/lib/buildings/permit-status";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +17,10 @@ type BuildingHeaderProps = {
 export function BuildingHeader({ data, canEdit }: BuildingHeaderProps) {
   const { building } = data;
   const addressLines = buildingFullAddress(building);
+  const permitStatus = computePermitStatus({
+    permitNumber: building.permitNumber,
+    permitExpiresAt: building.permitExpiresAt,
+  });
 
   return (
     <header className="space-y-4">
@@ -32,6 +38,7 @@ export function BuildingHeader({ data, canEdit }: BuildingHeaderProps) {
           <h1 className="font-heading text-2xl font-semibold tracking-tight text-foreground">
             {buildingDisplayName(building)}
           </h1>
+          <PermitStatusBadge status={permitStatus} className="mt-2" />
           <address className="not-italic text-sm text-muted-foreground">
             {addressLines.map((line) => (
               <span key={line} className="block">

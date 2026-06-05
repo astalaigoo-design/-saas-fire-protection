@@ -72,6 +72,9 @@ const buildingListSelect = {
   addressLine1: true,
   city: true,
   region: true,
+  fireDistrict: true,
+  permitNumber: true,
+  permitExpiresAt: true,
   currentStatus: true,
   customer: { select: { id: true, name: true } },
 } satisfies Prisma.BuildingSelect;

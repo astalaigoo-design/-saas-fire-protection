@@ -26,6 +26,12 @@ import { AssetType } from "@prisma/client";
 import type { DeficiencyRow } from "@/lib/deficiencies/queries";
 import { listOpenDeficiencies } from "@/lib/deficiencies/queries";
 import { getImportHealthSnapshot, type ImportHealthSnapshot } from "@/lib/operations/import-health";
+import {
+  buildPermitTrackingRows,
+  countPermitTotals,
+  type PermitTrackingRow,
+  type PermitTrackingTotals,
+} from "@/lib/buildings/permit-tracking";
 import { prisma } from "@/lib/prisma";
 
 /** @deprecated Use DeficiencyRow — kept for export/legacy references. */
@@ -73,6 +79,10 @@ export type CommandCenterSnapshot = {
   pendingQuotes: PendingQuoteRow[];
   reportsSentThisMonth: SentReportRow[];
   importHealth: ImportHealthSnapshot;
+  permits: {
+    rows: PermitTrackingRow[];
+    totals: PermitTrackingTotals;
+  };
   summary: {
     openDeficiencies: number;
     pendingQuotes: number;
@@ -82,6 +92,7 @@ export type CommandCenterSnapshot = {
     buildingsWithoutRegister: number;
     assetsMissingNextDue: number;
     csvImportsLast90Days: number;
+    permitsNeedAttention: number;
   };
 };
 
@@ -126,6 +137,9 @@ export async function getCommandCenterSnapshot(
           name: true,
           addressLine1: true,
           city: true,
+          fireDistrict: true,
+          permitNumber: true,
+          permitExpiresAt: true,
           customer: { select: { name: true } },
         },
         orderBy: { updatedAt: "desc" },
@@ -253,6 +267,9 @@ export async function getCommandCenterSnapshot(
   const dueByCadence = groupDueByCadence(dueRows);
   const dueTotals = countDue(dueRows);
 
+  const permitRows = buildPermitTrackingRows(buildings);
+  const permitTotals = countPermitTotals(permitRows);
+
   const dueAssetRows = computeDueAssets({ assets: registerAssets });
   const dueAssetTotals = countDueAssetTotals(dueAssetRows);
   const serviceMonthLabel = new Intl.DateTimeFormat("en-US", {
@@ -300,6 +317,10 @@ export async function getCommandCenterSnapshot(
     pendingQuotes: pendingQuoteRows,
     reportsSentThisMonth,
     importHealth,
+    permits: {
+      rows: permitRows,
+      totals: permitTotals,
+    },
     summary: {
       openDeficiencies: deficiencies.length,
       pendingQuotes: pendingQuoteRows.length,
@@ -313,6 +334,7 @@ export async function getCommandCenterSnapshot(
         importHealth.recentImports.buildings +
         importHealth.recentImports.equipment +
         importHealth.recentImports.scheduleJobs,
+      permitsNeedAttention: permitTotals.needsAttention,
     },
   };
 }

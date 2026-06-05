@@ -272,6 +272,9 @@ export async function runBuildingImport(
             region: row.region,
             postalCode: row.postalCode,
             country: row.country,
+            fireDistrict: row.fireDistrict ?? null,
+            permitNumber: row.permitNumber ?? null,
+            permitExpiresAt: row.permitExpiresAt ?? null,
           },
           select: { id: true },
         });

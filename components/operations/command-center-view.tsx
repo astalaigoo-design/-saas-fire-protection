@@ -14,6 +14,7 @@ import { CommandCenterDeficienciesTab } from "@/components/operations/command-ce
 import { CommandCenterEquipmentTab } from "@/components/operations/command-center-equipment-tab";
 import { CommandCenterImportHealth } from "@/components/operations/command-center-import-health";
 import { CommandCenterOutbound } from "@/components/operations/command-center-outbound";
+import { CommandCenterPermitsSection } from "@/components/operations/command-center-permits-section";
 import type { OutboundChannelsStatus } from "@/lib/outbound/channels";
 import { CommandCenterQuotesTab } from "@/components/operations/command-center-quotes-tab";
 import type { QuotePipelineMetrics } from "@/lib/quotes/pipeline";
@@ -204,7 +205,12 @@ export function CommandCenterView({
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Quotes & imports
           </p>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              label="Permits need attention"
+              value={snapshot.summary.permitsNeedAttention}
+              hint="Expired, expiring, missing, or no date"
+            />
             <StatCard
               label="Open quote pipeline"
               value={0}
@@ -249,6 +255,10 @@ export function CommandCenterView({
         <TabsContent value="overview" className="mt-6 space-y-8">
           <CommandCenterOutbound channels={outboundChannels} />
           <CommandCenterImportHealth health={snapshot.importHealth} />
+          <CommandCenterPermitsSection
+            rows={snapshot.permits.rows}
+            totals={snapshot.permits.totals}
+          />
 
           <div>
             <h2 className="font-heading text-lg font-semibold text-foreground">

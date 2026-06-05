@@ -12,6 +12,9 @@ export const BUILDING_IMPORT_TEMPLATE_HEADERS = [
   "country",
   "customer_email",
   "customer_phone",
+  "fire_district",
+  "permit_number",
+  "permit_expires",
 ] as const;
 
 export function buildingImportTemplateCsv(): string {
@@ -28,6 +31,9 @@ export function buildingImportTemplateCsv(): string {
       "US",
       "billing@acme.example",
       "",
+      "San Francisco Fire",
+      "SP-2024-001",
+      "2027-06-01",
     ],
     [
       "Main",
@@ -39,6 +45,9 @@ export function buildingImportTemplateCsv(): string {
       "CA",
       "94105",
       "US",
+      "",
+      "",
+      "",
       "",
       "",
     ],

@@ -214,6 +214,36 @@ export const marketingCommandCenterPreview: CommandCenterSnapshot = {
       sentTo: "facilities@harborview.example",
     },
   ],
+  permits: {
+    rows: [
+      {
+        buildingId: "b1",
+        buildingLabel: "Riverside Medical — Building A",
+        customerName: "Riverside Medical Group",
+        fireDistrict: "San Mateo County Fire",
+        permitNumber: "SP-2023-014",
+        permitExpiresAt: new Date("2026-04-15T00:00:00Z"),
+        status: "expired" as const,
+      },
+      {
+        buildingId: "b2",
+        buildingLabel: "Harborview Office Park",
+        customerName: "Harborview Properties",
+        fireDistrict: "Oakland Fire",
+        permitNumber: "SP-2025-088",
+        permitExpiresAt: new Date("2026-07-20T00:00:00Z"),
+        status: "expiring_soon" as const,
+      },
+    ],
+    totals: {
+      missing: 1,
+      expired: 1,
+      expiringSoon: 1,
+      noExpiryDate: 0,
+      current: 21,
+      needsAttention: 3,
+    },
+  },
   summary: {
     openDeficiencies: 1,
     pendingQuotes: 1,
@@ -223,6 +253,7 @@ export const marketingCommandCenterPreview: CommandCenterSnapshot = {
     buildingsWithoutRegister: 3,
     assetsMissingNextDue: 12,
     csvImportsLast90Days: 188,
+    permitsNeedAttention: 3,
   },
 };
 
