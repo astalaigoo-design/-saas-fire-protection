@@ -26,7 +26,8 @@ export function TechnicianAlertsSettingsSection({
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
         When you assign, reschedule, or reassign a job, the current and previous technicians are
-        notified through the channels below. Recurring series send one assign alert for the first
+        notified through the channels below (one assignee per visit — not multi-tech crews).
+        Recurring series send one assign alert for the first
         date (with a note); later dates appear on My jobs without duplicate emails. Pilots still
         miss jobs if they only rely on email — encourage My jobs and the in-app bell.
       </p>

@@ -190,7 +190,11 @@ export function ScheduleInspectionForm({
               <p className="text-xs text-muted-foreground">
                 No technicians linked yet. Link Clerk users with the technician role.
               </p>
-            ) : null}
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                One technician per visit. For two techs on site, schedule a second job or add notes.
+              </p>
+            )}
           </div>
 
           <fieldset className="space-y-3">

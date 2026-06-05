@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { InspectionCalendar } from "@/components/scheduling/inspection-calendar";
+import { JobAssignmentScopeNotice } from "@/components/scheduling/job-assignment-scope-notice";
 import { buttonVariants } from "@/components/ui/button";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
 import { getDashboardSession } from "@/lib/dashboard/session";
@@ -36,7 +37,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
     <div className="space-y-6">
       <PageHeader
         title="Calendar"
-        description="Drag jobs between days, import a CSV to schedule a full quarter, or open a job to change assignee and time. Technicians are notified on changes."
+        description="Drag jobs between days, import a CSV to schedule a full quarter, or open a job to change assignee and time. One technician per visit — alerts go to that assignee."
         actions={
           <div className="flex flex-wrap gap-2">
             <Link
@@ -54,6 +55,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           </div>
         }
       />
+      <JobAssignmentScopeNotice variant="inline" />
       <TechnicianDayOfReadinessBanner rows={dayOfReadiness} />
 
       <InspectionCalendar

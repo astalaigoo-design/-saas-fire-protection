@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { JobEquipmentSection } from "@/components/dashboard/job-equipment-section";
 import { InspectionJobEditForm } from "@/components/scheduling/inspection-job-edit-form";
+import { JobAssignmentScopeNotice } from "@/components/scheduling/job-assignment-scope-notice";
 import { listBuildingEquipmentPreview } from "@/lib/inspect/job-equipment";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -71,8 +72,9 @@ export default async function JobEditPage({ params }: JobEditPageProps) {
     <div className="space-y-8">
       <PageHeader
         title="Assign & reschedule"
-        description="Update who performs this visit and when. The assigned technician receives email and an in-app alert."
+        description="Update who performs this visit and when. One assigned technician receives email and in-app alerts — no multi-tech crews on a single job."
       />
+      <JobAssignmentScopeNotice variant="inline" />
       <JobEquipmentSection buildingId={inspection.buildingId} rows={equipment} />
       <InspectionJobEditForm
         inspectionId={inspection.id}
