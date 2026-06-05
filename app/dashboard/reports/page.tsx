@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { ReportShareLink } from "@/components/reports/report-share-link";
 
 import { ReportsRegistersSection } from "@/components/reports/reports-registers-section";
+import { CompliancePdfScopeNotice } from "@/components/reports/compliance-pdf-scope-notice";
 
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -29,6 +30,10 @@ import { listCompanyReportsSafe } from "@/lib/dashboard/queries";
 import { OutboundEmailInlineNotice } from "@/components/dashboard/outbound-email-inline-notice";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { getOutboundChannelsStatus } from "@/lib/outbound/channels";
+import {
+  REPORT_TEMPLATE_LABELS,
+  isReportTemplateKey,
+} from "@/lib/reports/templates/types";
 
 
 
@@ -70,7 +75,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
 
         title="Reports"
 
-        description="Compliance inspection PDFs, company registers, and repair quotes."
+        description="Compliance inspection PDFs with NFPA layouts, AHJ metadata, and company registers."
 
         actions={
 
@@ -91,6 +96,8 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
       />
 
 
+
+      <CompliancePdfScopeNotice variant="inline" />
 
       <OutboundEmailInlineNotice channels={getOutboundChannelsStatus()} context="reports" />
 
@@ -136,8 +143,13 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
 
           <ul className="space-y-3">
 
-            {reports.map((report) => (
+            {reports.map((report) => {
+              const templateLabel =
+                report.reportTemplateKey && isReportTemplateKey(report.reportTemplateKey)
+                  ? REPORT_TEMPLATE_LABELS[report.reportTemplateKey]
+                  : REPORT_TEMPLATE_LABELS.default;
 
+              return (
               <li key={report.id}>
 
                 <Card>
@@ -164,6 +176,8 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
 
                       {report.certificateNumber ? ` · ${report.certificateNumber}` : ""}
 
+                      {` · ${templateLabel}`}
+
                       {report.generatedAt ? ` · ${formatDate(report.generatedAt)}` : ""}
 
                       {report.emailedTo ? ` · emailed to ${report.emailedTo}` : ""}
@@ -189,8 +203,8 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
                 </Card>
 
               </li>
-
-            ))}
+              );
+            })}
 
           </ul>
 

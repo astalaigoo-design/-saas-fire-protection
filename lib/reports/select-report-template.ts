@@ -2,6 +2,7 @@ import { isReportTemplateKey, type ReportTemplateKey } from "@/lib/reports/templ
 
 const SPRINKLER_TYPE_CODES = new Set(["wet", "dry", "sprinkler"]);
 const ALARM_TYPE_CODES = new Set(["alarm"]);
+const HOOD_TYPE_CODES = new Set(["hood"]);
 
 export type ReportTemplateInput = {
   inspectionTypeCode: string;
@@ -23,6 +24,10 @@ export function resolveReportTemplateKey(input: ReportTemplateInput): ReportTemp
 
   if (ALARM_TYPE_CODES.has(input.inspectionTypeCode)) {
     return "nfpa72-alarm";
+  }
+
+  if (HOOD_TYPE_CODES.has(input.inspectionTypeCode)) {
+    return "nfpa96-hood";
   }
 
   return "default";

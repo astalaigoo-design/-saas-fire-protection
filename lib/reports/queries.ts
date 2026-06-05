@@ -8,6 +8,7 @@ import type { DashboardSession } from "@/lib/dashboard/session";
 import { calculateNextInspectionDue } from "@/lib/reports/next-inspection-due";
 import { resolveReportTemplateKey } from "@/lib/reports/select-report-template";
 import type { ReportTemplateKey } from "@/lib/reports/templates/types";
+import { isReportTemplateKey } from "@/lib/reports/templates/types";
 import { prisma } from "@/lib/prisma";
 
 const complianceReportSelect = {
@@ -149,11 +150,8 @@ export async function getComplianceReportData(
     ? {
         certificateNumber: report.certificateNumber,
         reportTemplateKey:
-          report.reportTemplateKey &&
-          (["default", "nfpa25-sprinkler", "nfpa72-alarm"] as const).includes(
-            report.reportTemplateKey as ReportTemplateKey,
-          )
-            ? (report.reportTemplateKey as ReportTemplateKey)
+          report.reportTemplateKey && isReportTemplateKey(report.reportTemplateKey)
+            ? report.reportTemplateKey
             : null,
       }
     : null;
@@ -234,11 +232,8 @@ export async function getComplianceReportDataForInspection(
     ? {
         certificateNumber: report.certificateNumber,
         reportTemplateKey:
-          report.reportTemplateKey &&
-          (["default", "nfpa25-sprinkler", "nfpa72-alarm"] as const).includes(
-            report.reportTemplateKey as ReportTemplateKey,
-          )
-            ? (report.reportTemplateKey as ReportTemplateKey)
+          report.reportTemplateKey && isReportTemplateKey(report.reportTemplateKey)
+            ? report.reportTemplateKey
             : null,
       }
     : null;

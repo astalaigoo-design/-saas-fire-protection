@@ -17,6 +17,8 @@ import {
   REPORT_TEMPLATE_KEYS,
   REPORT_TEMPLATE_LABELS,
 } from "@/lib/reports/templates/types";
+import { reportTemplatePreviewUrl } from "@/lib/reports/generate-template-preview";
+import { CompliancePdfScopeNotice } from "@/components/reports/compliance-pdf-scope-notice";
 
 type JurisdictionsSettingsSectionProps = {
   jurisdictions: JurisdictionRow[];
@@ -98,10 +100,12 @@ export function JurisdictionsSettingsSection({
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Define AHJs for certificate numbering and NFPA form layouts. Assign jurisdictions on
-          building profiles; sprinkler and alarm inspections auto-select NFPA templates when no
-          jurisdiction override is set.
+          building profiles; sprinkler, alarm, and hood inspections auto-select NFPA templates when
+          no jurisdiction override is set.
         </p>
       </div>
+
+      <CompliancePdfScopeNotice variant="inline" />
 
       {error ? (
         <p role="alert" className="text-sm text-destructive">
@@ -260,6 +264,22 @@ export function JurisdictionsSettingsSection({
                 </option>
               ))}
             </select>
+            <p className="text-xs text-muted-foreground">
+              Preview sample PDFs:{" "}
+              {REPORT_TEMPLATE_KEYS.map((key, index) => (
+                <span key={key}>
+                  {index > 0 ? " · " : ""}
+                  <a
+                    href={reportTemplatePreviewUrl(key)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-primary underline-offset-2 hover:underline"
+                  >
+                    {REPORT_TEMPLATE_LABELS[key]}
+                  </a>
+                </span>
+              ))}
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <SaveJurisdictionButton />

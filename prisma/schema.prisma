@@ -201,7 +201,7 @@ model Jurisdiction {
   /// Prepended to certificate numbers for this AHJ, e.g. `AFD-`.
   certificatePrefix     String?
   nextCertificateNumber Int     @default(1)
-  /// React-PDF template key: `default`, `nfpa25-sprinkler`, `nfpa72-alarm`.
+  /// React-PDF template key: `default`, `nfpa25-sprinkler`, `nfpa72-alarm`, `nfpa96-hood`.
   reportTemplateKey String @default("default")
 
   buildings Building[]

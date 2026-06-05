@@ -41,4 +41,13 @@ describe("resolveReportTemplateKey", () => {
       }),
     ).toBe("nfpa72-alarm");
   });
+
+  it("maps hood type to NFPA 96 template", () => {
+    expect(
+      resolveReportTemplateKey({
+        inspectionTypeCode: "hood",
+        jurisdictionReportTemplateKey: null,
+      }),
+    ).toBe("nfpa96-hood");
+  });
 });
