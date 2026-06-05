@@ -7,6 +7,8 @@ import {
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { sendComplianceReportEmail } from "@/lib/email/send-compliance-report";
 import { isOutboundEmailConfigured } from "@/lib/email/env";
+import { getCustomerNotificationSettings } from "@/lib/notifications/customer-settings";
+import { notifyCustomerReportReadySms } from "@/lib/notifications/notify-customer";
 import { notifyReportEmailFailed } from "@/lib/notifications/notify-report-email-failed";
 import { generateComplianceReport } from "@/lib/reports/generate-compliance-report";
 import { prisma } from "@/lib/prisma";
@@ -40,7 +42,19 @@ export async function emailComplianceReportAfterSubmit(
   session: DashboardSession,
   inspectionId: string,
 ): Promise<ReportEmailOutcome> {
-  if (!isOutboundEmailConfigured()) {
+  const notifySettings = await getCustomerNotificationSettings(session.companyId);
+  const emailEnabled = notifySettings?.reportReadyEmail ?? true;
+  const smsEnabled = notifySettings?.reportReadySms ?? false;
+
+  if (!emailEnabled && !smsEnabled) {
+    return {
+      status: "skipped",
+      reason:
+        "Customer report notifications are off in Organization → Customer notifications.",
+    };
+  }
+
+  if (emailEnabled && !isOutboundEmailConfigured()) {
     return {
       status: "skipped",
       reason:
@@ -93,7 +107,7 @@ export async function emailComplianceReportAfterSubmit(
           name: true,
           addressLine1: true,
           city: true,
-          customer: { select: { name: true, email: true } },
+          customer: { select: { name: true, email: true, phone: true } },
         },
       },
       inspectionType: { select: { name: true } },
@@ -105,68 +119,110 @@ export async function emailComplianceReportAfterSubmit(
     return { status: "skipped", reason: "Inspection data is not available for email." };
   }
 
-  const customerEmail = data.building.customer.email?.trim();
-  if (!customerEmail) {
-    const noEmailReason =
-      "This customer has no email address — add one on the customer profile.";
-    await prisma.report.update({
-      where: { id: reportId },
-      data: {
-        emailError: "Customer has no email address on file.",
-      },
-    });
-    await alertReportEmailSkipped(
-      session.companyId,
-      inspectionId,
-      noEmailReason,
-      buildingLabel(data.building),
-    );
-    return { status: "skipped", reason: noEmailReason };
-  }
-
+  const customerEmail = data.building.customer.email?.trim() || null;
   const overallPass = !data.items.some(
     (item) => item.result === "fail" || item.result === "pending",
   );
 
-  const sendResult = await sendComplianceReportEmail({
-    to: customerEmail,
-    customerName: data.building.customer.name,
-    buildingLabel: buildingLabel(data.building),
-    companyName: data.company.name,
-    inspectionTypeName: data.inspectionType.name,
-    completedAt: data.completedAt,
-    overallPass,
-    pdfBuffer: buffer,
-    filename,
-    replyTo: data.company.reportEmail,
-    reportLink: publicReportUrl(shareToken),
-  });
+  const reportLink = publicReportUrl(shareToken);
+  const siteLabel = buildingLabel(data.building);
 
-  if (!sendResult.ok) {
-    console.error("emailComplianceReportAfterSubmit: send failed", sendResult.error);
-    const failReason =
-      "The report was saved but the email could not be sent. Try downloading from the dashboard.";
-    await prisma.report.update({
-      where: { id: reportId },
-      data: { emailError: sendResult.error },
-    });
-    await alertReportEmailSkipped(
-      session.companyId,
-      inspectionId,
-      failReason,
-      buildingLabel(data.building),
-    );
-    return { status: "skipped", reason: failReason };
+  if (emailEnabled) {
+    if (!customerEmail) {
+      const noEmailReason =
+        "This customer has no email address — add one on the customer profile.";
+      await prisma.report.update({
+        where: { id: reportId },
+        data: {
+          emailError: "Customer has no email address on file.",
+        },
+      });
+      await alertReportEmailSkipped(
+        session.companyId,
+        inspectionId,
+        noEmailReason,
+        siteLabel,
+      );
+    } else {
+      const sendResult = await sendComplianceReportEmail({
+        to: customerEmail,
+        customerName: data.building.customer.name,
+        buildingLabel: siteLabel,
+        companyName: data.company.name,
+        inspectionTypeName: data.inspectionType.name,
+        completedAt: data.completedAt,
+        overallPass,
+        pdfBuffer: buffer,
+        filename,
+        replyTo: data.company.reportEmail,
+        reportLink,
+      });
+
+      if (!sendResult.ok) {
+        console.error("emailComplianceReportAfterSubmit: send failed", sendResult.error);
+        const failReason =
+          "The report was saved but the email could not be sent. Try downloading from the dashboard.";
+        await prisma.report.update({
+          where: { id: reportId },
+          data: { emailError: sendResult.error },
+        });
+        await alertReportEmailSkipped(
+          session.companyId,
+          inspectionId,
+          failReason,
+          siteLabel,
+        );
+        return { status: "skipped", reason: failReason };
+      }
+
+      await prisma.report.update({
+        where: { id: reportId },
+        data: {
+          emailedTo: customerEmail,
+          emailedAt: new Date(),
+          emailError: null,
+        },
+      });
+
+      if (smsEnabled) {
+        await notifyCustomerReportReadySms({
+          companyId: session.companyId,
+          buildingLabel: siteLabel,
+          companyName: data.company.name,
+          customerEmail,
+          customerPhone: data.building.customer.phone,
+          reportLink,
+        });
+      }
+
+      return { status: "sent", to: customerEmail };
+    }
   }
 
-  await prisma.report.update({
-    where: { id: reportId },
-    data: {
-      emailedTo: customerEmail,
-      emailedAt: new Date(),
-      emailError: null,
-    },
-  });
+  if (smsEnabled) {
+    const smsOutcome = await notifyCustomerReportReadySms({
+      companyId: session.companyId,
+      buildingLabel: siteLabel,
+      companyName: data.company.name,
+      customerEmail,
+      customerPhone: data.building.customer.phone,
+      reportLink,
+    });
 
-  return { status: "sent", to: customerEmail };
+    if (smsOutcome === "sent") {
+      return { status: "skipped", reason: "Report SMS sent to customer (email notifications off)." };
+    }
+  }
+
+  if (!emailEnabled) {
+    return {
+      status: "skipped",
+      reason: "Report ready email is off and SMS was not sent (check customer phone).",
+    };
+  }
+
+  return {
+    status: "skipped",
+    reason: "This customer has no email address — add one on the customer profile.",
+  };
 }

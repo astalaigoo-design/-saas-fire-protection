@@ -1,4 +1,5 @@
 import { createStaffNotification } from "@/lib/notifications/create";
+import { notifyCustomerVisitScheduled } from "@/lib/notifications/notify-customer";
 import { notifyTechnicianForInspection } from "@/lib/scheduling/notify-technician-job";
 import { prisma } from "@/lib/prisma";
 
@@ -73,5 +74,14 @@ export async function notifyInspectionScheduled(input: {
       kind: "assigned",
       knownSeriesOccurrenceCount: input.occurrenceCount,
     });
+  }
+
+  try {
+    await notifyCustomerVisitScheduled({
+      companyId: input.companyId,
+      inspectionId: inspection.id,
+    });
+  } catch (error) {
+    console.warn("notifyCustomerVisitScheduled failed", error);
   }
 }

@@ -6,6 +6,7 @@ import { getSmsConfigStatus, type SmsConfigStatus } from "@/lib/sms/env";
 
 /** Customer- and staff-facing features that require Resend env vars on the server. */
 export const RESEND_DEPENDENT_FEATURES = [
+  "Customer report-ready, quote-sent, and visit-scheduled emails (optional per company)",
   "Compliance PDFs emailed to customers after submit",
   "Repair quotes emailed to customers",
   "Quote accept/decline alerts to owners and admins",
@@ -21,6 +22,7 @@ export const WORKS_WITHOUT_RESEND = [
   "Quote public links and customer responses (/q/…) — accept is approval, not payment",
   "In-app staff bell and technician My jobs alerts",
   "Technician SMS when Twilio is configured",
+  "Customer SMS for report ready, quote sent, and visit scheduled (optional per company)",
 ] as const;
 
 export type OutboundChannelsStatus = {

@@ -140,6 +140,14 @@ model Company {
   /// Pilot design partner — complimentary access; Paddle checkout hidden for this tenant.
   designPartner Boolean @default(false)
 
+  /// Optional customer notifications (company-wide). Email uses Resend; SMS uses Twilio.
+  notifyCustomerReportReadyEmail     Boolean @default(true)
+  notifyCustomerReportReadySms       Boolean @default(false)
+  notifyCustomerQuoteSentEmail       Boolean @default(true)
+  notifyCustomerQuoteSentSms         Boolean @default(false)
+  notifyCustomerVisitScheduledEmail  Boolean @default(false)
+  notifyCustomerVisitScheduledSms    Boolean @default(false)
+
   /// Default prefix when a building has no jurisdiction-specific sequence.
   certificateNumberPrefix String?
   nextCertificateNumber   Int     @default(1)

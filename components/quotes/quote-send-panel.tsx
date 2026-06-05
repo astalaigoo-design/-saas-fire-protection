@@ -32,15 +32,19 @@ export function QuoteSendPanel({ quoteId, customerEmail, totalLabel }: QuoteSend
   const previewUrl = `/api/quotes/${quoteId}/pdf`;
 
   if (state?.ok) {
+    const sentMessage =
+      state.channel === "email"
+        ? `Inspection report and quote emailed to ${state.sentTo} (PDFs attached, with online links).`
+        : state.channel === "sms"
+          ? `Quote link texted to ${state.sentTo}.`
+          : "Quote marked sent — share the customer link below.";
+
     return (
       <div
         role="status"
         className="mt-3 space-y-2 rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300"
       >
-        <p>
-          Inspection report and quote emailed to {state.sentTo} (PDFs attached, with online
-          links).
-        </p>
+        <p>{sentMessage}</p>
         <p>
           Customer link:{" "}
           <a

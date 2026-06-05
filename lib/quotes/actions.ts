@@ -9,6 +9,9 @@ import { writeAuditEvent } from "@/lib/audit/write-event";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { publicQuoteUrl, publicReportUrl } from "@/lib/app-url";
 import { sendQuoteEmail } from "@/lib/email/send-quote-email";
+import { getCustomerNotificationSettings } from "@/lib/notifications/customer-settings";
+import { notifyCustomerQuoteSentSms } from "@/lib/notifications/notify-customer";
+import { resolveCustomerContact } from "@/lib/notifications/customer-contact";
 import { loadComplianceReportAttachment } from "@/lib/reports/compliance-report-attachment";
 import { generateQuotePdf } from "@/lib/quotes/generate-quote-pdf";
 import { tryScheduleReinspectionAfterQuoteAccept } from "@/lib/quotes/accept-quote-schedule";
@@ -20,7 +23,7 @@ import { prisma } from "@/lib/prisma";
 
 export type QuoteLineItemsActionResult = { ok: true } | { ok: false; error: string };
 export type SendQuoteActionResult =
-  | { ok: true; sentTo: string; publicUrl: string }
+  | { ok: true; sentTo: string | null; publicUrl: string; channel: "email" | "sms" | "link_only" }
   | { ok: false; error: string };
 
 const lineItemSchema = z.object({
@@ -198,7 +201,7 @@ export async function sendDraftQuote(
               name: true,
               addressLine1: true,
               city: true,
-              customer: { select: { name: true, email: true } },
+              customer: { select: { name: true, email: true, phone: true } },
             },
           },
         },
@@ -207,11 +210,30 @@ export async function sendDraftQuote(
   });
   if (!quote) return { ok: false, error: "Draft quote not found." };
 
-  const customerEmail = quote.inspection.building.customer.email?.trim();
-  if (!customerEmail) {
+  const notifySettings = await getCustomerNotificationSettings(session.companyId);
+  const emailEnabled = notifySettings?.quoteSentEmail ?? true;
+  const smsEnabled = notifySettings?.quoteSentSms ?? false;
+
+  const customerEmail = quote.inspection.building.customer.email?.trim() || null;
+  if (emailEnabled && !customerEmail) {
     return {
       ok: false,
       error: "Add a customer email on the customer profile before sending.",
+    };
+  }
+  if (!emailEnabled && !smsEnabled) {
+    return {
+      ok: false,
+      error:
+        "Customer quote notifications are off. Enable them under Organization → Customer notifications, or share the quote link manually.",
+    };
+  }
+
+  const customerContact = resolveCustomerContact(quote.inspection.building.customer);
+  if (!emailEnabled && smsEnabled && !customerContact.phoneE164) {
+    return {
+      ok: false,
+      error: "Add a customer mobile number on the customer profile before sending SMS.",
     };
   }
 
@@ -249,34 +271,68 @@ export async function sendDraftQuote(
     quote.inspection.building.name?.trim() ||
     `${quote.inspection.building.addressLine1}, ${quote.inspection.building.city}`;
 
-  const emailResult = await sendQuoteEmail({
-    to: customerEmail,
-    customerName: quote.inspection.building.customer.name,
-    companyName: quote.inspection.company.name,
-    buildingLabel,
-    inspectionTypeName: quote.inspection.inspectionType.name,
-    quoteTitle: quote.title ?? `${quote.inspection.inspectionType.name} repair quote`,
+  const totalLabel = new Intl.NumberFormat("en-US", {
+    style: "currency",
     currency: quote.currency,
-    subtotalCents: quote.subtotalCents,
-    taxCents: quote.taxCents,
-    discountCents: quote.discountCents,
-    totalCents: quote.totalCents,
-    lineItems: quote.lineItems,
-    replyTo: quote.inspection.company.reportEmail,
-    quoteLink: publicUrl,
-    reportLink,
-    quotePdfBuffer: pdfBuffer,
-    quotePdfFilename: pdfFilename,
-    reportPdfBuffer: complianceReport?.buffer,
-    reportPdfFilename: complianceReport?.filename,
-  });
+  }).format(quote.totalCents / 100);
 
-  if (!emailResult.ok) {
-    return { ok: false, error: emailResult.error };
+  let messageId: string | null = null;
+  let channel: "email" | "sms" | "link_only" = "link_only";
+
+  if (emailEnabled && customerEmail) {
+    const emailResult = await sendQuoteEmail({
+      to: customerEmail,
+      customerName: quote.inspection.building.customer.name,
+      companyName: quote.inspection.company.name,
+      buildingLabel,
+      inspectionTypeName: quote.inspection.inspectionType.name,
+      quoteTitle: quote.title ?? `${quote.inspection.inspectionType.name} repair quote`,
+      currency: quote.currency,
+      subtotalCents: quote.subtotalCents,
+      taxCents: quote.taxCents,
+      discountCents: quote.discountCents,
+      totalCents: quote.totalCents,
+      lineItems: quote.lineItems,
+      replyTo: quote.inspection.company.reportEmail,
+      quoteLink: publicUrl,
+      reportLink,
+      quotePdfBuffer: pdfBuffer,
+      quotePdfFilename: pdfFilename,
+      reportPdfBuffer: complianceReport?.buffer,
+      reportPdfFilename: complianceReport?.filename,
+    });
+
+    if (!emailResult.ok) {
+      return { ok: false, error: emailResult.error };
+    }
+
+    messageId = emailResult.messageId;
+    channel = "email";
+  }
+
+  if (smsEnabled) {
+    const smsOutcome = await notifyCustomerQuoteSentSms({
+      companyId: session.companyId,
+      buildingLabel,
+      companyName: quote.inspection.company.name,
+      customerEmail,
+      customerPhone: quote.inspection.building.customer.phone,
+      quoteLink: publicUrl,
+      totalLabel,
+    });
+    if (smsOutcome === "sent" && channel !== "email") {
+      channel = "sms";
+    }
+    if (!emailEnabled && smsOutcome !== "sent") {
+      return {
+        ok: false,
+        error: "Could not send quote SMS. Check the customer mobile number and Twilio setup.",
+      };
+    }
   }
 
   const now = new Date();
-  if (complianceReport) {
+  if (complianceReport && customerEmail && channel === "email") {
     await prisma.report.update({
       where: { id: complianceReport.reportId },
       data: {
@@ -290,9 +346,9 @@ export async function sendDraftQuote(
     where: { id: quote.id },
     data: {
       status: QuoteStatus.sent,
-      sentTo: customerEmail,
+      sentTo: customerEmail ?? quote.inspection.building.customer.phone,
       sentAt: now,
-      sentMessageId: emailResult.messageId,
+      sentMessageId: messageId,
       statusChangedAt: now,
       acceptedAt: null,
       declinedAt: null,
@@ -306,8 +362,9 @@ export async function sendDraftQuote(
     entityType: "quote",
     entityId: quote.id,
     metadata: {
-      sentTo: customerEmail,
-      messageId: emailResult.messageId,
+      sentTo: customerEmail ?? quote.inspection.building.customer.phone,
+      messageId,
+      channel,
     },
   });
 
@@ -321,7 +378,12 @@ export async function sendDraftQuote(
   revalidatePath("/dashboard/quotes");
   revalidatePath("/dashboard/reports");
   revalidatePath("/dashboard/operations");
-  return { ok: true, sentTo: customerEmail, publicUrl };
+  return {
+    ok: true,
+    sentTo: customerEmail ?? quote.inspection.building.customer.phone,
+    publicUrl,
+    channel,
+  };
 }
 
 async function transitionQuoteStatus(

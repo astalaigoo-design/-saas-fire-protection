@@ -9,6 +9,7 @@ import { InspectionTypePacksSection } from "@/components/dashboard/inspection-ty
 import { BranchesSettingsSection } from "@/components/dashboard/branches-settings-section";
 import { OutboundEmailSettingsSection } from "@/components/dashboard/outbound-email-settings-section";
 import { PilotReadinessChecklist } from "@/components/dashboard/pilot-readiness-checklist";
+import { CustomerNotificationsSettingsSection } from "@/components/dashboard/customer-notifications-settings-section";
 import { TechnicianAlertsSettingsSection } from "@/components/dashboard/technician-alerts-settings-section";
 import { TeamInviteSection } from "@/components/dashboard/team-invite-section";
 import { RepairQuotesSettingsSection } from "@/components/dashboard/repair-quotes-settings-section";
@@ -20,6 +21,7 @@ import { getInspectionTypePacksData } from "@/lib/companies/inspection-type-quer
 import { getChecklistTemplatesEditorData } from "@/lib/inspections/checklist-template-queries";
 import { JurisdictionsSettingsSection } from "@/components/dashboard/jurisdictions-settings-section";
 import { getCompanyProfile } from "@/lib/companies/queries";
+import { getCustomerNotificationSettings } from "@/lib/notifications/customer-settings";
 import { getJurisdictionsSettingsData } from "@/lib/jurisdictions/queries";
 import { isOwner } from "@/lib/auth/permissions";
 import { getDashboardSession } from "@/lib/dashboard/session";
@@ -33,17 +35,27 @@ export default async function OrgSettingsPage() {
   if (!session) redirect("/sign-in");
   ensureCanManageOrgSettings(session.role);
 
-  const [company, team, inspectionTypePacks, checklistTemplates, branches, integrations, jurisdictions, pilotReadiness] =
-    await Promise.all([
-      getCompanyProfile(session),
-      getTeamManagementData(session),
-      getInspectionTypePacksData(session),
-      getChecklistTemplatesEditorData(session),
-      listBranchesForCompany(session.companyId),
-      getIntegrationsSettingsData(session.companyId),
-      getJurisdictionsSettingsData(session),
-      isOwner(session.role) ? getPilotReadinessStatus() : Promise.resolve(null),
-    ]);
+  const [
+    company,
+    team,
+    inspectionTypePacks,
+    checklistTemplates,
+    branches,
+    integrations,
+    jurisdictions,
+    pilotReadiness,
+    customerNotifications,
+  ] = await Promise.all([
+    getCompanyProfile(session),
+    getTeamManagementData(session),
+    getInspectionTypePacksData(session),
+    getChecklistTemplatesEditorData(session),
+    listBranchesForCompany(session.companyId),
+    getIntegrationsSettingsData(session.companyId),
+    getJurisdictionsSettingsData(session),
+    isOwner(session.role) ? getPilotReadinessStatus() : Promise.resolve(null),
+    getCustomerNotificationSettings(session.companyId),
+  ]);
   if (!company) redirect("/dashboard");
 
   return (
@@ -65,6 +77,14 @@ export default async function OrgSettingsPage() {
         emailStatus={getOutboundEmailStatus()}
         smsStatus={getSmsConfigStatus()}
       />
+
+      {customerNotifications ? (
+        <CustomerNotificationsSettingsSection
+          settings={customerNotifications}
+          emailStatus={getOutboundEmailStatus()}
+          smsStatus={getSmsConfigStatus()}
+        />
+      ) : null}
 
       <TeamInviteSection
         members={team.members}
