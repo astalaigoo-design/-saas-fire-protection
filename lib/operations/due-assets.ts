@@ -137,6 +137,14 @@ export function filterDueAssetsByType(
   return rows.filter((row) => row.assetType === assetType);
 }
 
+export function filterDueWaterSystemAssets(rows: DueAssetRow[]): DueAssetRow[] {
+  return rows.filter((row) =>
+    WATER_SYSTEM_ASSET_TYPES.includes(
+      row.assetType as (typeof WATER_SYSTEM_ASSET_TYPES)[number],
+    ),
+  );
+}
+
 export function groupDueAssetsByType(rows: DueAssetRow[]): {
   assetType: AssetType;
   assetTypeLabel: string;

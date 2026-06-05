@@ -17,7 +17,7 @@ export function OperationsExportButtons({ className }: { className?: string }) {
         className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-h-10")}
         prefetch={false}
       >
-        Export equipment due (CSV)
+        Export asset due report (CSV)
       </Link>
       <Link
         href="/api/operations/export?type=deficiencies"

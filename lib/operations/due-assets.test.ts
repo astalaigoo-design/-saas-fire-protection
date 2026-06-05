@@ -5,6 +5,7 @@ import {
   countDueAssetTotals,
   countDueByWaterSystemType,
   filterDueAssetsByType,
+  filterDueWaterSystemAssets,
 } from "@/lib/operations/due-assets";
 
 const building = {
@@ -136,5 +137,31 @@ describe("countDueByWaterSystemType", () => {
     expect(water.standpipe).toEqual({ overdue: 0, dueThisMonth: 1 });
     expect(water.sprinkler_component).toEqual({ overdue: 0, dueThisMonth: 0 });
     expect(water.attentionTotal).toBe(2);
+  });
+});
+
+describe("filterDueWaterSystemAssets", () => {
+  it("returns only hydrant, standpipe, and sprinkler rows", () => {
+    const rows = computeDueAssets({
+      assets: [
+        asset({
+          id: "hydrant",
+          assetType: AssetType.fire_hydrant,
+          nextServiceDue: new Date("2026-05-01"),
+        }),
+        asset({
+          id: "ext",
+          assetType: AssetType.fire_extinguisher,
+          nextServiceDue: new Date("2026-05-01"),
+        }),
+      ],
+      now: new Date("2026-06-15"),
+      monthStart: new Date(2026, 5, 1),
+      monthEnd: new Date(2026, 6, 1),
+    });
+
+    const water = filterDueWaterSystemAssets(rows);
+    expect(water).toHaveLength(1);
+    expect(water[0]?.assetType).toBe(AssetType.fire_hydrant);
   });
 });
