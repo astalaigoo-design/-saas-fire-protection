@@ -1,8 +1,16 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+type JurisdictionOption = {
+  id: string;
+  name: string;
+  code: string;
+};
+
 type BuildingAhjFieldsProps = {
   idPrefix: string;
+  jurisdictions?: JurisdictionOption[];
+  jurisdictionId?: string | null;
   fireDistrict?: string | null;
   permitNumber?: string | null;
   permitExpiresAt?: Date | null;
@@ -10,6 +18,8 @@ type BuildingAhjFieldsProps = {
 
 export function BuildingAhjFields({
   idPrefix,
+  jurisdictions = [],
+  jurisdictionId,
   fireDistrict,
   permitNumber,
   permitExpiresAt,
@@ -19,6 +29,30 @@ export function BuildingAhjFields({
       <legend className="px-1 text-sm font-medium text-foreground">
         AHJ / permit (optional)
       </legend>
+
+      {jurisdictions.length > 0 ? (
+        <div className="space-y-2">
+          <Label htmlFor={`${idPrefix}-jurisdiction`}>Jurisdiction</Label>
+          <select
+            id={`${idPrefix}-jurisdiction`}
+            name="jurisdictionId"
+            defaultValue={jurisdictionId ?? ""}
+            className="flex min-h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+          >
+            <option value="">None — enter fire district manually</option>
+            {jurisdictions.map((jurisdiction) => (
+              <option key={jurisdiction.id} value={jurisdiction.id}>
+                {jurisdiction.name} ({jurisdiction.code})
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">
+            Selecting a jurisdiction sets certificate numbering and PDF form template for this
+            site.
+          </p>
+        </div>
+      ) : null}
+
       <div className="space-y-2">
         <Label htmlFor={`${idPrefix}-fire-district`}>Fire district / jurisdiction</Label>
         <Input

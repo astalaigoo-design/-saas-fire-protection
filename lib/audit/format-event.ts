@@ -31,6 +31,10 @@ export function formatAuditEventSummary(event: AuditEventForDisplay): string {
       return metaString(meta, "buildingId")
         ? "Inspection completed and signed"
         : "Inspection completed";
+    case "inspection.arrived_on_site": {
+      const at = metaString(meta, "arrivedAt");
+      return at ? `Checked in on site at ${formatIsoDate(at)}` : "Checked in on site";
+    }
     case "inspection.scheduled": {
       const count = meta?.occurrenceCount;
       if (typeof count === "number" && count > 1) {

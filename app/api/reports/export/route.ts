@@ -6,7 +6,12 @@ import { generateReportsExport } from "@/lib/reports/export-csv";
 
 export const dynamic = "force-dynamic";
 
-const EXPORT_TYPES = ["asset-inventory", "ahj-permit-register"] as const;
+const EXPORT_TYPES = [
+  "asset-inventory",
+  "ahj-permit-register",
+  "certificate-register",
+  "visit-time-mileage",
+] as const;
 type ExportType = (typeof EXPORT_TYPES)[number];
 
 function isExportType(value: string | null): value is ExportType {
@@ -32,7 +37,7 @@ export async function GET(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Invalid export type. Use type=asset-inventory or type=ahj-permit-register.",
+          "Invalid export type. Use type=asset-inventory, type=ahj-permit-register, type=certificate-register, or type=visit-time-mileage.",
       },
       { status: 400 },
     );

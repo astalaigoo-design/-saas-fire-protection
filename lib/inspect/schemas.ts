@@ -1,5 +1,6 @@
 import { InspectionItemResult } from "@prisma/client";
 import { z } from "zod";
+import { gpsCoordinatesSchema, visitMileageSchema } from "@/lib/inspect/visit-proof";
 
 export const checklistItemResultSchema = z.enum([
   InspectionItemResult.pass,
@@ -64,4 +65,10 @@ export const submitInspectionSchema = z.object({
       (value) => value.startsWith("data:image/"),
       "Signature is required.",
     ),
+  submitCoordinates: gpsCoordinatesSchema.optional(),
+  mileageMiles: z.preprocess((value) => {
+    if (value === "" || value === undefined || value === null) return undefined;
+    const parsed = typeof value === "number" ? value : Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }, visitMileageSchema),
 });

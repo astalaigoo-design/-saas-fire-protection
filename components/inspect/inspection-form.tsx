@@ -16,6 +16,9 @@ import { DownloadReportButton } from "@/components/inspect/download-report-butto
 import { OfflineBadge } from "@/components/inspect/offline-badge";
 import { InspectBillingBlock } from "@/components/inspect/inspect-billing-block";
 import { SignaturePad } from "@/components/inspect/signature-pad";
+import { VisitArrivalPanel } from "@/components/inspect/visit-arrival-panel";
+import { VisitProofSummary } from "@/components/inspect/visit-proof-summary";
+import { captureDeviceGps } from "@/lib/inspect/capture-gps";
 import type { AppRole } from "@/lib/auth/roles";
 import type { ChecklistItemState } from "@/components/inspect/checklist-item-card";
 import {
@@ -23,7 +26,7 @@ import {
   listOfflineMutations,
   saveInspectionSnapshot,
 } from "@/lib/offline/indexeddb";
-import { apiStartInspection, apiSubmitInspection } from "@/lib/offline/inspect-api";
+import { apiSubmitInspection } from "@/lib/offline/inspect-api";
 import { syncOfflineInspectionMutations } from "@/lib/offline/inspection-sync";
 import type { PreJobBrief } from "@/lib/inspect/pre-job-brief";
 import type { InspectionFormData } from "@/lib/inspect/queries";
@@ -104,7 +107,15 @@ export function InspectionForm({
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [isHydrated, setIsHydrated] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+  const [localArrivedAt, setLocalArrivedAt] = useState<Date | null>(
+    inspection.arrivedAt ?? null,
+  );
+  const [mileageMiles, setMileageMiles] = useState("");
   const [pending, startTransition] = useTransition();
+
+  const hasCheckedIn = Boolean(inspection.arrivedAt ?? localArrivedAt);
+  const offlineMode = offlineOnly || !isOnline;
+  const awaitingCheckIn = !formLocked && !readOnly && !hasCheckedIn;
 
   const showOfflineBadge =
     isHydrated && (offlineOnly || !isOnline || pendingSyncCount > 0 || submittedOffline);
@@ -194,30 +205,6 @@ export function InspectionForm({
   }, [inspection, items, assetChecks, photos, signature]);
 
   useEffect(() => {
-    if (!locked && inspection.status === "scheduled") {
-      void (async () => {
-        if (offlineOnly || !navigator.onLine) {
-          await enqueueOfflineMutation({
-            inspectionId: inspection.id,
-            type: "inspection.start",
-            payload: {},
-          });
-          const pendingMutations = await listOfflineMutations(inspection.id);
-          setPendingSyncCount(pendingMutations.length);
-          return;
-        }
-
-        const response = await apiStartInspection(inspection.id);
-        if (!response.ok) {
-          setSubmitError(response.error);
-        }
-      })().catch((error: unknown) => {
-        console.error("startInspection failed", error);
-      });
-    }
-  }, [inspection.id, inspection.status, locked, offlineOnly]);
-
-  useEffect(() => {
     const raw = sessionStorage.getItem(emailNoticeKey(inspection.id));
     if (!raw) return;
     sessionStorage.removeItem(emailNoticeKey(inspection.id));
@@ -269,11 +256,23 @@ export function InspectionForm({
     }
 
     startTransition(async () => {
-      if (offlineOnly || !navigator.onLine) {
+      const submitGps = await captureDeviceGps(10_000);
+      const submitCoordinates = submitGps.ok ? submitGps.coordinates : undefined;
+      const parsedMileage = mileageMiles.trim() === "" ? undefined : Number(mileageMiles);
+      const mileage =
+        parsedMileage != null && Number.isFinite(parsedMileage) && parsedMileage >= 0
+          ? parsedMileage
+          : undefined;
+
+      if (offlineMode) {
         await enqueueOfflineMutation({
           inspectionId: inspection.id,
           type: "inspection.submit",
-          payload: { signatureData: signature },
+          payload: {
+            signatureData: signature,
+            submitCoordinates,
+            mileageMiles: mileage,
+          },
         });
         setSubmittedOffline(true);
         const pendingMutations = await listOfflineMutations(inspection.id);
@@ -281,7 +280,11 @@ export function InspectionForm({
         return;
       }
 
-      const response = await apiSubmitInspection(inspection.id, signature);
+      const response = await apiSubmitInspection(inspection.id, {
+        signatureData: signature,
+        submitCoordinates,
+        mileageMiles: mileage,
+      });
       if (!response.ok) {
         setSubmitError(response.error);
         return;
@@ -324,25 +327,48 @@ export function InspectionForm({
       <main className="flex-1 space-y-8 py-6 pb-48">
         {!locked && preJobBrief ? <PreJobBriefCard brief={preJobBrief} /> : null}
 
-        <ChecklistCarousel
-          inspectionId={inspection.id}
-          items={items}
-          photos={photos}
-          locked={locked}
-          onItemsChange={setItems}
-          onPhotoAdded={handlePhotoAdded}
-        />
+        {awaitingCheckIn ? (
+          <VisitArrivalPanel
+            inspectionId={inspection.id}
+            offlineMode={offlineMode}
+            onArrived={(arrivedAt) => setLocalArrivedAt(arrivedAt)}
+          />
+        ) : null}
 
-        <EquipmentRegisterSection
-          inspectionId={inspection.id}
-          assetChecks={assetChecks}
-          locked={locked}
-          onAssetChecksChange={setAssetChecks}
-          offlineMode={offlineOnly || !isOnline}
-          offlineRegisterUnavailable={
-            (offlineOnly || !isOnline) && assetChecks.length === 0
-          }
-        />
+        {formLocked ? (
+          <VisitProofSummary
+            startedAt={inspection.startedAt}
+            arrivedAt={inspection.arrivedAt ?? localArrivedAt}
+            completedAt={displayInspection.completedAt}
+            mileageMiles={inspection.mileageMiles}
+            arrivalLatitude={inspection.arrivalLatitude}
+            arrivalLongitude={inspection.arrivalLongitude}
+            submitLatitude={inspection.submitLatitude}
+            submitLongitude={inspection.submitLongitude}
+          />
+        ) : null}
+
+        {!awaitingCheckIn ? (
+          <>
+            <ChecklistCarousel
+              inspectionId={inspection.id}
+              items={items}
+              photos={photos}
+              locked={locked}
+              onItemsChange={setItems}
+              onPhotoAdded={handlePhotoAdded}
+            />
+
+            <EquipmentRegisterSection
+              inspectionId={inspection.id}
+              assetChecks={assetChecks}
+              locked={locked}
+              onAssetChecksChange={setAssetChecks}
+              offlineMode={offlineMode}
+              offlineRegisterUnavailable={offlineMode && assetChecks.length === 0}
+            />
+          </>
+        ) : null}
 
         {locked && photos.length > 0 ? (
           <PhotoUploadSection
@@ -423,6 +449,24 @@ export function InspectionForm({
               <h2 className="text-base font-semibold text-white">Finish inspection</h2>
               <p className="text-xs text-slate-400">Sign below, then tap Done to submit.</p>
             </div>
+
+            <label className="block space-y-2">
+              <span className="text-sm font-medium text-slate-200">
+                Mileage <span className="font-normal text-slate-500">(optional)</span>
+              </span>
+              <input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={9999}
+                step={0.1}
+                value={mileageMiles}
+                onChange={(event) => setMileageMiles(event.target.value)}
+                disabled={pending}
+                placeholder="Round-trip miles"
+                className="flex min-h-11 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 text-sm text-white placeholder:text-slate-600"
+              />
+            </label>
 
             <SignaturePad
               disabled={locked || pending}

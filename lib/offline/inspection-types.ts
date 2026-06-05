@@ -1,5 +1,6 @@
 import type { InspectionItemResult } from "@prisma/client";
 import type { InspectionFormData } from "@/lib/inspect/queries";
+import type { GpsCoordinatesInput } from "@/lib/inspect/visit-proof";
 import type { ReportEmailOutcome } from "@/lib/reports/email-report-after-submit";
 
 export type InspectActionResponse =
@@ -8,6 +9,7 @@ export type InspectActionResponse =
 
 export type OfflineMutationType =
   | "inspection.start"
+  | "inspection.arrive"
   | "checklist.update"
   | "asset.update"
   | "photo.upload"
@@ -16,6 +18,9 @@ export type OfflineMutationType =
 
 export type OfflineMutationPayloadMap = {
   "inspection.start": {};
+  "inspection.arrive": {
+    coordinates: GpsCoordinatesInput;
+  };
   "checklist.update": {
     itemId: string;
     result: InspectionItemResult;
@@ -36,6 +41,8 @@ export type OfflineMutationPayloadMap = {
   };
   "inspection.submit": {
     signatureData: string;
+    submitCoordinates?: GpsCoordinatesInput;
+    mileageMiles?: number;
   };
 };
 

@@ -1,6 +1,7 @@
 /** Known audit actions — extend as new events are instrumented. */
 export const AUDIT_ACTIONS = [
   "inspection.submitted",
+  "inspection.arrived_on_site",
   "inspection.scheduled",
   "inspection.rescheduled",
   "inspection.assignee_changed",
@@ -43,6 +44,7 @@ export type AuditEntityType = (typeof AUDIT_ENTITY_TYPES)[number];
 
 const ACTION_LABELS: Record<string, string> = {
   "inspection.submitted": "Inspection submitted",
+  "inspection.arrived_on_site": "Technician checked in on site",
   "inspection.scheduled": "Inspection scheduled",
   "inspection.rescheduled": "Inspection rescheduled",
   "inspection.assignee_changed": "Job assignee updated",

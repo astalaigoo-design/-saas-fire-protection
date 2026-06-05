@@ -1,5 +1,9 @@
-import { ComplianceStatus } from "@prisma/client";
-import { branchScopeFromSession, buildingWhereFromScope } from "@/lib/branches/scope";
+import { ComplianceStatus, InspectionStatus } from "@prisma/client";
+import {
+  branchScopeFromSession,
+  buildingWhereFromScope,
+  inspectionWhereFromScope,
+} from "@/lib/branches/scope";
 import { assetTypeLabel } from "@/lib/assets/constants";
 import { buildingTypeLabel } from "@/lib/buildings/constants";
 import { buildingLabel } from "@/lib/customers/format";
@@ -186,4 +190,163 @@ export async function getAhjPermitRegisterExportRows(
     buildingComplianceStatus: building.currentStatus,
     buildingId: building.id,
   }));
+}
+
+export type CertificateRegisterExportRow = {
+  certificateNumber: string;
+  reportTemplateKey: string | null;
+  generatedAt: Date | null;
+  customerName: string;
+  buildingLabel: string;
+  jurisdictionName: string | null;
+  inspectionTypeName: string;
+  overallPass: boolean;
+  reportId: string;
+  inspectionId: string;
+};
+
+export async function getCertificateRegisterExportRows(
+  session: DashboardSession,
+): Promise<CertificateRegisterExportRow[]> {
+  const scope = branchScopeFromSession(session);
+
+  const reports = await prisma.report.findMany({
+    where: {
+      companyId: session.companyId,
+      certificateNumber: { not: null },
+      inspection: inspectionWhereFromScope(scope, session.companyId),
+    },
+    select: {
+      id: true,
+      certificateNumber: true,
+      reportTemplateKey: true,
+      generatedAt: true,
+      inspection: {
+        select: {
+          id: true,
+          building: {
+            select: {
+              name: true,
+              addressLine1: true,
+              city: true,
+              fireDistrict: true,
+              jurisdiction: { select: { name: true } },
+              customer: { select: { name: true } },
+            },
+          },
+          inspectionType: { select: { name: true } },
+          items: { select: { result: true } },
+        },
+      },
+    },
+    orderBy: { generatedAt: "desc" },
+  });
+
+  return reports
+    .filter((report): report is typeof report & { certificateNumber: string } =>
+      Boolean(report.certificateNumber),
+    )
+    .map((report) => {
+      const building = report.inspection.building;
+      const overallPass = !report.inspection.items.some(
+        (item) => item.result === "fail" || item.result === "pending",
+      );
+
+      return {
+        certificateNumber: report.certificateNumber,
+        reportTemplateKey: report.reportTemplateKey,
+        generatedAt: report.generatedAt,
+        customerName: building.customer.name,
+        buildingLabel: buildingLabel(building),
+        jurisdictionName:
+          building.jurisdiction?.name ?? building.fireDistrict ?? null,
+        inspectionTypeName: report.inspection.inspectionType.name,
+        overallPass,
+        reportId: report.id,
+        inspectionId: report.inspection.id,
+      };
+    });
+}
+
+export type VisitTimeMileageExportRow = {
+  inspectionId: string;
+  customerName: string;
+  buildingLabel: string;
+  inspectionTypeName: string;
+  technicianName: string | null;
+  scheduledAt: Date;
+  arrivedAt: Date | null;
+  completedAt: Date | null;
+  onSiteMinutes: number | null;
+  mileageMiles: number | null;
+  hasArrivalGps: boolean;
+  hasSubmitGps: boolean;
+};
+
+export async function getVisitTimeMileageExportRows(
+  session: DashboardSession,
+): Promise<VisitTimeMileageExportRow[]> {
+  const scope = branchScopeFromSession(session);
+
+  const inspections = await prisma.inspection.findMany({
+    where: {
+      ...inspectionWhereFromScope(scope, session.companyId),
+      status: InspectionStatus.completed,
+      completedAt: { not: null },
+    },
+    select: {
+      id: true,
+      scheduledAt: true,
+      startedAt: true,
+      arrivedAt: true,
+      completedAt: true,
+      mileageMiles: true,
+      arrivalLatitude: true,
+      arrivalLongitude: true,
+      submitLatitude: true,
+      submitLongitude: true,
+      inspectionType: { select: { name: true } },
+      assignedTo: { select: { name: true } },
+      building: {
+        select: {
+          name: true,
+          addressLine1: true,
+          city: true,
+          customer: { select: { name: true } },
+        },
+      },
+    },
+    orderBy: { completedAt: "desc" },
+    take: 5000,
+  });
+
+  return inspections.map((inspection) => {
+    const anchor = inspection.arrivedAt ?? inspection.startedAt;
+    const onSiteMinutes =
+      anchor && inspection.completedAt
+        ? Math.max(
+            0,
+            Math.round(
+              (inspection.completedAt.getTime() - anchor.getTime()) / 60_000,
+            ),
+          )
+        : null;
+
+    return {
+      inspectionId: inspection.id,
+      customerName: inspection.building.customer.name,
+      buildingLabel: buildingLabel(inspection.building),
+      inspectionTypeName: inspection.inspectionType.name,
+      technicianName: inspection.assignedTo?.name?.trim() || null,
+      scheduledAt: inspection.scheduledAt,
+      arrivedAt: inspection.arrivedAt,
+      completedAt: inspection.completedAt,
+      onSiteMinutes,
+      mileageMiles: inspection.mileageMiles,
+      hasArrivalGps:
+        inspection.arrivalLatitude != null && inspection.arrivalLongitude != null,
+      hasSubmitGps:
+        inspection.submitLatitude != null && inspection.submitLongitude != null,
+    };
+  });
 }

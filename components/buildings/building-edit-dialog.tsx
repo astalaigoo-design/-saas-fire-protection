@@ -31,11 +31,18 @@ function SaveButton() {
   );
 }
 
-type BuildingEditDialogProps = {
-  building: BuildingDetailRecord;
+type JurisdictionOption = {
+  id: string;
+  name: string;
+  code: string;
 };
 
-export function BuildingEditDialog({ building }: BuildingEditDialogProps) {
+type BuildingEditDialogProps = {
+  building: BuildingDetailRecord;
+  jurisdictions: JurisdictionOption[];
+};
+
+export function BuildingEditDialog({ building, jurisdictions }: BuildingEditDialogProps) {
   const [open, setOpen] = useState(false);
   const [state, formAction] = useFormState(updateBuilding, initialState);
 
@@ -125,6 +132,8 @@ export function BuildingEditDialog({ building }: BuildingEditDialogProps) {
           </div>
           <BuildingAhjFields
             idPrefix="edit"
+            jurisdictions={jurisdictions}
+            jurisdictionId={building.jurisdictionId}
             fireDistrict={building.fireDistrict}
             permitNumber={building.permitNumber}
             permitExpiresAt={building.permitExpiresAt}

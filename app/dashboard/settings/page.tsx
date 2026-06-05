@@ -17,7 +17,9 @@ import { listBranchesForCompany } from "@/lib/branches/queries";
 import { ensureCanManageOrgSettings } from "@/lib/auth/guards";
 import { getInspectionTypePacksData } from "@/lib/companies/inspection-type-queries";
 import { getChecklistTemplatesEditorData } from "@/lib/inspections/checklist-template-queries";
+import { JurisdictionsSettingsSection } from "@/components/dashboard/jurisdictions-settings-section";
 import { getCompanyProfile } from "@/lib/companies/queries";
+import { getJurisdictionsSettingsData } from "@/lib/jurisdictions/queries";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { getOutboundEmailStatus } from "@/lib/email/env";
 import { getSmsConfigStatus } from "@/lib/sms/env";
@@ -28,7 +30,7 @@ export default async function OrgSettingsPage() {
   if (!session) redirect("/sign-in");
   ensureCanManageOrgSettings(session.role);
 
-  const [company, team, inspectionTypePacks, checklistTemplates, branches, integrations] =
+  const [company, team, inspectionTypePacks, checklistTemplates, branches, integrations, jurisdictions] =
     await Promise.all([
       getCompanyProfile(session),
       getTeamManagementData(session),
@@ -36,6 +38,7 @@ export default async function OrgSettingsPage() {
       getChecklistTemplatesEditorData(session),
       listBranchesForCompany(session.companyId),
       getIntegrationsSettingsData(session.companyId),
+      getJurisdictionsSettingsData(session),
     ]);
   if (!company) redirect("/dashboard");
 
@@ -84,6 +87,12 @@ export default async function OrgSettingsPage() {
       </section>
 
       <IntegrationsSettingsSection data={integrations} />
+
+      <JurisdictionsSettingsSection
+        jurisdictions={jurisdictions.jurisdictions}
+        certificateNumberPrefix={jurisdictions.certificateNumberPrefix}
+        nextCertificateNumber={jurisdictions.nextCertificateNumber}
+      />
 
       <CompanySettingsForm company={company} />
     </div>

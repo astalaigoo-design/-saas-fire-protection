@@ -5,16 +5,16 @@ import {
   requestJsonHash,
   setCachedIdempotentResponse,
 } from "@/lib/api/idempotency";
-import { submitInspection } from "@/lib/inspect/actions";
+import { recordVisitArrival } from "@/lib/inspect/actions";
 
-type SubmitRouteProps = {
+type ArriveRouteProps = {
   params: { inspectionId: string };
 };
 
-export async function POST(request: Request, { params }: SubmitRouteProps) {
+export async function POST(request: Request, { params }: ArriveRouteProps) {
   const idempotencyKey = request.headers.get("x-idempotency-key");
   const cacheKey = idempotencyKey
-    ? getIdempotencyCacheKey(`inspect-submit:${params.inspectionId}`, idempotencyKey)
+    ? getIdempotencyCacheKey(`inspect-arrive:${params.inspectionId}`, idempotencyKey)
     : null;
   const requestHash = cacheKey ? await requestJsonHash(request) : null;
   if (cacheKey) {
@@ -35,13 +35,9 @@ export async function POST(request: Request, { params }: SubmitRouteProps) {
     }
   }
 
-  let payload: {
-    signatureData?: unknown;
-    submitCoordinates?: unknown;
-    mileageMiles?: unknown;
-  } = {};
+  let payload: unknown = {};
   try {
-    payload = (await request.json()) as typeof payload;
+    payload = await request.json();
   } catch {
     return NextResponse.json(
       { ok: false, error: "Invalid JSON payload." },
@@ -49,11 +45,9 @@ export async function POST(request: Request, { params }: SubmitRouteProps) {
     );
   }
 
-  const result = await submitInspection({
+  const result = await recordVisitArrival({
     inspectionId: params.inspectionId,
-    signatureData: payload.signatureData,
-    submitCoordinates: payload.submitCoordinates,
-    mileageMiles: payload.mileageMiles,
+    ...(typeof payload === "object" && payload !== null ? payload : {}),
   });
 
   const status = result.ok ? 200 : 400;

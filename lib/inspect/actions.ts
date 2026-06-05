@@ -27,6 +27,7 @@ import {
   updateInspectionAssetCheckSchema,
   uploadPhotoSchema,
 } from "@/lib/inspect/schemas";
+import { recordVisitArrivalSchema } from "@/lib/inspect/visit-proof";
 import { isSupabaseStorageConfigured } from "@/lib/supabase/env";
 import {
   deleteInspectionPhotoFromStorage,
@@ -102,15 +103,83 @@ export async function startInspection(
   if (!loaded.ok) return { ok: false, error: loaded.error };
 
   if (loaded.inspection.status === InspectionStatus.scheduled) {
+    const now = new Date();
     await prisma.inspection.update({
       where: { id: inspectionId },
-      data: { status: InspectionStatus.in_progress },
+      data: {
+        status: InspectionStatus.in_progress,
+        startedAt: now,
+      },
     });
     await ensureInspectionAssetChecks(inspectionId, loaded.inspection.buildingId);
     await syncBuildingComplianceStatus(loaded.inspection.buildingId);
     revalidatePath(`/inspect/${inspectionId}`);
   }
 
+  return { ok: true };
+}
+
+export async function recordVisitArrival(
+  input: unknown,
+): Promise<InspectActionResult> {
+  const session = await getDashboardSession();
+  if (!session) return { ok: false, error: "You must be signed in." };
+
+  const tenant = await requireWritableTenant(session);
+  if (!tenant.ok) return { ok: false, error: tenant.error };
+
+  const parsed = recordVisitArrivalSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid check-in." };
+  }
+
+  const loaded = await loadEditableInspection(parsed.data.inspectionId, session);
+  if (!loaded.ok) return { ok: false, error: loaded.error };
+
+  if (loaded.inspection.arrivedAt) {
+    return { ok: true };
+  }
+
+  const capturedAt = parsed.data.coordinates.capturedAt
+    ? new Date(parsed.data.coordinates.capturedAt)
+    : new Date();
+  const now = capturedAt;
+
+  await prisma.inspection.update({
+    where: { id: parsed.data.inspectionId },
+    data: {
+      status: InspectionStatus.in_progress,
+      startedAt: loaded.inspection.startedAt ?? now,
+      arrivedAt: now,
+      arrivalLatitude: parsed.data.coordinates.latitude,
+      arrivalLongitude: parsed.data.coordinates.longitude,
+      arrivalAccuracyMeters: parsed.data.coordinates.accuracyMeters ?? null,
+    },
+  });
+
+  if (loaded.inspection.status === InspectionStatus.scheduled) {
+    await ensureInspectionAssetChecks(
+      parsed.data.inspectionId,
+      loaded.inspection.buildingId,
+    );
+    await syncBuildingComplianceStatus(loaded.inspection.buildingId);
+  }
+
+  await writeAuditEvent({
+    companyId: session.companyId,
+    actorUserId: session.appUserId,
+    action: "inspection.arrived_on_site",
+    entityType: "inspection",
+    entityId: parsed.data.inspectionId,
+    metadata: {
+      buildingId: loaded.inspection.buildingId,
+      latitude: parsed.data.coordinates.latitude,
+      longitude: parsed.data.coordinates.longitude,
+      arrivedAt: now.toISOString(),
+    },
+  });
+
+  revalidatePath(`/inspect/${parsed.data.inspectionId}`);
   return { ok: true };
 }
 
@@ -426,6 +495,10 @@ export async function submitInspection(
       signedAt: now,
       signatureData: parsed.data.signatureData,
       submittedByUserId: session.appUserId,
+      submitLatitude: parsed.data.submitCoordinates?.latitude ?? null,
+      submitLongitude: parsed.data.submitCoordinates?.longitude ?? null,
+      submitAccuracyMeters: parsed.data.submitCoordinates?.accuracyMeters ?? null,
+      mileageMiles: parsed.data.mileageMiles ?? null,
     },
   });
 
@@ -437,6 +510,10 @@ export async function submitInspection(
     entityId: parsed.data.inspectionId,
     metadata: {
       buildingId: loaded.inspection.buildingId,
+      arrivedAt: loaded.inspection.arrivedAt?.toISOString() ?? null,
+      hasArrivalGps: loaded.inspection.arrivalLatitude != null,
+      hasSubmitGps: parsed.data.submitCoordinates != null,
+      mileageMiles: parsed.data.mileageMiles ?? null,
     },
   });
 

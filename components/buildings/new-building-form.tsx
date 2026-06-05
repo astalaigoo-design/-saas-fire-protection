@@ -16,8 +16,15 @@ type CustomerOption = {
   name: string;
 };
 
+type JurisdictionOption = {
+  id: string;
+  name: string;
+  code: string;
+};
+
 type NewBuildingFormProps = {
   customers: CustomerOption[];
+  jurisdictions: JurisdictionOption[];
   initialCustomerId?: string;
 };
 
@@ -37,7 +44,11 @@ function SubmitButton() {
   );
 }
 
-export function NewBuildingForm({ customers, initialCustomerId }: NewBuildingFormProps) {
+export function NewBuildingForm({
+  customers,
+  jurisdictions,
+  initialCustomerId,
+}: NewBuildingFormProps) {
   const [state, formAction] = useFormState(createBuilding, initialState);
   const defaultCustomerId =
     customers.find((c) => c.id === initialCustomerId)?.id ?? customers[0]?.id ?? "";
@@ -123,7 +134,7 @@ export function NewBuildingForm({ customers, initialCustomerId }: NewBuildingFor
             <Input id="country" type="text" name="country" defaultValue="US" className="min-h-11" />
           </div>
 
-          <BuildingAhjFields idPrefix="new-building" />
+          <BuildingAhjFields idPrefix="new-building" jurisdictions={jurisdictions} />
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <SubmitButton />

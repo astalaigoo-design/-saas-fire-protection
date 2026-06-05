@@ -3,6 +3,7 @@ import { NewBuildingForm } from "@/components/buildings/new-building-form";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { ensureCanManageCustomers } from "@/lib/auth/guards";
 import { getDashboardSession } from "@/lib/dashboard/session";
+import { listJurisdictionOptions } from "@/lib/jurisdictions/queries";
 import { prisma } from "@/lib/prisma";
 
 type NewBuildingPageProps = {
@@ -14,11 +15,14 @@ export default async function NewBuildingPage({ searchParams }: NewBuildingPageP
   if (!session) redirect("/sign-in");
   ensureCanManageCustomers(session.role);
 
-  const customers = await prisma.customer.findMany({
-    where: { companyId: session.companyId },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true },
-  });
+  const [customers, jurisdictions] = await Promise.all([
+    prisma.customer.findMany({
+      where: { companyId: session.companyId },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+    listJurisdictionOptions(session.companyId),
+  ]);
 
   if (customers.length === 0) redirect("/dashboard/customers/new");
 
@@ -28,7 +32,11 @@ export default async function NewBuildingPage({ searchParams }: NewBuildingPageP
         title="New building"
         description="Add a site to one of your customers before scheduling inspections."
       />
-      <NewBuildingForm customers={customers} initialCustomerId={searchParams?.customerId} />
+      <NewBuildingForm
+        customers={customers}
+        jurisdictions={jurisdictions}
+        initialCustomerId={searchParams?.customerId}
+      />
     </div>
   );
 }

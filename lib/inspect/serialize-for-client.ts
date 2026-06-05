@@ -5,9 +5,11 @@ const MAX_PHOTO_URL_LENGTH = 500_000;
 /** JSON-safe inspection payload for Server Component → Client Component boundaries. */
 export type ClientInspectionFormData = Omit<
   InspectionFormData,
-  "scheduledAt" | "completedAt" | "signedAt" | "assetChecks"
+  "scheduledAt" | "startedAt" | "arrivedAt" | "completedAt" | "signedAt" | "assetChecks"
 > & {
   scheduledAt: string;
+  startedAt: string | null;
+  arrivedAt: string | null;
   completedAt: string | null;
   signedAt: string | null;
   assetChecks: Array<
@@ -22,6 +24,18 @@ export function hydrateInspectionFormData(
 ): InspectionFormData {
   const scheduledAt =
     data.scheduledAt instanceof Date ? data.scheduledAt : new Date(data.scheduledAt);
+  const startedAt =
+    data.startedAt == null
+      ? null
+      : data.startedAt instanceof Date
+        ? data.startedAt
+        : new Date(data.startedAt);
+  const arrivedAt =
+    data.arrivedAt == null
+      ? null
+      : data.arrivedAt instanceof Date
+        ? data.arrivedAt
+        : new Date(data.arrivedAt);
   const completedAt =
     data.completedAt == null
       ? null
@@ -48,6 +62,8 @@ export function hydrateInspectionFormData(
   return {
     ...data,
     scheduledAt,
+    startedAt,
+    arrivedAt,
     completedAt,
     signedAt,
     assetChecks,
@@ -61,6 +77,8 @@ export function serializeInspectionForClient(
   return {
     ...inspection,
     scheduledAt: inspection.scheduledAt.toISOString(),
+    startedAt: inspection.startedAt?.toISOString() ?? null,
+    arrivedAt: inspection.arrivedAt?.toISOString() ?? null,
     completedAt: inspection.completedAt?.toISOString() ?? null,
     signedAt: inspection.signedAt?.toISOString() ?? null,
     photos: inspection.photos.map((photo) => ({

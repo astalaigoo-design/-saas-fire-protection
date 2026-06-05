@@ -1,3 +1,4 @@
+import type { GpsCoordinatesInput } from "@/lib/inspect/visit-proof";
 import type { InspectActionResponse } from "@/lib/offline/inspection-types";
 
 async function parseJsonResponse(response: Response): Promise<InspectActionResponse> {
@@ -18,9 +19,30 @@ export async function apiStartInspection(
   return parseJsonResponse(response);
 }
 
+export async function apiRecordVisitArrival(
+  inspectionId: string,
+  coordinates: GpsCoordinatesInput,
+  idempotencyKey?: string,
+): Promise<InspectActionResponse> {
+  const response = await fetch(`/api/inspect/${inspectionId}/arrive`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "content-type": "application/json",
+      ...(idempotencyKey ? { "x-idempotency-key": idempotencyKey } : {}),
+    },
+    body: JSON.stringify({ coordinates }),
+  });
+  return parseJsonResponse(response);
+}
+
 export async function apiSubmitInspection(
   inspectionId: string,
-  signatureData: string,
+  input: {
+    signatureData: string;
+    submitCoordinates?: GpsCoordinatesInput;
+    mileageMiles?: number;
+  },
   idempotencyKey?: string,
 ): Promise<InspectActionResponse> {
   const response = await fetch(`/api/inspect/${inspectionId}/submit`, {
@@ -30,7 +52,7 @@ export async function apiSubmitInspection(
       "content-type": "application/json",
       ...(idempotencyKey ? { "x-idempotency-key": idempotencyKey } : {}),
     },
-    body: JSON.stringify({ signatureData }),
+    body: JSON.stringify(input),
   });
   return parseJsonResponse(response);
 }

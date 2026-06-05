@@ -34,6 +34,11 @@ export default async function PublicReportPage({ params }: PublicReportPageProps
           <p className="text-sm text-slate-300">
             Completed {formatDate(meta.completedAt)} by {meta.companyName}
           </p>
+          {meta.certificateNumber ? (
+            <p className="mt-2 text-xs font-medium text-amber-400/90">
+              Certificate {meta.certificateNumber}
+            </p>
+          ) : null}
           <p
             className={`mt-3 text-lg font-semibold ${
               meta.overallPass ? "text-emerald-400" : "text-amber-300"

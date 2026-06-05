@@ -162,6 +162,8 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
 
                       {report.status.replace(/_/g, " ")}
 
+                      {report.certificateNumber ? ` · ${report.certificateNumber}` : ""}
+
                       {report.generatedAt ? ` · ${formatDate(report.generatedAt)}` : ""}
 
                       {report.emailedTo ? ` · emailed to ${report.emailedTo}` : ""}

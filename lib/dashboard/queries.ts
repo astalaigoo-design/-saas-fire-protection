@@ -112,6 +112,8 @@ const reportListSelect = {
   generatedAt: true,
   createdAt: true,
   shareToken: true,
+  certificateNumber: true,
+  reportTemplateKey: true,
   emailedTo: true,
   emailedAt: true,
   inspection: {

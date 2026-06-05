@@ -140,7 +140,13 @@ model Company {
   /// Pilot design partner — complimentary access; Paddle checkout hidden for this tenant.
   designPartner Boolean @default(false)
 
+  /// Default prefix when a building has no jurisdiction-specific sequence.
+  certificateNumberPrefix String?
+  nextCertificateNumber   Int     @default(1)
+
   users           User[]
+  jurisdictions   Jurisdiction[]
+  reports         Report[]
   branches        Branch[]
   customers       Customer[]
   inspectionTypes InspectionType[]
@@ -158,6 +164,31 @@ model Company {
   updatedAt DateTime @updatedAt
 
   @@map("companies")
+}
+
+/// Normalized AHJ / fire district for certificate numbering and PDF form templates.
+model Jurisdiction {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  name String
+  /// Short code unique per company (exports, certificate prefix).
+  code String
+  /// Prepended to certificate numbers for this AHJ, e.g. `AFD-`.
+  certificatePrefix     String?
+  nextCertificateNumber Int     @default(1)
+  /// React-PDF template key: `default`, `nfpa25-sprinkler`, `nfpa72-alarm`.
+  reportTemplateKey String @default("default")
+
+  buildings Building[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, code])
+  @@index([companyId])
+  @@map("jurisdictions")
 }
 
 /// Company-scoped API key for read-only REST (`/api/v1/*`).
@@ -341,7 +372,9 @@ model Building {
   country      String  @default("US")
 
   buildingType BuildingType?
-  /// Fire district or AHJ jurisdiction.
+  jurisdictionId String?
+  jurisdiction   Jurisdiction? @relation(fields: [jurisdictionId], references: [id], onDelete: SetNull)
+  /// Fire district or AHJ jurisdiction (free text; synced from jurisdiction when set).
   fireDistrict String?
   /// AHJ permit or system approval identifier.
   permitNumber   String?
@@ -363,6 +396,7 @@ model Building {
 
   @@index([customerId])
   @@index([currentStatus])
+  @@index([jurisdictionId])
   @@map("buildings")
 }
 
@@ -492,7 +526,19 @@ model Inspection {
   assignedTo       User?   @relation("InspectionAssignee", fields: [assignedToUserId], references: [id], onDelete: SetNull)
 
   scheduledAt DateTime
+  /// First time the visit moved to in_progress (check-in or form open).
+  startedAt   DateTime?
+  /// GPS check-in timestamp (explicit on-site arrival).
+  arrivedAt   DateTime?
+  arrivalLatitude        Float?
+  arrivalLongitude       Float?
+  arrivalAccuracyMeters  Float?
   completedAt DateTime?
+  submitLatitude        Float?
+  submitLongitude       Float?
+  submitAccuracyMeters  Float?
+  /// Round-trip or one-way miles logged by technician at submit.
+  mileageMiles Float?
   status      InspectionStatus @default(scheduled)
 
   /// Set when the day-of technician SMS cron successfully sends (one per job per day).
@@ -627,10 +673,18 @@ model Report {
   inspectionId String
   inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
 
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
   title       String?
   storageUrl  String /// bucket path or URL to PDF
   status      ReportStatus @default(draft)
   generatedAt DateTime?
+
+  /// Human-readable certificate number (company- or jurisdiction-scoped sequence).
+  certificateNumber String?
+  /// React-PDF template used when finalized.
+  reportTemplateKey String?
 
   /// Unguessable token for customer read-only report access at /r/[token].
   shareToken String? @unique
@@ -643,7 +697,9 @@ model Report {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([companyId, certificateNumber])
   @@index([inspectionId])
+  @@index([companyId])
   @@map("reports")
 }
 

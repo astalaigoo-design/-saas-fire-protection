@@ -12,6 +12,7 @@ export type PublicReportMeta = {
   reportId: string;
   inspectionId: string;
   title: string;
+  certificateNumber: string | null;
   buildingLabel: string;
   customerName: string;
   companyName: string;
@@ -33,6 +34,7 @@ export async function getPublicReportMeta(
     select: {
       id: true,
       title: true,
+      certificateNumber: true,
       inspection: {
         select: {
           id: true,
@@ -72,6 +74,7 @@ export async function getPublicReportMeta(
     title:
       report.title ??
       `${report.inspection.inspectionType.name} — ${building.customer.name}`,
+    certificateNumber: report.certificateNumber,
     buildingLabel,
     customerName: building.customer.name,
     companyName: report.inspection.company.name,

@@ -9,8 +9,8 @@ export function ReportsRegistersSection() {
       <CardHeader>
         <CardTitle className="text-lg">Registers &amp; exports</CardTitle>
         <CardDescription>
-          Company-wide CSV downloads for equipment on file and AHJ / permit tracking per
-          building. Edit fire district and permit fields on each building profile.
+          Company-wide CSV downloads for equipment, AHJ / permit tracking, and issued inspection
+          certificates. Configure jurisdictions under Organization settings.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -28,6 +28,20 @@ export function ReportsRegistersSection() {
             prefetch={false}
           >
             AHJ / permit register (CSV)
+          </Link>
+          <Link
+            href="/api/reports/export?type=certificate-register"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-h-10")}
+            prefetch={false}
+          >
+            Certificate register (CSV)
+          </Link>
+          <Link
+            href="/api/reports/export?type=visit-time-mileage"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-h-10")}
+            prefetch={false}
+          >
+            Time &amp; mileage (CSV)
           </Link>
         </div>
       </CardContent>

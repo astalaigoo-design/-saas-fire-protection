@@ -28,6 +28,7 @@ import {
   getBranchAssetDefaults,
   type BranchAssetDefaults,
 } from "@/lib/branches/asset-defaults";
+import { listJurisdictionOptions } from "@/lib/jurisdictions/queries";
 import { toDateInputValue } from "@/lib/scheduling/calendar";
 
 const buildingDetailSelect = {
@@ -41,6 +42,7 @@ const buildingDetailSelect = {
   postalCode: true,
   country: true,
   buildingType: true,
+  jurisdictionId: true,
   fireDistrict: true,
   permitNumber: true,
   permitExpiresAt: true,
@@ -147,6 +149,7 @@ export type BuildingAssetFormDefaults = {
 
 export type BuildingDetailPageData = {
   building: BuildingDetailRecord;
+  jurisdictions: { id: string; name: string; code: string }[];
   inspections: BuildingInspectionRow[];
   assets: BuildingAssetRow[];
   inactiveAssets: BuildingAssetRow[];
@@ -185,7 +188,7 @@ export async function getBuildingDetailPageData(
   const building = await getBuildingById(session, buildingId);
   if (!building) return null;
 
-  const [inspections, assets, inactiveAssets, assetAuditHistory, deficiencies, assignableStaff, branchDefaults] =
+  const [inspections, assets, inactiveAssets, assetAuditHistory, deficiencies, assignableStaff, branchDefaults, jurisdictions] =
     await Promise.all([
       prisma.inspection.findMany({
         where: { companyId: session.companyId, buildingId },
@@ -198,6 +201,7 @@ export async function getBuildingDetailPageData(
       listDeficienciesForBuilding(session, buildingId),
       listAssignableStaff(session),
       getBranchAssetDefaults(building.customer.branchId),
+      listJurisdictionOptions(session.companyId),
     ]);
 
   const assetFormDefaults: BuildingAssetFormDefaults = {};
@@ -243,6 +247,7 @@ export async function getBuildingDetailPageData(
 
   return {
     building,
+    jurisdictions,
     inspections: inspectionsWithCompliance,
     assets,
     inactiveAssets,

@@ -18,6 +18,7 @@ export const createBuildingSchema = z.object({
   region: z.string().trim().min(1, "State / region is required").max(50),
   postalCode: z.string().trim().min(1, "Postal code is required").max(20),
   country: z.string().trim().min(2).max(2).default("US"),
+  jurisdictionId: z.string().trim().optional().or(z.literal("")),
   fireDistrict: z.string().trim().max(200).optional().or(z.literal("")),
   permitNumber: z.string().trim().max(100).optional().or(z.literal("")),
   permitExpiresAt: z.string().trim().max(32).optional().or(z.literal("")),
@@ -36,6 +37,7 @@ export const updateBuildingSchema = z.object({
     .union([z.nativeEnum(BuildingType), z.literal("")])
     .optional()
     .transform((v) => (v === "" ? undefined : v)),
+  jurisdictionId: z.string().trim().optional().or(z.literal("")),
   fireDistrict: z.string().trim().max(200).optional().or(z.literal("")),
   permitNumber: z.string().trim().max(100).optional().or(z.literal("")),
   permitExpiresAt: z.string().trim().max(32).optional().or(z.literal("")),

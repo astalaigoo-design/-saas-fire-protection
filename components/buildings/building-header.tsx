@@ -70,7 +70,9 @@ export function BuildingHeader({ data, canEdit }: BuildingHeaderProps) {
             </div>
           </dl>
         </div>
-        {canEdit ? <BuildingEditDialog building={building} /> : null}
+        {canEdit ? (
+          <BuildingEditDialog building={building} jurisdictions={data.jurisdictions} />
+        ) : null}
       </div>
     </header>
   );

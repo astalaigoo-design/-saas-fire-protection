@@ -13,6 +13,13 @@ export async function emitInspectionCompletedWebhook(
       id: true,
       buildingId: true,
       completedAt: true,
+      arrivedAt: true,
+      startedAt: true,
+      mileageMiles: true,
+      arrivalLatitude: true,
+      arrivalLongitude: true,
+      submitLatitude: true,
+      submitLongitude: true,
       status: true,
       building: {
         select: {
@@ -41,6 +48,13 @@ export async function emitInspectionCompletedWebhook(
       inspectionTypeCode: inspection.inspectionType.code,
       status: inspection.status,
       completedAt: inspection.completedAt.toISOString(),
+      arrivedAt: inspection.arrivedAt?.toISOString() ?? null,
+      startedAt: inspection.startedAt?.toISOString() ?? null,
+      mileageMiles: inspection.mileageMiles,
+      hasArrivalGps:
+        inspection.arrivalLatitude != null && inspection.arrivalLongitude != null,
+      hasSubmitGps:
+        inspection.submitLatitude != null && inspection.submitLongitude != null,
       hasFailedItems,
       buildingComplianceStatus: inspection.building.currentStatus,
     },
@@ -52,6 +66,7 @@ export async function emitReportFinalizedWebhook(input: {
   reportId: string;
   inspectionId: string;
   shareToken: string;
+  certificateNumber?: string | null;
 }): Promise<void> {
   const inspection = await prisma.inspection.findFirst({
     where: { id: input.inspectionId, companyId: input.companyId },
@@ -71,6 +86,7 @@ export async function emitReportFinalizedWebhook(input: {
       buildingId: inspection.buildingId,
       customerId: inspection.building.customerId,
       publicReportUrl: publicReportUrl(input.shareToken),
+      certificateNumber: input.certificateNumber ?? null,
     },
   });
 }

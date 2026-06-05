@@ -1,4 +1,4 @@
-import { InspectionStatus, type Prisma } from "@prisma/client";
+import { InspectionStatus, ReportStatus, type Prisma } from "@prisma/client";
 import { canViewAllJobs } from "@/lib/auth/permissions";
 import {
   branchScopeFromSession,
@@ -6,6 +6,8 @@ import {
 } from "@/lib/branches/scope";
 import type { DashboardSession } from "@/lib/dashboard/session";
 import { calculateNextInspectionDue } from "@/lib/reports/next-inspection-due";
+import { resolveReportTemplateKey } from "@/lib/reports/select-report-template";
+import type { ReportTemplateKey } from "@/lib/reports/templates/types";
 import { prisma } from "@/lib/prisma";
 
 const complianceReportSelect = {
@@ -34,6 +36,17 @@ const complianceReportSelect = {
       city: true,
       region: true,
       postalCode: true,
+      fireDistrict: true,
+      permitNumber: true,
+      permitExpiresAt: true,
+      jurisdiction: {
+        select: {
+          id: true,
+          name: true,
+          code: true,
+          reportTemplateKey: true,
+        },
+      },
       customer: { select: { name: true, email: true, phone: true } },
     },
   },
@@ -62,6 +75,9 @@ type RawComplianceData = Prisma.InspectionGetPayload<{
 export type ComplianceReportData = RawComplianceData & {
   inspectorName: string;
   nextInspectionDue: Date;
+  certificateNumber: string | null;
+  reportTemplateKey: ReportTemplateKey;
+  jurisdiction: { name: string; code: string } | null;
   summary: {
     pass: number;
     fail: number;
@@ -120,21 +136,41 @@ export async function getComplianceReportData(
 
   if (!inspection || !inspection.completedAt) return null;
 
-  const nextInspectionDue = calculateNextInspectionDue(
-    inspection.completedAt,
-    inspection.recurrenceInterval,
-    inspection.inspectionType.code,
-  );
+  const report = await prisma.report.findFirst({
+    where: { inspectionId, status: ReportStatus.finalized },
+    orderBy: { generatedAt: "desc" },
+    select: {
+      certificateNumber: true,
+      reportTemplateKey: true,
+    },
+  });
 
-  return {
-    ...inspection,
-    inspectorName: resolveInspectorName(inspection.assignedTo),
-    nextInspectionDue,
-    summary: buildSummary(inspection.items),
-  };
+  const reportMeta: ReportPdfMeta | null = report
+    ? {
+        certificateNumber: report.certificateNumber,
+        reportTemplateKey:
+          report.reportTemplateKey &&
+          (["default", "nfpa25-sprinkler", "nfpa72-alarm"] as const).includes(
+            report.reportTemplateKey as ReportTemplateKey,
+          )
+            ? (report.reportTemplateKey as ReportTemplateKey)
+            : null,
+      }
+    : null;
+
+  return enrichComplianceReportData(inspection, reportMeta, null);
 }
 
-function toComplianceReportData(inspection: RawComplianceData): ComplianceReportData | null {
+type ReportPdfMeta = {
+  certificateNumber: string | null;
+  reportTemplateKey: ReportTemplateKey | null;
+};
+
+function enrichComplianceReportData(
+  inspection: RawComplianceData,
+  reportMeta: ReportPdfMeta | null,
+  templateOverride: ReportTemplateKey | null,
+): ComplianceReportData | null {
   if (!inspection.completedAt) return null;
 
   const nextInspectionDue = calculateNextInspectionDue(
@@ -143,12 +179,33 @@ function toComplianceReportData(inspection: RawComplianceData): ComplianceReport
     inspection.inspectionType.code,
   );
 
+  const jurisdiction = inspection.building.jurisdiction;
+  const reportTemplateKey =
+    templateOverride ??
+    reportMeta?.reportTemplateKey ??
+    resolveReportTemplateKey({
+      inspectionTypeCode: inspection.inspectionType.code,
+      jurisdictionReportTemplateKey: jurisdiction?.reportTemplateKey ?? null,
+    });
+
   return {
     ...inspection,
     inspectorName: resolveInspectorName(inspection.assignedTo),
     nextInspectionDue,
+    certificateNumber: reportMeta?.certificateNumber ?? null,
+    reportTemplateKey,
+    jurisdiction: jurisdiction
+      ? { name: jurisdiction.name, code: jurisdiction.code }
+      : null,
     summary: buildSummary(inspection.items),
   };
+}
+
+function toComplianceReportData(
+  inspection: RawComplianceData,
+  reportMeta?: ReportPdfMeta | null,
+): ComplianceReportData | null {
+  return enrichComplianceReportData(inspection, reportMeta ?? null, null);
 }
 
 /** Loads report data for a completed inspection without session (public share links). */
@@ -163,5 +220,28 @@ export async function getComplianceReportDataForInspection(
     select: complianceReportSelect,
   });
   if (!inspection) return null;
-  return toComplianceReportData(inspection);
+
+  const report = await prisma.report.findFirst({
+    where: { inspectionId, status: ReportStatus.finalized },
+    orderBy: { generatedAt: "desc" },
+    select: {
+      certificateNumber: true,
+      reportTemplateKey: true,
+    },
+  });
+
+  const reportMeta: ReportPdfMeta | null = report
+    ? {
+        certificateNumber: report.certificateNumber,
+        reportTemplateKey:
+          report.reportTemplateKey &&
+          (["default", "nfpa25-sprinkler", "nfpa72-alarm"] as const).includes(
+            report.reportTemplateKey as ReportTemplateKey,
+          )
+            ? (report.reportTemplateKey as ReportTemplateKey)
+            : null,
+      }
+    : null;
+
+  return toComplianceReportData(inspection, reportMeta);
 }

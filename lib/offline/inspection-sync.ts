@@ -5,6 +5,7 @@ import {
 } from "@/lib/offline/indexeddb";
 import {
   apiDeletePhoto,
+  apiRecordVisitArrival,
   apiStartInspection,
   apiSubmitInspection,
   apiUpdateChecklistItem,
@@ -26,6 +27,14 @@ async function sendMutation(mutation: OfflineMutation): Promise<InspectActionRes
   switch (mutation.type) {
     case "inspection.start":
       return apiStartInspection(mutation.inspectionId, mutation.idempotencyKey);
+    case "inspection.arrive": {
+      const payload = mutation.payload as OfflineMutationPayloadMap["inspection.arrive"];
+      return apiRecordVisitArrival(
+        mutation.inspectionId,
+        payload.coordinates,
+        mutation.idempotencyKey,
+      );
+    }
     case "checklist.update": {
       const payload = mutation.payload as OfflineMutationPayloadMap["checklist.update"];
       return apiUpdateChecklistItem(
@@ -74,7 +83,11 @@ async function sendMutation(mutation: OfflineMutation): Promise<InspectActionRes
       const payload = mutation.payload as OfflineMutationPayloadMap["inspection.submit"];
       return apiSubmitInspection(
         mutation.inspectionId,
-        payload.signatureData,
+        {
+          signatureData: payload.signatureData,
+          submitCoordinates: payload.submitCoordinates,
+          mileageMiles: payload.mileageMiles,
+        },
         mutation.idempotencyKey,
       );
     }

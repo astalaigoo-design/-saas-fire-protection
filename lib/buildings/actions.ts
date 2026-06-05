@@ -17,6 +17,38 @@ import { captureServerActionError } from "@/lib/monitoring/capture";
 import { prisma } from "@/lib/prisma";
 import { parseDateInputValue } from "@/lib/scheduling/calendar";
 
+async function resolveBuildingJurisdiction(
+  companyId: string,
+  jurisdictionId: string | undefined,
+  fireDistrict: string | undefined,
+): Promise<
+  | { ok: true; jurisdictionId: string | null; fireDistrict: string | null }
+  | { ok: false; error: string }
+> {
+  const id = jurisdictionId?.trim();
+  if (!id) {
+    return {
+      ok: true,
+      jurisdictionId: null,
+      fireDistrict: fireDistrict?.trim() || null,
+    };
+  }
+
+  const jurisdiction = await prisma.jurisdiction.findFirst({
+    where: { id, companyId },
+    select: { id: true, name: true },
+  });
+  if (!jurisdiction) {
+    return { ok: false, error: "Selected jurisdiction is not valid." };
+  }
+
+  return {
+    ok: true,
+    jurisdictionId: jurisdiction.id,
+    fireDistrict: jurisdiction.name,
+  };
+}
+
 function parseOptionalPermitExpiresAt(
   raw: string | undefined,
 ): { ok: true; value: Date | null } | { ok: false; error: string } {
@@ -56,6 +88,7 @@ export async function createBuilding(
     region: formData.get("region"),
     postalCode: formData.get("postalCode"),
     country: formData.get("country") || "US",
+    jurisdictionId: formData.get("jurisdictionId"),
     fireDistrict: formData.get("fireDistrict"),
     permitNumber: formData.get("permitNumber"),
     permitExpiresAt: formData.get("permitExpiresAt"),
@@ -67,6 +100,13 @@ export async function createBuilding(
 
   const permitExpiry = parseOptionalPermitExpiresAt(parsed.data.permitExpiresAt);
   if (!permitExpiry.ok) return { ok: false, error: permitExpiry.error };
+
+  const jurisdiction = await resolveBuildingJurisdiction(
+    session.companyId,
+    parsed.data.jurisdictionId,
+    parsed.data.fireDistrict,
+  );
+  if (!jurisdiction.ok) return { ok: false, error: jurisdiction.error };
 
   try {
     const customer = await prisma.customer.findFirst({
@@ -89,7 +129,8 @@ export async function createBuilding(
         region: parsed.data.region,
         postalCode: parsed.data.postalCode,
         country: parsed.data.country,
-        fireDistrict: parsed.data.fireDistrict || null,
+        jurisdictionId: jurisdiction.jurisdictionId,
+        fireDistrict: jurisdiction.fireDistrict,
         permitNumber: parsed.data.permitNumber || null,
         permitExpiresAt: permitExpiry.value,
       },
@@ -139,6 +180,7 @@ export async function updateBuilding(
     postalCode: formData.get("postalCode"),
     country: formData.get("country") || "US",
     buildingType: formData.get("buildingType"),
+    jurisdictionId: formData.get("jurisdictionId"),
     fireDistrict: formData.get("fireDistrict"),
     permitNumber: formData.get("permitNumber"),
     permitExpiresAt: formData.get("permitExpiresAt"),
@@ -157,6 +199,13 @@ export async function updateBuilding(
   if (!permitExpiry.ok) return { ok: false, error: permitExpiry.error };
   const permitExpiresAt = permitExpiry.value;
 
+  const jurisdiction = await resolveBuildingJurisdiction(
+    session.companyId,
+    d.jurisdictionId,
+    d.fireDistrict,
+  );
+  if (!jurisdiction.ok) return { ok: false, error: jurisdiction.error };
+
   await prisma.building.update({
     where: { id: d.buildingId },
     data: {
@@ -168,7 +217,8 @@ export async function updateBuilding(
       postalCode: d.postalCode,
       country: d.country,
       buildingType: d.buildingType || null,
-      fireDistrict: d.fireDistrict || null,
+      jurisdictionId: jurisdiction.jurisdictionId,
+      fireDistrict: jurisdiction.fireDistrict,
       permitNumber: d.permitNumber || null,
       permitExpiresAt,
       notes: d.notes || null,
