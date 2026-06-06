@@ -4,6 +4,7 @@ import {
   NFPA_PACK_TEMPLATES,
   type InspectionTypeTemplate,
 } from "@/lib/inspections/inspection-type-templates";
+import { localizeInspectionTypeTemplate } from "@/lib/market/inspection-type-labels";
 import { prisma } from "@/lib/prisma";
 
 export type InspectionTypePackRow = InspectionTypeTemplate & {
@@ -28,8 +29,11 @@ export async function getInspectionTypePacksData(
 
   const packs: InspectionTypePackRow[] = NFPA_PACK_TEMPLATES.map((template) => {
     const inspectionTypeId = enabledByCode.get(template.code) ?? null;
+    const localized = localizeInspectionTypeTemplate(template, session.operatingMarket);
     return {
       ...template,
+      name: localized.name,
+      description: localized.description,
       enabled: inspectionTypeId !== null,
       inspectionTypeId,
     };

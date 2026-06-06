@@ -1,4 +1,5 @@
-import { InspectionItemResult, QuoteStatus } from "@prisma/client";
+import { InspectionItemResult, OperatingMarket, QuoteStatus } from "@prisma/client";
+import { getDefaultCurrencyForMarket } from "@/lib/market/operating-market";
 import { prisma } from "@/lib/prisma";
 
 type CreateDraftQuoteInput = {
@@ -34,6 +35,14 @@ export async function createDraftQuoteFromInspection(
   if (!inspection || inspection.items.length === 0) {
     return null;
   }
+
+  const company = await prisma.company.findFirst({
+    where: { id: input.companyId },
+    select: { operatingMarket: true },
+  });
+  const currency = getDefaultCurrencyForMarket(
+    company?.operatingMarket ?? OperatingMarket.US,
+  );
 
   const title = `${inspection.inspectionType.name} repair quote`;
 
@@ -71,6 +80,7 @@ export async function createDraftQuoteFromInspection(
     create: {
       companyId: input.companyId,
       inspectionId: inspection.id,
+      currency,
       status: QuoteStatus.draft,
       title,
       notes: "Auto-generated from failed inspection items. Add pricing before sending.",

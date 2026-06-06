@@ -1,4 +1,5 @@
 import type { DashboardSession } from "@/lib/dashboard/session";
+import { OperatingMarket } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export type CompanyProfile = {
@@ -8,6 +9,7 @@ export type CompanyProfile = {
   reportEmail: string | null;
   reportPhone: string | null;
   reportAddress: string | null;
+  operatingMarket: OperatingMarket;
 };
 
 export async function getCompanyProfile(
@@ -22,6 +24,7 @@ export async function getCompanyProfile(
       reportEmail: true,
       reportPhone: true,
       reportAddress: true,
+      operatingMarket: true,
     },
   });
 }

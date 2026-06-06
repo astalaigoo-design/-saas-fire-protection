@@ -20,6 +20,7 @@ import {
   type BuildingImportSummary,
 } from "@/lib/buildings/import-csv-resolve";
 import { writeAuditEvent } from "@/lib/audit/write-event";
+import { getDefaultCountryForMarket } from "@/lib/market/operating-market";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { parseCsv, rowToRecord } from "@/lib/import/parse-csv";
 import { captureServerActionError } from "@/lib/monitoring/capture";
@@ -83,7 +84,7 @@ async function loadImportContext(companyId: string) {
   return { branches, customers, existingBuildingKeys, defaultBranchId };
 }
 
-function parseImportRows(csv: string) {
+function parseImportRows(csv: string, defaultCountry: string) {
   const parsed = parseCsv(csv);
   if (parsed.headers.length === 0) {
     return { ok: false as const, error: "CSV must include a header row." };
@@ -117,6 +118,9 @@ function parseImportRows(csv: string) {
   for (let i = 0; i < parsed.rows.length; i += 1) {
     const line = i + 2;
     const record = rowToRecord(canonicalHeaders, parsed.rows[i]!);
+    if (!record.country?.trim()) {
+      record.country = defaultCountry;
+    }
     const result = buildingImportRowSchema.safeParse(record);
     if (!result.success) {
       const message = result.error.issues[0]?.message ?? "Invalid row.";
@@ -161,7 +165,10 @@ export async function runBuildingImport(
     return { ok: false, error: parsedAction.error.issues[0]?.message ?? "Invalid request." };
   }
 
-  const parsedRows = parseImportRows(parsedAction.data.csv);
+  const parsedRows = parseImportRows(
+    parsedAction.data.csv,
+    getDefaultCountryForMarket(session.operatingMarket),
+  );
   if (!parsedRows.ok) return { ok: false, error: parsedRows.error };
 
   const ctx = await loadImportContext(session.companyId);

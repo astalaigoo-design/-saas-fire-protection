@@ -26,6 +26,9 @@ type NewBuildingFormProps = {
   customers: CustomerOption[];
   jurisdictions: JurisdictionOption[];
   initialCustomerId?: string;
+  defaultCountry: string;
+  regionLabel: string;
+  postalCodeLabel: string;
 };
 
 const initialState: BuildingActionResult = { ok: false, error: "" };
@@ -48,6 +51,9 @@ export function NewBuildingForm({
   customers,
   jurisdictions,
   initialCustomerId,
+  defaultCountry,
+  regionLabel,
+  postalCodeLabel,
 }: NewBuildingFormProps) {
   const [state, formAction] = useFormState(createBuilding, initialState);
   const defaultCustomerId =
@@ -117,13 +123,13 @@ export function NewBuildingForm({
             </div>
             <div className="space-y-2 sm:col-span-1">
               <Label htmlFor="region">
-                State / region <span className="text-primary">*</span>
+                {regionLabel} <span className="text-primary">*</span>
               </Label>
               <Input id="region" type="text" name="region" required className="min-h-11" />
             </div>
             <div className="space-y-2 sm:col-span-1">
               <Label htmlFor="postalCode">
-                Postal code <span className="text-primary">*</span>
+                {postalCodeLabel} <span className="text-primary">*</span>
               </Label>
               <Input id="postalCode" type="text" name="postalCode" required className="min-h-11" />
             </div>
@@ -131,7 +137,7 @@ export function NewBuildingForm({
 
           <div className="space-y-2">
             <Label htmlFor="country">Country</Label>
-            <Input id="country" type="text" name="country" defaultValue="US" className="min-h-11" />
+            <Input id="country" type="text" name="country" defaultValue={defaultCountry} className="min-h-11" />
           </div>
 
           <BuildingAhjFields idPrefix="new-building" jurisdictions={jurisdictions} />

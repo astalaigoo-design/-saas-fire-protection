@@ -17,6 +17,8 @@ import type { ChecklistTemplatesEditorData } from "@/lib/inspections/checklist-t
 
 type ChecklistTemplatesSectionProps = {
   data: ChecklistTemplatesEditorData;
+  resetLabel: string;
+  templatesDescription: string;
 };
 
 function ActionButton({
@@ -253,7 +255,13 @@ function AddItemForm({ inspectionTypeId }: { inspectionTypeId: string }) {
   );
 }
 
-function ResetTemplateForm({ inspectionTypeId }: { inspectionTypeId: string }) {
+function ResetTemplateForm({
+  inspectionTypeId,
+  resetLabel,
+}: {
+  inspectionTypeId: string;
+  resetLabel: string;
+}) {
   const [state, formAction] = useFormState<
     ChecklistTemplateActionState | undefined,
     FormData
@@ -262,7 +270,7 @@ function ResetTemplateForm({ inspectionTypeId }: { inspectionTypeId: string }) {
   return (
     <form action={formAction} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
       <input type="hidden" name="inspectionTypeId" value={inspectionTypeId} />
-      <ActionButton variant="outline">Reset to NFPA defaults</ActionButton>
+      <ActionButton variant="outline">{resetLabel}</ActionButton>
       {state && !state.ok ? (
         <p className="text-xs text-destructive" role="alert">
           {state.error}
@@ -277,7 +285,11 @@ function ResetTemplateForm({ inspectionTypeId }: { inspectionTypeId: string }) {
   );
 }
 
-export function ChecklistTemplatesSection({ data }: ChecklistTemplatesSectionProps) {
+export function ChecklistTemplatesSection({
+  data,
+  resetLabel,
+  templatesDescription,
+}: ChecklistTemplatesSectionProps) {
   const types = data.types;
   const defaultTypeId = types[0]?.id ?? "";
   const [selectedTypeId, setSelectedTypeId] = useState(defaultTypeId);
@@ -306,11 +318,7 @@ export function ChecklistTemplatesSection({ data }: ChecklistTemplatesSectionPro
         >
           Checklist templates
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Customize checklist items per inspection type. NFPA citation packs are the starting
-          point — add AHJ-specific lines, hide what you do not use, and reorder for your forms.
-          New jobs copy the template at schedule time; jobs already in the field are unchanged.
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">{templatesDescription}</p>
       </div>
 
       <div className="space-y-2">
@@ -340,7 +348,7 @@ export function ChecklistTemplatesSection({ data }: ChecklistTemplatesSectionPro
                 ? ` (${selectedType.items.length - visibleCount} hidden)`
                 : ""}
             </p>
-            <ResetTemplateForm inspectionTypeId={selectedType.id} />
+            <ResetTemplateForm inspectionTypeId={selectedType.id} resetLabel={resetLabel} />
           </div>
 
           <ul className="space-y-3">

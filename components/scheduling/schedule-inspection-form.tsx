@@ -22,6 +22,7 @@ type ScheduleInspectionFormProps = {
   defaultDate: string;
   defaultTime?: string;
   defaultBuildingId?: string;
+  checklistHint: string;
 };
 
 const initialState: ScheduleInspectionFormState = { ok: false, error: "" };
@@ -61,6 +62,7 @@ export function ScheduleInspectionForm({
   defaultDate,
   defaultTime = "10:00",
   defaultBuildingId,
+  checklistHint,
 }: ScheduleInspectionFormProps) {
   const [state, formAction] = useFormState(scheduleInspection, initialState);
   const buildingGroups = groupBuildingsByCustomer(formData.buildings);
@@ -165,10 +167,7 @@ export function ScheduleInspectionForm({
                 </option>
               ))}
             </select>
-            <p className="text-xs text-muted-foreground">
-              Checklist items are created automatically from NFPA rules for the selected type
-              (cadence or system pack).
-            </p>
+            <p className="text-xs text-muted-foreground">{checklistHint}</p>
           </div>
 
           <div className="space-y-2">

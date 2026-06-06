@@ -2,11 +2,13 @@
 
 import { useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
+import { OperatingMarket } from "@prisma/client";
 import {
   updateCompanyProfile,
   type UpdateCompanyProfileState,
 } from "@/lib/companies/actions";
 import type { CompanyProfile } from "@/lib/companies/queries";
+import { OPERATING_MARKET_LABELS } from "@/lib/market/operating-market";
 import { compressImageFile } from "@/lib/inspect/compress-image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,6 +71,26 @@ export function CompanySettingsForm({ company }: CompanySettingsFormProps) {
   return (
     <form action={formAction} className="max-w-lg space-y-6">
       <input type="hidden" name="logoUrl" value={logoUrl} />
+
+      <div className="space-y-2">
+        <Label htmlFor="operatingMarket">Operating market</Label>
+        <select
+          id="operatingMarket"
+          name="operatingMarket"
+          defaultValue={company.operatingMarket}
+          className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {Object.values(OperatingMarket).map((market) => (
+            <option key={market} value={market}>
+              {OPERATING_MARKET_LABELS[market]}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-muted-foreground">
+          Sets default checklists (NFPA vs BS / UK), currency, and address formats. Reset checklist
+          templates per type after changing market.
+        </p>
+      </div>
 
       <div className="space-y-2">
         <Label htmlFor="name">Company name</Label>

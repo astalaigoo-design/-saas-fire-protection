@@ -12,6 +12,7 @@ import {
   createBuildingSchema,
   updateBuildingSchema,
 } from "@/lib/buildings/schemas";
+import { getDefaultCountryForMarket } from "@/lib/market/operating-market";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { captureServerActionError } from "@/lib/monitoring/capture";
 import { prisma } from "@/lib/prisma";
@@ -79,6 +80,8 @@ export async function createBuilding(
   const tenant = await requireWritableTenant(session);
   if (!tenant.ok) return { ok: false, error: tenant.error };
 
+  const defaultCountry = getDefaultCountryForMarket(session.operatingMarket);
+
   const parsed = createBuildingSchema.safeParse({
     customerId: formData.get("customerId"),
     name: formData.get("name"),
@@ -87,7 +90,7 @@ export async function createBuilding(
     city: formData.get("city"),
     region: formData.get("region"),
     postalCode: formData.get("postalCode"),
-    country: formData.get("country") || "US",
+    country: formData.get("country") || defaultCountry,
     jurisdictionId: formData.get("jurisdictionId"),
     fireDistrict: formData.get("fireDistrict"),
     permitNumber: formData.get("permitNumber"),
@@ -170,6 +173,8 @@ export async function updateBuilding(
   const tenant = await requireWritableTenant(session);
   if (!tenant.ok) return { ok: false, error: tenant.error };
 
+  const defaultCountry = getDefaultCountryForMarket(session.operatingMarket);
+
   const parsed = updateBuildingSchema.safeParse({
     buildingId: formData.get("buildingId"),
     name: formData.get("name"),
@@ -178,7 +183,7 @@ export async function updateBuilding(
     city: formData.get("city"),
     region: formData.get("region"),
     postalCode: formData.get("postalCode"),
-    country: formData.get("country") || "US",
+    country: formData.get("country") || defaultCountry,
     buildingType: formData.get("buildingType"),
     jurisdictionId: formData.get("jurisdictionId"),
     fireDistrict: formData.get("fireDistrict"),

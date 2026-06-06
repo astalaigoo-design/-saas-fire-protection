@@ -24,6 +24,7 @@ import { getCompanyProfile } from "@/lib/companies/queries";
 import { getCustomerNotificationSettings } from "@/lib/notifications/customer-settings";
 import { getJurisdictionsSettingsData } from "@/lib/jurisdictions/queries";
 import { isOwner } from "@/lib/auth/permissions";
+import { getMarketConfig } from "@/lib/market/operating-market";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { getPilotReadinessStatus } from "@/lib/pilot-readiness/status";
 import { getOutboundEmailStatus } from "@/lib/email/env";
@@ -69,6 +70,7 @@ export default async function OrgSettingsPage() {
   ]);
 
   const teamBranches = await branchesForTeamSection(session.companyId, team.scope, ownerView);
+  const marketConfig = getMarketConfig(session.operatingMarket);
   const branchName =
     team.scope.mode === "branch"
       ? (teamBranches[0]?.name ?? "your branch")
@@ -117,10 +119,18 @@ export default async function OrgSettingsPage() {
       />
 
       {ownerView && inspectionTypePacks ? (
-        <InspectionTypePacksSection packs={inspectionTypePacks.packs} />
+        <InspectionTypePacksSection
+          packs={inspectionTypePacks.packs}
+          heading={marketConfig.checklistPackHeading}
+          description={marketConfig.checklistPackDescription}
+        />
       ) : null}
 
-      <ChecklistTemplatesSection data={checklistTemplates} />
+      <ChecklistTemplatesSection
+        data={checklistTemplates}
+        resetLabel={marketConfig.checklistResetLabel}
+        templatesDescription={`Customize checklist items per inspection type. ${marketConfig.complianceFrameworkLabel} citation packs are the starting point — add jurisdiction-specific lines, hide what you do not use, and reorder for your forms. New jobs copy the template at schedule time; jobs already in the field are unchanged.`}
+      />
 
       {ownerView ? (
         <section className="max-w-lg rounded-xl border border-border bg-card p-5 shadow-sm">
@@ -146,6 +156,7 @@ export default async function OrgSettingsPage() {
           jurisdictions={jurisdictions.jurisdictions}
           certificateNumberPrefix={jurisdictions.certificateNumberPrefix}
           nextCertificateNumber={jurisdictions.nextCertificateNumber}
+          operatingMarket={session.operatingMarket}
         />
       ) : null}
 

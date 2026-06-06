@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { NewBuildingForm } from "@/components/buildings/new-building-form";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { ensureCanManageCustomers } from "@/lib/auth/guards";
+import { getMarketConfig } from "@/lib/market/operating-market";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { listJurisdictionOptions } from "@/lib/jurisdictions/queries";
 import { prisma } from "@/lib/prisma";
@@ -26,6 +27,8 @@ export default async function NewBuildingPage({ searchParams }: NewBuildingPageP
 
   if (customers.length === 0) redirect("/dashboard/customers/new");
 
+  const marketConfig = getMarketConfig(session.operatingMarket);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -36,6 +39,9 @@ export default async function NewBuildingPage({ searchParams }: NewBuildingPageP
         customers={customers}
         jurisdictions={jurisdictions}
         initialCustomerId={searchParams?.customerId}
+        defaultCountry={marketConfig.defaultCountry}
+        regionLabel={marketConfig.regionLabel}
+        postalCodeLabel={marketConfig.postalCodeLabel}
       />
     </div>
   );

@@ -2,7 +2,7 @@
  * Create a real tenant company and optionally link a Clerk user as owner.
  *
  * Usage:
- *   npx tsx scripts/create-company.ts "Acme Fire Protection"
+ *   npx tsx scripts/create-company.ts "Acme Fire Protection" --uk
  *   npx tsx scripts/create-company.ts "Acme Fire Protection" user_xxx owner
  *
  * Env:
@@ -10,11 +10,12 @@
  *   CREATE_CLERK_USER_ID=user_xxx
  *   CREATE_USER_ROLE=owner
  */
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, OperatingMarket } from "@prisma/client";
 import { z } from "zod";
 import { APP_ROLES, isAppRole } from "../lib/auth/roles";
 import { syncClerkPublicMetadata } from "../lib/clerk/sync-public-metadata";
 import { createCompanyWithDefaults } from "../lib/companies/bootstrap-company";
+import { parseOperatingMarket } from "../lib/market/operating-market";
 
 const prisma = new PrismaClient();
 
@@ -25,16 +26,25 @@ const argsSchema = z.object({
 });
 
 async function main() {
+  const argv = process.argv.slice(2);
+  const ukFlag = argv.includes("--uk");
+  const positional = argv.filter((arg) => arg !== "--uk");
+
   const companyName =
-    process.argv[2]?.trim() || process.env.CREATE_COMPANY_NAME?.trim() || "";
+    positional[0]?.trim() || process.env.CREATE_COMPANY_NAME?.trim() || "";
   const clerkUserId =
-    process.argv[3]?.trim() || process.env.CREATE_CLERK_USER_ID?.trim() || undefined;
+    positional[1]?.trim() || process.env.CREATE_CLERK_USER_ID?.trim() || undefined;
   const roleInput =
-    process.argv[4]?.trim() || process.env.CREATE_USER_ROLE?.trim() || "owner";
+    positional[2]?.trim() || process.env.CREATE_USER_ROLE?.trim() || "owner";
+
+  const operatingMarket =
+    ukFlag || process.env.CREATE_OPERATING_MARKET?.trim().toUpperCase() === "UK"
+      ? OperatingMarket.UK
+      : parseOperatingMarket(process.env.CREATE_OPERATING_MARKET);
 
   if (!companyName) {
     console.error(
-      'Usage: npx tsx scripts/create-company.ts "<company name>" [clerk_user_id] [owner|admin|technician]',
+      'Usage: npx tsx scripts/create-company.ts "<company name>" [--uk] [clerk_user_id] [owner|admin|technician]',
     );
     process.exitCode = 1;
     return;
@@ -63,9 +73,12 @@ async function main() {
     return;
   }
 
-  const company = await createCompanyWithDefaults(parsed.companyName);
+  const company = await createCompanyWithDefaults(parsed.companyName, undefined, {
+    operatingMarket,
+  });
   console.log("Created company:", company.name);
   console.log("  id:", company.id);
+  console.log("  market:", company.operatingMarket);
   console.log("  Inspection types: annual, quarterly, monthly");
 
   if (!parsed.clerkUserId) {

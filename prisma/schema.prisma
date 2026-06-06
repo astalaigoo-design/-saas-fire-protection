@@ -96,6 +96,12 @@ enum SubscriptionStatus {
   expired
 }
 
+/// Regional defaults for checklists, currency, and address formats.
+enum OperatingMarket {
+  US
+  UK
+}
+
 /// Corrective-action lifecycle for a failed checklist item.
 enum CustomerContactRole {
   billing
@@ -149,6 +155,9 @@ model Company {
 
   /// Pilot design partner — complimentary access; Paddle checkout hidden for this tenant.
   designPartner Boolean @default(false)
+
+  /// US = NFPA defaults; UK = BS / UK fire safety defaults.
+  operatingMarket OperatingMarket @default(US)
 
   /// Optional customer notifications (company-wide). Email uses Resend; SMS uses Twilio.
   notifyCustomerReportReadyEmail     Boolean @default(true)

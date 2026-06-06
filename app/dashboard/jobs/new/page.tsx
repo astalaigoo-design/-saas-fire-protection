@@ -6,6 +6,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
 import { getDashboardSession } from "@/lib/dashboard/session";
+import { getMarketConfig } from "@/lib/market/operating-market";
 import {
   parseDateInputValue,
   toDateInputValue,
@@ -34,6 +35,7 @@ export default async function ScheduleInspectionPage({
   ensureCanManageJobs(session.role);
 
   const formData = await getScheduleFormData(session);
+  const marketConfig = getMarketConfig(session.operatingMarket);
   const defaultDate = resolveDefaultDate(searchParams);
   const buildingIdParam = searchParams.buildingId;
   const defaultBuildingId =
@@ -58,6 +60,7 @@ export default async function ScheduleInspectionPage({
         formData={formData}
         defaultDate={defaultDate}
         defaultBuildingId={defaultBuildingId}
+        checklistHint={marketConfig.scheduleChecklistHint}
       />
     </div>
   );

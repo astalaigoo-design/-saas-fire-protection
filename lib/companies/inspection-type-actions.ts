@@ -8,6 +8,7 @@ import {
   isKnownInspectionTypeTemplateCode,
 } from "@/lib/inspections/inspection-type-templates";
 import { ensureChecklistTemplateSeeded } from "@/lib/inspections/checklist-template-seed";
+import { localizeInspectionTypeTemplate } from "@/lib/market/inspection-type-labels";
 import { captureServerActionError } from "@/lib/monitoring/capture";
 import { prisma } from "@/lib/prisma";
 
@@ -38,20 +39,35 @@ export async function enableInspectionTypePack(
   }
 
   try {
+    const company = await prisma.company.findFirst({
+      where: { id: session.companyId },
+      select: { operatingMarket: true },
+    });
+    if (!company) {
+      return { ok: false, error: "Company not found." };
+    }
+
+    const localized = localizeInspectionTypeTemplate(template, company.operatingMarket);
+
     const inspectionType = await prisma.inspectionType.upsert({
       where: {
         companyId_code: { companyId: session.companyId, code: template.code },
       },
-      update: { name: template.name },
+      update: { name: localized.name },
       create: {
         companyId: session.companyId,
         code: template.code,
-        name: template.name,
+        name: localized.name,
       },
       select: { id: true, code: true },
     });
 
-    await ensureChecklistTemplateSeeded(inspectionType.id, inspectionType.code);
+    await ensureChecklistTemplateSeeded(
+      inspectionType.id,
+      inspectionType.code,
+      prisma,
+      company.operatingMarket,
+    );
 
     revalidatePath("/dashboard/settings");
     revalidatePath("/dashboard/jobs/new");

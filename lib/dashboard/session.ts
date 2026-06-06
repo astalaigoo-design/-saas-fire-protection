@@ -1,4 +1,5 @@
 import type { AppRole } from "@/lib/auth/roles";
+import { OperatingMarket } from "@prisma/client";
 import {
   BRANCH_METADATA_KEY,
   COMPANY_METADATA_KEY,
@@ -15,6 +16,7 @@ export type DashboardSession = {
   appUserId: string;
   companyId: string;
   companyName: string;
+  operatingMarket: OperatingMarket;
   role: AppRole;
   /** Assigned branch for admin/technician; null = company-wide (owner). */
   userBranchId: string | null;
@@ -64,6 +66,7 @@ export async function getDashboardSession(): Promise<DashboardSession | null> {
     appUserId: appUser.id,
     companyId: appUser.companyId,
     companyName: appUser.company.name,
+    operatingMarket: appUser.company.operatingMarket,
     role: input.role,
     userBranchId: appUser.branchId,
     activeBranchId,

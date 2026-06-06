@@ -1,18 +1,26 @@
+import { OperatingMarket } from "@prisma/client";
 import {
-  COMPLIANCE_PDF_CAPABILITIES,
+  getCompliancePdfCapabilities,
+  getCompliancePdfInlineNotice,
+  getCompliancePdfScopeDescription,
   COMPLIANCE_PDF_NOT_INCLUDED,
 } from "@/lib/reports/scope";
 import { cn } from "@/lib/utils";
 
 type CompliancePdfScopeNoticeProps = {
+  operatingMarket?: OperatingMarket;
   variant?: "inline" | "full";
   className?: string;
 };
 
 export function CompliancePdfScopeNotice({
+  operatingMarket = OperatingMarket.US,
   variant = "inline",
   className,
 }: CompliancePdfScopeNoticeProps) {
+  const inline = getCompliancePdfInlineNotice(operatingMarket);
+  const capabilities = getCompliancePdfCapabilities(operatingMarket);
+
   if (variant === "inline") {
     return (
       <p
@@ -22,10 +30,7 @@ export function CompliancePdfScopeNotice({
           className,
         )}
       >
-        <span className="font-medium text-foreground">Flareflow-native NFPA layouts.</span>{" "}
-        Certificate PDFs include AHJ and permit metadata from building profiles. Not
-        city-specific fire marshal forms — AHJ e-filing is partner-specific via Integrations
-        webhooks.
+        <span className="font-medium text-foreground">{inline.title}</span> {inline.body}
       </p>
     );
   }
@@ -46,9 +51,7 @@ export function CompliancePdfScopeNotice({
           Compliance PDFs
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Inspection data renders into Flareflow certificate layouts. Jurisdiction records drive
-          certificate numbering and optional NFPA form overrides — not a full library of municipal
-          AHJ forms.
+          {getCompliancePdfScopeDescription(operatingMarket)}
         </p>
       </div>
 
@@ -57,7 +60,7 @@ export function CompliancePdfScopeNotice({
           Included
         </p>
         <ul className="mt-2 space-y-1.5 text-sm text-foreground">
-          {COMPLIANCE_PDF_CAPABILITIES.map((line) => (
+          {capabilities.map((line) => (
             <li key={line} className="flex gap-2">
               <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden />
               {line}

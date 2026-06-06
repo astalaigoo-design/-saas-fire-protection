@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { OperatingMarket } from "@prisma/client";
 import { canManageOrgSettings } from "@/lib/auth/permissions";
 import { updateCompanyProfileSchema } from "@/lib/companies/schemas";
 import { getDashboardSession } from "@/lib/dashboard/session";
@@ -18,6 +19,7 @@ function formDataToObject(formData: FormData): Record<string, string> {
     reportEmail: String(formData.get("reportEmail") ?? ""),
     reportPhone: String(formData.get("reportPhone") ?? ""),
     reportAddress: String(formData.get("reportAddress") ?? ""),
+    operatingMarket: String(formData.get("operatingMarket") ?? OperatingMarket.US),
   };
 }
 
@@ -48,6 +50,7 @@ export async function updateCompanyProfile(
         reportEmail: parsed.data.reportEmail || null,
         reportPhone: parsed.data.reportPhone || null,
         reportAddress: parsed.data.reportAddress || null,
+        operatingMarket: parsed.data.operatingMarket,
       },
     });
 

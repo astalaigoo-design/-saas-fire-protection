@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 
 type InspectionTypePacksSectionProps = {
   packs: InspectionTypePackRow[];
+  heading: string;
+  description: string;
 };
 
 function EnablePackButton({ code, label }: { code: string; label: string }) {
@@ -59,7 +61,11 @@ function PackEnableForm({
   );
 }
 
-export function InspectionTypePacksSection({ packs }: InspectionTypePacksSectionProps) {
+export function InspectionTypePacksSection({
+  packs,
+  heading,
+  description,
+}: InspectionTypePacksSectionProps) {
   return (
     <section
       id="inspection-type-packs"
@@ -71,14 +77,9 @@ export function InspectionTypePacksSection({ packs }: InspectionTypePacksSection
           id="nfpa-packs-heading"
           className="font-heading text-lg font-semibold text-foreground"
         >
-          NFPA checklist packs
+          {heading}
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Add system-specific inspection types beyond monthly, quarterly, and annual cadence —
-          wet pipe, dry pipe, sprinkler, fire alarm, and commercial kitchen (NFPA 25 / 72 /
-          96). Enable packs here, then customize each type&apos;s checklist under Checklist
-          templates below.
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
       </div>
 
       <ul className="divide-y divide-border rounded-xl border border-border bg-card">

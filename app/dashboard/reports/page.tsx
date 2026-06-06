@@ -28,6 +28,7 @@ import { formatDate } from "@/lib/dashboard/dates";
 import { listCompanyReportsSafe } from "@/lib/dashboard/queries";
 
 import { OutboundEmailInlineNotice } from "@/components/dashboard/outbound-email-inline-notice";
+import { getMarketConfig } from "@/lib/market/operating-market";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { getOutboundChannelsStatus } from "@/lib/outbound/channels";
 import {
@@ -64,6 +65,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
 
 
   const reports = await listCompanyReportsSafe(session);
+  const marketConfig = getMarketConfig(session.operatingMarket);
 
 
 
@@ -75,7 +77,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
 
         title="Reports"
 
-        description="Compliance inspection PDFs with NFPA layouts, AHJ metadata, and company registers."
+        description={`Compliance inspection PDFs with ${marketConfig.complianceFrameworkLabel} layouts, jurisdiction metadata, and company registers.`}
 
         actions={
 
@@ -97,7 +99,7 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
 
 
 
-      <CompliancePdfScopeNotice variant="inline" />
+      <CompliancePdfScopeNotice variant="inline" operatingMarket={session.operatingMarket} />
 
       <OutboundEmailInlineNotice channels={getOutboundChannelsStatus()} context="reports" />
 

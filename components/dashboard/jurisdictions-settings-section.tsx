@@ -18,12 +18,14 @@ import {
   REPORT_TEMPLATE_LABELS,
 } from "@/lib/reports/templates/types";
 import { reportTemplatePreviewUrl } from "@/lib/reports/generate-template-preview";
+import { OperatingMarket } from "@prisma/client";
 import { CompliancePdfScopeNotice } from "@/components/reports/compliance-pdf-scope-notice";
 
 type JurisdictionsSettingsSectionProps = {
   jurisdictions: JurisdictionRow[];
   certificateNumberPrefix: string | null;
   nextCertificateNumber: number;
+  operatingMarket: OperatingMarket;
 };
 
 function SaveJurisdictionButton() {
@@ -48,6 +50,7 @@ export function JurisdictionsSettingsSection({
   jurisdictions: initialJurisdictions,
   certificateNumberPrefix,
   nextCertificateNumber,
+  operatingMarket,
 }: JurisdictionsSettingsSectionProps) {
   const router = useRouter();
   const [jurisdictions, setJurisdictions] = useState(initialJurisdictions);
@@ -99,13 +102,13 @@ export function JurisdictionsSettingsSection({
           Jurisdictions &amp; certificate PDFs
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Define AHJs for certificate numbering and NFPA form layouts. Assign jurisdictions on
-          building profiles; sprinkler, alarm, and hood inspections auto-select NFPA templates when
-          no jurisdiction override is set.
+          {operatingMarket === OperatingMarket.UK
+            ? "Define enforcing authorities for certificate numbering and UK form layouts. Assign jurisdictions on building profiles; sprinkler, alarm, and kitchen inspections auto-select templates when no jurisdiction override is set."
+            : "Define AHJs for certificate numbering and NFPA form layouts. Assign jurisdictions on building profiles; sprinkler, alarm, and hood inspections auto-select NFPA templates when no jurisdiction override is set."}
         </p>
       </div>
 
-      <CompliancePdfScopeNotice variant="inline" />
+      <CompliancePdfScopeNotice variant="inline" operatingMarket={operatingMarket} />
 
       {error ? (
         <p role="alert" className="text-sm text-destructive">

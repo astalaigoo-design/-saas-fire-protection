@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { OperatingMarket } from "@prisma/client";
 
 const companyLogoUrlSchema = z.union([
   z.literal(""),
@@ -28,6 +29,7 @@ export const updateCompanyProfileSchema = z.object({
   ]),
   reportPhone: z.string().trim().max(40).optional().or(z.literal("")),
   reportAddress: z.string().trim().max(500).optional().or(z.literal("")),
+  operatingMarket: z.nativeEnum(OperatingMarket),
 });
 
 export type UpdateCompanyProfileInput = z.infer<typeof updateCompanyProfileSchema>;

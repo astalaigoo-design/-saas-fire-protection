@@ -1,5 +1,5 @@
-import { InspectionItemResult } from "@prisma/client";
-import { getNfpaChecklistForInspectionTypeCode } from "@/lib/inspections/nfpa-checklists";
+import { InspectionItemResult, OperatingMarket } from "@prisma/client";
+import { getDefaultChecklistForMarket } from "@/lib/inspections/checklist-for-market";
 
 export type InspectionChecklistCreateInput = {
   label: string;
@@ -9,11 +9,12 @@ export type InspectionChecklistCreateInput = {
   result: InspectionItemResult;
 };
 
-/** Build draft inspection checklist rows with exact NFPA rule citations. */
+/** Build draft inspection checklist rows with market-specific standard citations. */
 export function buildInspectionChecklistItems(
   inspectionTypeCode: string,
+  operatingMarket: OperatingMarket = OperatingMarket.US,
 ): InspectionChecklistCreateInput[] {
-  return getNfpaChecklistForInspectionTypeCode(inspectionTypeCode).map(
+  return getDefaultChecklistForMarket(inspectionTypeCode, operatingMarket).map(
     (item, index) => ({
       label: item.label,
       description: item.description,

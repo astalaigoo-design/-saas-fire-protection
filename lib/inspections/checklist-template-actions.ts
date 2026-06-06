@@ -9,7 +9,7 @@ import {
   reorderChecklistTemplateItemSchema,
   updateChecklistTemplateItemSchema,
 } from "@/lib/inspections/checklist-template-schemas";
-import { replaceChecklistTemplateWithNfpa } from "@/lib/inspections/checklist-template-seed";
+import { replaceChecklistTemplateWithDefaults } from "@/lib/inspections/checklist-template-seed";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { captureServerActionError } from "@/lib/monitoring/capture";
 import { prisma } from "@/lib/prisma";
@@ -266,7 +266,19 @@ export async function resetChecklistTemplateToDefaults(
   if (!typeCheck.ok) return typeCheck;
 
   try {
-    await replaceChecklistTemplateWithNfpa(typeCheck.type.id, typeCheck.type.code);
+    const company = await prisma.company.findFirst({
+      where: { id: guard.companyId },
+      select: { operatingMarket: true },
+    });
+    if (!company) {
+      return { ok: false, error: "Company not found." };
+    }
+
+    await replaceChecklistTemplateWithDefaults(
+      typeCheck.type.id,
+      typeCheck.type.code,
+      company.operatingMarket,
+    );
     revalidateChecklistTemplatePaths();
     return { ok: true };
   } catch (error) {

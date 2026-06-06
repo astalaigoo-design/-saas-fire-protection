@@ -2,18 +2,19 @@
  * One-shot pilot tenant setup: company + design partner + owner link or invite + verify.
  *
  * Usage:
- *   npm run pilot:onboard -- "Acme Fire Protection" --design-partner --clerk-user user_xxx
+ *   npm run pilot:onboard -- "Acme Fire Protection" --uk --design-partner --clerk-user user_xxx
  *   npm run pilot:onboard -- "Acme Fire Protection" --design-partner --invite owner@acme.com
  *   npm run pilot:onboard -- "Acme Fire Protection" --clerk-user user_xxx --verify
  *
  * Env (optional): PILOT_COMPANY_NAME, PILOT_CLERK_USER_ID, PILOT_INVITE_EMAIL, PILOT_DESIGN_PARTNER=1
  */
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, OperatingMarket } from "@prisma/client";
 import { z } from "zod";
 import { createTeamInvitation } from "../lib/clerk/create-team-invitation";
 import { syncClerkPublicMetadata } from "../lib/clerk/sync-public-metadata";
 import { createCompanyWithDefaults } from "../lib/companies/bootstrap-company";
 import { getAppOrigin } from "../lib/app-url";
+import { parseOperatingMarket } from "../lib/market/operating-market";
 
 const prisma = new PrismaClient();
 
@@ -25,6 +26,7 @@ Pilot onboarding — create company, optional design partner, link or invite own
 
 Options:
   --design-partner     Complimentary pilot (no Paddle checkout)
+  --uk                 UK operating market (BS checklists, GBP, GB addresses)
   --clerk-user <id>    Link existing Clerk user as owner (user_...)
   --invite <email>     Send Clerk invitation email as owner
   --verify             After link, verify Clerk metadata + DB row
@@ -44,11 +46,16 @@ function parseArgs(argv: string[]) {
   let clerkUserId: string | undefined;
   let inviteEmail: string | undefined;
   let verify = false;
+  let uk = false;
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--design-partner") {
       designPartner = true;
+      continue;
+    }
+    if (arg === "--uk") {
+      uk = true;
       continue;
     }
     if (arg === "--verify") {
@@ -81,7 +88,12 @@ function parseArgs(argv: string[]) {
   clerkUserId = clerkUserId || process.env.PILOT_CLERK_USER_ID?.trim();
   inviteEmail = inviteEmail || process.env.PILOT_INVITE_EMAIL?.trim();
 
-  return { companyName, designPartner, clerkUserId, inviteEmail, verify };
+  const operatingMarket =
+    uk || process.env.PILOT_OPERATING_MARKET?.trim().toUpperCase() === "UK"
+      ? OperatingMarket.UK
+      : parseOperatingMarket(process.env.PILOT_OPERATING_MARKET);
+
+  return { companyName, designPartner, clerkUserId, inviteEmail, verify, operatingMarket };
 }
 
 async function verifyClerkUser(clerkUserId: string, companyId: string): Promise<boolean> {
@@ -98,9 +110,8 @@ async function verifyClerkUser(clerkUserId: string, companyId: string): Promise<
 }
 
 async function main() {
-  const { companyName, designPartner, clerkUserId, inviteEmail, verify } = parseArgs(
-    process.argv.slice(2),
-  );
+  const { companyName, designPartner, clerkUserId, inviteEmail, verify, operatingMarket } =
+    parseArgs(process.argv.slice(2));
 
   if (!companyName) {
     printUsage();
@@ -132,9 +143,10 @@ async function main() {
   }
 
   console.log("\n1/4 Creating company with default inspection types…");
-  const company = await createCompanyWithDefaults(companyName);
+  const company = await createCompanyWithDefaults(companyName, undefined, { operatingMarket });
   console.log(`   ✓ ${company.name}`);
   console.log(`   id: ${company.id}`);
+  console.log(`   market: ${company.operatingMarket}`);
 
   if (designPartner) {
     console.log("\n2/4 Marking design partner (complimentary pilot)…");
@@ -226,6 +238,7 @@ async function main() {
   console.log("Company:", company.name);
   console.log("Company ID:", company.id);
   console.log("Design partner:", designPartner ? "yes" : "no");
+  console.log("Operating market:", operatingMarket);
   console.log("App:", getAppOrigin());
   console.log("Owner signs out/in after metadata changes.\n");
 }
