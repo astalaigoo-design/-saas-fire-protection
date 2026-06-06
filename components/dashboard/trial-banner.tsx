@@ -48,7 +48,7 @@ export function TrialBanner({ billing, role }: TrialBannerProps) {
   return (
     <div
       className={cn(
-        "mb-6 rounded-xl border px-4 py-3 text-sm",
+        "mt-6 rounded-xl border px-4 py-3 text-sm",
         urgent
           ? "border-amber-500/40 bg-amber-500/10 text-amber-950 dark:text-amber-100"
           : "border-primary/30 bg-primary/5 text-foreground",
