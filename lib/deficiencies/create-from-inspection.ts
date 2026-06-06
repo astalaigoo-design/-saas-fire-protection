@@ -1,4 +1,5 @@
 import { DeficiencyStatus, InspectionItemResult, InspectionStatus } from "@prisma/client";
+import { cache } from "react";
 import { deficiencyLabelKey } from "@/lib/deficiencies/label-key";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { FOLLOW_UP_INSPECTION_DAYS } from "@/lib/scheduling/auto-schedule-follow-up";
@@ -96,7 +97,7 @@ export async function createDeficienciesFromFailedItems(input: {
 }
 
 /** One-time backfill for failed items recorded before the deficiencies table existed. */
-export async function backfillDeficienciesForCompany(companyId: string): Promise<number> {
+async function backfillDeficienciesForCompanyUncached(companyId: string): Promise<number> {
   const items = await prisma.inspectionItem.findMany({
     where: {
       result: InspectionItemResult.fail,
@@ -156,3 +157,6 @@ export async function backfillDeficienciesForCompany(companyId: string): Promise
 
   return created;
 }
+
+/** Deduped per server request — command center calls this from multiple loaders. */
+export const backfillDeficienciesForCompany = cache(backfillDeficienciesForCompanyUncached);

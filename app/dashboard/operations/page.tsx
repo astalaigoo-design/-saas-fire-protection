@@ -15,6 +15,8 @@ import { getCronSecretStatus } from "@/lib/cron/env";
 import { getOutboundChannelsStatus } from "@/lib/outbound/channels";
 import { getPilotReadinessStatus } from "@/lib/pilot-readiness/status";
 
+export const dynamic = "force-dynamic";
+
 type CommandCenterPageProps = {
   searchParams: Record<string, string | string[] | undefined>;
 };
