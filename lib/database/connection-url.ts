@@ -6,6 +6,25 @@ const INVALID_HOSTS = new Set(["x"]);
 /** Not valid on Vercel/serverless — use Supabase pooler in deployed envs. */
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1"]);
 
+let dotenvLoaded = false;
+
+/** Load .env when DATABASE_URL / DIRECT_URL are missing (local dev, scripts). */
+function loadDotenvIfNeeded(): void {
+  if (dotenvLoaded) return;
+  dotenvLoaded = true;
+
+  if (normalizeEnvUrl(process.env.DATABASE_URL) || normalizeEnvUrl(process.env.DIRECT_URL)) {
+    return;
+  }
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require("dotenv/config");
+  } catch {
+    // dotenv optional in production — Vercel injects env vars.
+  }
+}
+
 /** Strip wrapping quotes / newlines from Vercel env paste mistakes. */
 function normalizeEnvUrl(raw: string | undefined): string | undefined {
   if (!raw) return undefined;
@@ -80,6 +99,8 @@ export function assertValidDatabaseUrl(
 
 /** Dev-only: bump connection_limit when Supabase pooler is set to 1. */
 export function resolveDatabaseUrlForPrisma(): string {
+  loadDotenvIfNeeded();
+
   const rawDatabaseUrl = normalizeEnvUrl(process.env.DATABASE_URL);
   const rawDirectUrl = normalizeEnvUrl(process.env.DIRECT_URL);
   const validated = assertValidDatabaseUrl(rawDatabaseUrl || rawDirectUrl, "DATABASE_URL");

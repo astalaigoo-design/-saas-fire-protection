@@ -31,6 +31,8 @@ import { getOutboundEmailStatus } from "@/lib/email/env";
 import { getSmsConfigStatus } from "@/lib/sms/env";
 import { getTeamManagementData } from "@/lib/team/queries";
 
+export const dynamic = "force-dynamic";
+
 async function branchesForTeamSection(
   companyId: string,
   teamScope: Awaited<ReturnType<typeof getTeamManagementData>>["scope"],
