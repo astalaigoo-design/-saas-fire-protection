@@ -89,7 +89,9 @@ export default async function OrgSettingsPage() {
         }
       />
 
-      {ownerView && pilotReadiness ? <PilotReadinessChecklist status={pilotReadiness} /> : null}
+      {ownerView && pilotReadiness && !pilotReadiness.ready ? (
+        <PilotReadinessChecklist status={pilotReadiness} />
+      ) : null}
 
       {ownerView ? <BranchesSettingsSection branches={teamBranches} /> : null}
 
