@@ -33,6 +33,32 @@ export function LandingPage() {
       <header className="border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <BrandLogo logoClassName="size-9" textClassName="text-lg" />
+          <nav className="hidden items-center gap-6 md:flex" aria-label="Primary">
+            <Link
+              href="#features"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Features
+            </Link>
+            <Link
+              href="#how-it-works"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              How it works
+            </Link>
+            <Link
+              href="/pricing"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Pricing
+            </Link>
+            <Link
+              href="#contact"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Contact
+            </Link>
+          </nav>
           <nav className="flex items-center gap-2 sm:gap-3" aria-label="Account">
             <Link
               href="/sign-in"
@@ -40,11 +66,8 @@ export function LandingPage() {
             >
               Sign in
             </Link>
-            <Link
-              href="/pricing"
-              className={cn(buttonVariants({ size: "sm" }), "min-h-10 px-4")}
-            >
-              Pricing
+            <Link href="/sign-up" className={cn(buttonVariants({ size: "sm" }), "min-h-10 px-4")}>
+              Start free
             </Link>
           </nav>
         </div>
@@ -90,7 +113,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="border-y border-border/60 bg-card/40 py-14 sm:py-16">
+      <section id="features" className="border-y border-border/60 bg-card/40 py-14 sm:py-16">
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
           <div className="max-w-2xl">
             <h2 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -212,7 +235,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      <footer className="border-t border-border/60">
+      <footer id="contact" className="border-t border-border/60">
         <div className="mx-auto w-full max-w-6xl space-y-3 px-4 py-8 text-xs leading-5 text-muted-foreground sm:px-6">
           <p>
             Contact support:{" "}
@@ -221,6 +244,9 @@ export function LandingPage() {
             </a>
           </p>
           <nav aria-label="Site links" className="flex flex-wrap gap-x-4 gap-y-2">
+            <Link href="#features" className="text-primary hover:underline">
+              Features
+            </Link>
             <Link href="#how-it-works" className="text-primary hover:underline">
               How it works
             </Link>
