@@ -37,6 +37,7 @@ function clerkPublishableKeyMissing(): NextResponse {
 
 const isPublicRoute = createRouteMatcher([
   "/",
+  "/pricing",
   "/nfpa-25-inspection-software",
   "/fire-sprinkler-inspection-app",
   "/terms",

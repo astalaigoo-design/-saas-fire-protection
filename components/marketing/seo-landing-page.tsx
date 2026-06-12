@@ -18,6 +18,12 @@ export function SeoLandingPage({ config }: SeoLandingPageProps) {
           <BrandLogo logoClassName="size-9" textClassName="text-lg" />
           <nav className="flex items-center gap-2" aria-label="Account">
             <Link
+              href="/pricing"
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "min-h-10")}
+            >
+              Pricing
+            </Link>
+            <Link
               href="/sign-in"
               className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "min-h-10")}
             >
@@ -101,6 +107,9 @@ export function SeoLandingPage({ config }: SeoLandingPageProps) {
 
       <footer className="border-t border-border/60">
         <div className="mx-auto flex w-full max-w-3xl flex-wrap gap-x-4 gap-y-2 px-4 py-8 text-xs text-muted-foreground sm:px-6">
+          <Link href="/pricing" className="hover:text-primary">
+            Pricing
+          </Link>
           <Link href="/terms" className="hover:text-primary">
             Terms
           </Link>
