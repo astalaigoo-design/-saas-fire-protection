@@ -6,6 +6,9 @@ import { join } from "node:path";
 
 const PUBLIC_SITEMAP_PATHS = [
   { path: "", priority: 1, changeFrequency: "weekly" },
+  { path: "/pricing", priority: 0.9, changeFrequency: "monthly" },
+  { path: "/nfpa-25-inspection-software", priority: 0.7, changeFrequency: "monthly" },
+  { path: "/fire-sprinkler-inspection-app", priority: 0.7, changeFrequency: "monthly" },
   { path: "/sign-in", priority: 0.8, changeFrequency: "monthly" },
   { path: "/sign-up", priority: 0.8, changeFrequency: "monthly" },
   { path: "/terms", priority: 0.5, changeFrequency: "yearly" },

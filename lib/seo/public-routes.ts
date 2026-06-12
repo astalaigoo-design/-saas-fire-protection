@@ -1,6 +1,17 @@
 /** Marketing and legal paths included in sitemap.xml (no auth required). */
 export const PUBLIC_SITEMAP_PATHS = [
   { path: "", priority: 1, changeFrequency: "weekly" as const },
+  { path: "/pricing", priority: 0.9, changeFrequency: "monthly" as const },
+  {
+    path: "/nfpa-25-inspection-software",
+    priority: 0.7,
+    changeFrequency: "monthly" as const,
+  },
+  {
+    path: "/fire-sprinkler-inspection-app",
+    priority: 0.7,
+    changeFrequency: "monthly" as const,
+  },
   { path: "/sign-in", priority: 0.8, changeFrequency: "monthly" as const },
   { path: "/sign-up", priority: 0.8, changeFrequency: "monthly" as const },
   { path: "/terms", priority: 0.5, changeFrequency: "yearly" as const },
