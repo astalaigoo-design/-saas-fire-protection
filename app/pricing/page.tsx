@@ -149,6 +149,9 @@ export default function PricingPage() {
             <Link href="/" className="text-primary hover:underline">
               Home
             </Link>
+            <Link href="/about" className="text-primary hover:underline">
+              About
+            </Link>
             <Link href="/terms" className="text-primary hover:underline">
               Terms of Service
             </Link>
