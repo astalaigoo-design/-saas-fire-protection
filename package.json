@@ -40,6 +40,7 @@
     "vercel:sync-db-env": "node scripts/sync-vercel-db-env.mjs",
     "migrate-shared-tenant-users": "tsx scripts/migrate-shared-tenant-users.ts",
     "marketing:screenshots": "tsx scripts/capture-marketing-screenshots.ts",
+    "marketing:demo-video": "tsx scripts/capture-marketing-demo-video.ts",
     "db:list-shared-tenant": "node scripts/list-shared-tenant-users.mjs",
     "sync-user-clerk-metadata": "tsx scripts/sync-user-clerk-metadata.ts",
     "db:backfill-share-tokens": "tsx scripts/backfill-report-share-tokens.ts --apply"
