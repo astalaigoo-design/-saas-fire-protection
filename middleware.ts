@@ -1,6 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { applyRateLimit } from "@/lib/rate-limit/apply";
+import { SEO_LANDING_PATHS } from "@/lib/seo/landing-pages";
 
 function clerkPublishableKeyHelp(): NextResponse {
   return new NextResponse(
@@ -38,8 +39,9 @@ function clerkPublishableKeyMissing(): NextResponse {
 const isPublicRoute = createRouteMatcher([
   "/",
   "/pricing",
-  "/nfpa-25-inspection-software",
-  "/fire-sprinkler-inspection-app",
+  "/about",
+  "/design-partner",
+  ...SEO_LANDING_PATHS,
   "/terms",
   "/privacy",
   "/refund",

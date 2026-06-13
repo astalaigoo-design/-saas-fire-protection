@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { TRIAL_DAYS } from "@/lib/billing/constants";
-import { APP_NAME, PILOT_SUPPORT_EMAIL } from "@/lib/branding";
+import { APP_NAME, DESIGN_PARTNER_APPLY_PATH, PILOT_SUPPORT_EMAIL } from "@/lib/branding";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type AboutSectionProps = {
   id?: string;
@@ -75,14 +77,23 @@ export function AboutSection({ id, className }: AboutSectionProps) {
         <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">
           We&apos;re early, and we&apos;d rather show you the product than borrowed logos. Run a
           real inspection on the {TRIAL_DAYS}-day free trial and judge the reports yourself — or
-          write to us and we&apos;ll answer personally. If you want to shape the product, ask about
-          the design partner program.
-        </p>
-        <p className="mt-4">
-          <Link href="/sign-up" className="text-sm font-medium text-primary hover:underline">
-            Start free trial →
+          write to us and we&apos;ll answer personally. If you want to shape the product,{" "}
+          <Link href={DESIGN_PARTNER_APPLY_PATH} className="font-medium text-primary hover:underline">
+            apply for the design partner program
           </Link>
+          .
         </p>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <Link href="/sign-up" className={cn(buttonVariants({ size: "sm" }), "min-h-10")}>
+            Start free trial
+          </Link>
+          <Link
+            href={DESIGN_PARTNER_APPLY_PATH}
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-h-10")}
+          >
+            Apply for design partner
+          </Link>
+        </div>
       </div>
     </section>
   );

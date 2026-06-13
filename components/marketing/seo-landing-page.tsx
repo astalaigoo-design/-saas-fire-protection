@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
 import { buttonVariants } from "@/components/ui/button";
 import { TRIAL_DAYS } from "@/lib/billing/constants";
-import { APP_NAME, PILOT_PRICING } from "@/lib/branding";
+import { APP_NAME, DESIGN_PARTNER_APPLY_PATH, PILOT_PRICING } from "@/lib/branding";
 import type { SeoLandingPageConfig } from "@/lib/seo/landing-pages";
 import { cn } from "@/lib/utils";
 
@@ -10,9 +10,33 @@ type SeoLandingPageProps = {
   config: SeoLandingPageConfig;
 };
 
+function faqJsonLd(config: SeoLandingPageConfig) {
+  if (!config.faqs?.length) return null;
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: config.faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  };
+}
+
 export function SeoLandingPage({ config }: SeoLandingPageProps) {
+  const structuredData = faqJsonLd(config);
+
   return (
     <main className="min-h-screen bg-background text-foreground">
+      {structuredData ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+      ) : null}
       <header className="border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <BrandLogo logoClassName="size-9" textClassName="text-lg" />
@@ -47,7 +71,7 @@ export function SeoLandingPage({ config }: SeoLandingPageProps) {
           <p className="text-base leading-7 text-muted-foreground">{config.subhead}</p>
         </div>
 
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Link
             href="/sign-up"
             className={cn(buttonVariants({ size: "lg" }), "min-h-12 justify-center")}
@@ -55,13 +79,13 @@ export function SeoLandingPage({ config }: SeoLandingPageProps) {
             Start {TRIAL_DAYS}-day free trial
           </Link>
           <Link
-            href="/sign-in"
+            href={DESIGN_PARTNER_APPLY_PATH}
             className={cn(
               buttonVariants({ variant: "outline", size: "lg" }),
               "min-h-12 justify-center",
             )}
           >
-            Sign in
+            Apply for design partner
           </Link>
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
@@ -91,6 +115,27 @@ export function SeoLandingPage({ config }: SeoLandingPageProps) {
           ))}
         </div>
 
+        {config.faqs?.length ? (
+          <section aria-labelledby="seo-faq-heading" className="mt-12 space-y-6">
+            <h2 id="seo-faq-heading" className="font-heading text-xl font-semibold tracking-tight">
+              Frequently asked questions
+            </h2>
+            <dl className="space-y-5">
+              {config.faqs.map((faq) => (
+                <div
+                  key={faq.question}
+                  className="rounded-xl border border-border bg-card p-5 shadow-sm"
+                >
+                  <dt className="font-heading text-base font-semibold text-foreground">
+                    {faq.question}
+                  </dt>
+                  <dd className="mt-2 text-sm leading-6 text-muted-foreground">{faq.answer}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ) : null}
+
         <aside className="mt-12 rounded-xl border border-border bg-card p-5 shadow-sm">
           <p className="text-sm font-medium text-foreground">Also explore</p>
           <ul className="mt-3 space-y-2">
@@ -106,19 +151,38 @@ export function SeoLandingPage({ config }: SeoLandingPageProps) {
       </article>
 
       <footer className="border-t border-border/60">
-        <div className="mx-auto flex w-full max-w-3xl flex-wrap gap-x-4 gap-y-2 px-4 py-8 text-xs text-muted-foreground sm:px-6">
-          <Link href="/pricing" className="hover:text-primary">
-            Pricing
-          </Link>
-          <Link href="/terms" className="hover:text-primary">
-            Terms
-          </Link>
-          <Link href="/privacy" className="hover:text-primary">
-            Privacy
-          </Link>
-          <Link href="/refunds" className="hover:text-primary">
-            Refunds
-          </Link>
+        <div className="mx-auto w-full max-w-3xl space-y-3 px-4 py-8 text-xs text-muted-foreground sm:px-6">
+          <nav aria-label="Solutions" className="flex flex-wrap gap-x-4 gap-y-2">
+            <Link href="/nfpa-25-inspection-software" className="hover:text-primary">
+              NFPA 25 inspection software
+            </Link>
+            <Link href="/fire-sprinkler-inspection-app" className="hover:text-primary">
+              NFPA 25 sprinkler inspection app
+            </Link>
+            <Link href="/fire-alarm-compliance-reporting-software" className="hover:text-primary">
+              Fire alarm compliance reporting
+            </Link>
+            <Link href="/fire-protection-repair-quoting-software" className="hover:text-primary">
+              Fire protection repair quoting
+            </Link>
+          </nav>
+          <nav aria-label="Legal" className="flex flex-wrap gap-x-4 gap-y-2">
+            <Link href="/pricing" className="hover:text-primary">
+              Pricing
+            </Link>
+            <Link href="/about" className="hover:text-primary">
+              About
+            </Link>
+            <Link href="/terms" className="hover:text-primary">
+              Terms
+            </Link>
+            <Link href="/privacy" className="hover:text-primary">
+              Privacy
+            </Link>
+            <Link href="/refunds" className="hover:text-primary">
+              Refunds
+            </Link>
+          </nav>
         </div>
       </footer>
     </main>

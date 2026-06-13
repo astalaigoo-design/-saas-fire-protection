@@ -30,6 +30,9 @@ export const PILOT_PRICING = {
 
 export const PILOT_SUPPORT_EMAIL = "support@getflareflow.com";
 
+/** Public marketing route for design partner intake (separate from /sign-up). */
+export const DESIGN_PARTNER_APPLY_PATH = "/design-partner";
+
 /** Default demo tenant name in seed scripts. */
 export const DEMO_COMPANY_NAME = "GetFlareflow Demo Co.";
 

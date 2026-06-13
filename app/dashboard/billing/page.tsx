@@ -8,7 +8,7 @@ import { canManageBilling } from "@/lib/auth/permissions";
 import { getCompanyBillingSnapshot } from "@/lib/billing/queries";
 import { isPaddleInlineCheckoutReady } from "@/lib/billing/paddle-env";
 import { TRIAL_DAYS } from "@/lib/billing/constants";
-import { PILOT_PRICING, PILOT_SUPPORT_EMAIL } from "@/lib/branding";
+import { DESIGN_PARTNER_APPLY_PATH, PILOT_PRICING } from "@/lib/branding";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { cn } from "@/lib/utils";
 
@@ -50,14 +50,14 @@ export default async function BillingPage() {
         <section className="max-w-xl rounded-xl border border-border bg-card p-6 shadow-sm">
           <h2 className="text-base font-semibold text-foreground">Design partner?</h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            If you&apos;re in the pilot cohort, email us before subscribing — we&apos;ll confirm your
-            rate.
+            If you&apos;re in the pilot cohort, apply before subscribing — we&apos;ll confirm your
+            rate within one business day.
           </p>
           <Link
-            href={`mailto:${PILOT_SUPPORT_EMAIL}?subject=GetFlareflow%20design%20partner%20pricing`}
+            href={DESIGN_PARTNER_APPLY_PATH}
             className={cn(buttonVariants({ variant: "outline" }), "mt-4 inline-flex min-h-10")}
           >
-            Contact about pilot access
+            Apply for design partner
           </Link>
         </section>
       ) : null}
@@ -105,14 +105,14 @@ export default async function BillingPage() {
           <section className="rounded-xl border border-border bg-card p-6 shadow-sm">
             <h2 className="text-base font-semibold text-foreground">Design partner?</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              If you&apos;re in the pilot cohort, email us before subscribing — we&apos;ll confirm your
-              rate.
+              If you&apos;re in the pilot cohort, apply before subscribing — we&apos;ll confirm your
+              rate within one business day.
             </p>
             <Link
-              href={`mailto:${PILOT_SUPPORT_EMAIL}?subject=GetFlareflow%20design%20partner%20pricing`}
+              href={DESIGN_PARTNER_APPLY_PATH}
               className={cn(buttonVariants({ variant: "outline" }), "mt-4 inline-flex min-h-10")}
             >
-              Contact about pilot access
+              Apply for design partner
             </Link>
           </section>
         </>

@@ -16,6 +16,7 @@ import {
   APP_NAME,
   APP_POSITIONING,
   APP_TAGLINE,
+  DESIGN_PARTNER_APPLY_PATH,
   PILOT_PRICING,
   PILOT_SUPPORT_EMAIL,
 } from "@/lib/branding";
@@ -66,6 +67,12 @@ export function LandingPage() {
               Pricing
             </Link>
             <Link
+              href="#solutions"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Solutions
+            </Link>
+            <Link
               href="#contact"
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
@@ -99,7 +106,7 @@ export function LandingPage() {
               Built for fire protection contractors — not generic scheduling software. One workflow
               from the truck to the client inbox.
             </p>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <Link
                 href="/sign-up"
                 className={cn(buttonVariants({ size: "lg" }), "min-h-12 px-8 text-base")}
@@ -107,13 +114,13 @@ export function LandingPage() {
                 Start free — create account
               </Link>
               <Link
-                href="/sign-in"
+                href={DESIGN_PARTNER_APPLY_PATH}
                 className={cn(
                   buttonVariants({ variant: "outline", size: "lg" }),
                   "min-h-12 px-8 text-base",
                 )}
               >
-                Sign in
+                Apply for design partner
               </Link>
             </div>
           </div>
@@ -201,6 +208,71 @@ export function LandingPage() {
 
       <AboutSection id="about" />
 
+      <section
+        id="solutions"
+        aria-labelledby="solutions-heading"
+        className="border-y border-border/60 bg-card/40 py-14 sm:py-16"
+      >
+        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+          <div className="max-w-2xl">
+            <p className="text-sm font-medium uppercase tracking-wide text-primary">Solutions</p>
+            <h2
+              id="solutions-heading"
+              className="mt-2 font-heading text-2xl font-semibold tracking-tight sm:text-3xl"
+            >
+              Built for how fire protection contractors actually work
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground sm:text-base">
+              Each page goes deeper on a specific workflow — NFPA sprinkler inspections, fire alarm
+              compliance reports, and repair quoting from failed items.
+            </p>
+          </div>
+          <ul className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                href: "/nfpa-25-inspection-software",
+                title: "NFPA 25 inspection software",
+                description:
+                  "Citation-backed sprinkler checklists, compliance PDFs, and deficiency tracking.",
+              },
+              {
+                href: "/fire-sprinkler-inspection-app",
+                title: "NFPA 25 sprinkler inspection app",
+                description:
+                  "Offline mobile inspections with photos, signatures, and client-ready reports.",
+              },
+              {
+                href: "/fire-alarm-compliance-reporting-software",
+                title: "Fire alarm compliance reporting",
+                description:
+                  "NFPA 72 inspections, branded PDFs, certificate numbers, and report links.",
+              },
+              {
+                href: "/fire-protection-repair-quoting-software",
+                title: "Fire protection repair quoting",
+                description:
+                  "Draft quotes from failed items, customer accept online, schedule follow-up work.",
+              },
+            ].map((item) => (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className="flex h-full flex-col rounded-2xl border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/40"
+                >
+                  <h3 className="font-heading text-base font-semibold text-foreground">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">
+                    {item.description}
+                  </p>
+                  <span className="mt-4 text-sm font-medium text-primary">Learn more →</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
       <section id="pricing" className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
         <div className="max-w-2xl">
           <p className="text-sm font-medium uppercase tracking-wide text-primary">Pricing</p>
@@ -209,8 +281,11 @@ export function LandingPage() {
           </h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground sm:text-base">
             {TRIAL_DAYS}-day free trial, then {PILOT_PRICING.standard.price}
-            {PILOT_PRICING.standard.period}. Design partners on the pilot may qualify for free
-            access — contact us before subscribing.
+            {PILOT_PRICING.standard.period}. Want complimentary pilot access?{" "}
+            <Link href={DESIGN_PARTNER_APPLY_PATH} className="font-medium text-primary hover:underline">
+              Apply for design partner
+            </Link>{" "}
+            — separate from starting a trial.
           </p>
         </div>
 
@@ -237,15 +312,26 @@ export function LandingPage() {
                 {PILOT_PRICING.standard.period}.
               </p>
             </div>
-            <Link
-              href="/sign-up"
-              className={cn(
-                buttonVariants({ size: "lg" }),
-                "min-h-12 shrink-0 px-8 text-base lg:min-w-[200px]",
-              )}
-            >
-              Create account
-            </Link>
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
+              <Link
+                href="/sign-up"
+                className={cn(
+                  buttonVariants({ size: "lg" }),
+                  "min-h-12 shrink-0 px-8 text-base lg:min-w-[200px]",
+                )}
+              >
+                Create account
+              </Link>
+              <Link
+                href={DESIGN_PARTNER_APPLY_PATH}
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "lg" }),
+                  "min-h-12 shrink-0 px-8 text-base",
+                )}
+              >
+                Apply for design partner
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -271,11 +357,26 @@ export function LandingPage() {
             <Link href="/pricing" className="text-primary hover:underline">
               Pricing
             </Link>
+            <Link href={DESIGN_PARTNER_APPLY_PATH} className="text-primary hover:underline">
+              Design partner
+            </Link>
             <Link href="/nfpa-25-inspection-software" className="text-primary hover:underline">
               NFPA 25 inspection software
             </Link>
             <Link href="/fire-sprinkler-inspection-app" className="text-primary hover:underline">
-              Fire sprinkler inspection app
+              NFPA 25 sprinkler inspection app
+            </Link>
+            <Link
+              href="/fire-alarm-compliance-reporting-software"
+              className="text-primary hover:underline"
+            >
+              Fire alarm compliance reporting
+            </Link>
+            <Link
+              href="/fire-protection-repair-quoting-software"
+              className="text-primary hover:underline"
+            >
+              Fire protection repair quoting
             </Link>
             <Link href="/terms" className="text-primary hover:underline">
               Terms of Service

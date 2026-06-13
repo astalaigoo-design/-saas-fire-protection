@@ -1,7 +1,10 @@
+import Link from "next/link";
 import { TRIAL_DAYS } from "@/lib/billing/constants";
-import { PILOT_PRICING, PILOT_SUPPORT_EMAIL } from "@/lib/branding";
+import { DESIGN_PARTNER_APPLY_PATH, PILOT_PRICING } from "@/lib/branding";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-/** Plan cards + support contact, shared by the homepage pricing section and /pricing. */
+/** Plan cards + CTAs, shared by the homepage pricing section and /pricing. */
 export function PricingCards() {
   return (
     <>
@@ -22,6 +25,12 @@ export function PricingCards() {
           <p className="mt-4 text-xs text-muted-foreground">
             Includes {TRIAL_DAYS}-day free trial for new workspaces.
           </p>
+          <Link
+            href="/sign-up"
+            className={cn(buttonVariants({ size: "lg" }), "mt-6 min-h-11 w-full")}
+          >
+            Start free trial
+          </Link>
         </li>
 
         <li className="flex flex-col rounded-2xl border border-border bg-card p-6 shadow-sm">
@@ -38,19 +47,30 @@ export function PricingCards() {
             {PILOT_PRICING.designPartner.detail}
           </p>
           <p className="mt-4 text-xs text-muted-foreground">
-            {PILOT_PRICING.designPartner.limitNote}
+            {PILOT_PRICING.designPartner.limitNote} Apply here — no subscription required to inquire.
           </p>
+          <Link
+            href={DESIGN_PARTNER_APPLY_PATH}
+            className={cn(
+              buttonVariants({ variant: "outline", size: "lg" }),
+              "mt-6 min-h-11 w-full",
+            )}
+          >
+            Apply for design partner
+          </Link>
         </li>
       </ul>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        Questions or to join the pilot?{" "}
-        <a
-          href={`mailto:${PILOT_SUPPORT_EMAIL}?subject=GetFlareflow%20pilot%20pricing`}
-          className="font-medium text-primary hover:underline"
-        >
-          {PILOT_SUPPORT_EMAIL}
-        </a>
+        Standard plan?{" "}
+        <Link href="/sign-up" className="font-medium text-primary hover:underline">
+          Start free trial
+        </Link>
+        . Want to shape the product?{" "}
+        <Link href={DESIGN_PARTNER_APPLY_PATH} className="font-medium text-primary hover:underline">
+          Apply for design partner
+        </Link>
+        .
       </p>
     </>
   );

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
 import { PricingCards } from "@/components/marketing/pricing-cards";
 import { buttonVariants } from "@/components/ui/button";
 import { TRIAL_DAYS } from "@/lib/billing/constants";
-import { APP_NAME, PILOT_PRICING, PILOT_SUPPORT_EMAIL } from "@/lib/branding";
+import { APP_NAME, DESIGN_PARTNER_APPLY_PATH, PILOT_PRICING, PILOT_SUPPORT_EMAIL } from "@/lib/branding";
 import { buildPublicPageMetadata } from "@/lib/seo/site-metadata";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +15,7 @@ export const metadata: Metadata = buildPublicPageMetadata({
   path: "/pricing",
 });
 
-const faqs = [
+const faqs: { question: string; answer: string | ReactNode }[] = [
   {
     question: `What happens after the ${TRIAL_DAYS}-day free trial?`,
     answer: `Nothing is charged automatically — we don't collect a card at sign-up. When the trial ends, your workspace pauses until you subscribe for ${PILOT_PRICING.standard.price}${PILOT_PRICING.standard.period} from the billing page. Your customers, buildings, and inspection history are kept the whole time.`,
@@ -36,9 +37,18 @@ const faqs = [
   },
   {
     question: "What is the design partner plan?",
-    answer: `Free access for 2–3 early fire protection contractors who help shape the product with regular feedback. Email ${PILOT_SUPPORT_EMAIL} if you'd like to apply.`,
+    answer: (
+      <>
+        Free access for 2–3 early fire protection contractors who help shape the product with regular
+        feedback.{" "}
+        <Link href={DESIGN_PARTNER_APPLY_PATH} className="font-medium text-primary hover:underline">
+          Apply for design partner
+        </Link>{" "}
+        — we review applications within one business day.
+      </>
+    ),
   },
-] as const;
+];
 
 export default function PricingPage() {
   return (
@@ -127,12 +137,23 @@ export default function PricingPage() {
                 {PILOT_PRICING.standard.period}. No card to start.
               </p>
             </div>
-            <Link
-              href="/sign-up"
-              className={cn(buttonVariants({ size: "lg" }), "min-h-12 shrink-0 px-8 text-base")}
-            >
-              Start free — create account
-            </Link>
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
+              <Link
+                href="/sign-up"
+                className={cn(buttonVariants({ size: "lg" }), "min-h-12 shrink-0 px-8 text-base")}
+              >
+                Start free — create account
+              </Link>
+              <Link
+                href={DESIGN_PARTNER_APPLY_PATH}
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "lg" }),
+                  "min-h-12 shrink-0 px-8 text-base",
+                )}
+              >
+                Apply for design partner
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -151,6 +172,9 @@ export default function PricingPage() {
             </Link>
             <Link href="/about" className="text-primary hover:underline">
               About
+            </Link>
+            <Link href={DESIGN_PARTNER_APPLY_PATH} className="text-primary hover:underline">
+              Design partner
             </Link>
             <Link href="/terms" className="text-primary hover:underline">
               Terms of Service
