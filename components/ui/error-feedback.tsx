@@ -27,6 +27,8 @@ function getSafeUserMessage(error: Error | undefined, fallbackMessage: string): 
     "digest",
     "loading chunk",
     "chunkloaderror",
+    "base ui error #31",
+    "objects are not valid as a react child",
   ];
 
   const normalized = raw.toLowerCase();

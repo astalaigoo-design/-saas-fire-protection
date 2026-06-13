@@ -4,6 +4,7 @@ import Link from "next/link";
 import { StaffNotificationBell } from "@/components/dashboard/staff-notification-bell";
 import type { AppRole } from "@/lib/auth/roles";
 import type { StaffNotificationsFeed } from "@/lib/notifications/queries";
+import { serializeStaffNotificationsFeed } from "@/lib/notifications/serialize-feed";
 import { cn } from "@/lib/utils";
 
 type InspectFieldHeaderBarProps = {
@@ -32,7 +33,11 @@ export function InspectFieldHeaderBar({
       >
         ← {backLabel}
       </Link>
-      <StaffNotificationBell feed={feed} role={role} variant="field" />
+      <StaffNotificationBell
+        feed={serializeStaffNotificationsFeed(feed)}
+        role={role}
+        variant="field"
+      />
     </div>
   );
 }
