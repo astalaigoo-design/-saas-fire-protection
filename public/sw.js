@@ -1,7 +1,7 @@
-const STATIC_CACHE = "flareflow-static-v16";
-const PAGE_CACHE = "flareflow-pages-v16";
-const INSPECT_CACHE = "flareflow-inspect-v16";
-const ASSET_CACHE = "flareflow-assets-v16";
+const STATIC_CACHE = "flareflow-static-v17";
+const PAGE_CACHE = "flareflow-pages-v17";
+const INSPECT_CACHE = "flareflow-inspect-v17";
+const ASSET_CACHE = "flareflow-assets-v17";
 
 const OFFLINE_FALLBACK_PATH = "/offline.html";
 
@@ -292,6 +292,10 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+    return;
+  }
   if (event.data?.type === "CACHE_URL" && typeof event.data.url === "string") {
     event.waitUntil(cacheUrlMessage(event.data.url).catch(() => undefined));
   }

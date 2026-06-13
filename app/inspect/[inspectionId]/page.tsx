@@ -11,16 +11,40 @@ type InspectPageProps = {
   params: { inspectionId: string };
 };
 
+async function loadBillingSnapshot(
+  session: NonNullable<Awaited<ReturnType<typeof getInspectSession>>>,
+) {
+  try {
+    return await getCompanyBillingSnapshot(session, session.email);
+  } catch (error) {
+    console.error("inspect page billing snapshot failed", error);
+    return null;
+  }
+}
+
+async function loadPreJobBrief(
+  session: NonNullable<Awaited<ReturnType<typeof getInspectSession>>>,
+  inspectionId: string,
+) {
+  try {
+    return await getPreJobBriefForInspection(session, inspectionId);
+  } catch (error) {
+    console.error("inspect page pre-job brief failed", error, { inspectionId });
+    return null;
+  }
+}
+
 export default async function InspectPage({ params }: InspectPageProps) {
   const session = await getInspectSession();
   if (!session) redirect("/sign-in");
 
-  const [inspection, billing, preJobBrief] = await Promise.all([
-    getInspectionForForm(session, params.inspectionId),
-    getCompanyBillingSnapshot(session, session.email),
-    getPreJobBriefForInspection(session, params.inspectionId),
-  ]);
+  const inspection = await getInspectionForForm(session, params.inspectionId);
   if (!inspection) notFound();
+
+  const [billing, preJobBrief] = await Promise.all([
+    loadBillingSnapshot(session),
+    loadPreJobBrief(session, params.inspectionId),
+  ]);
 
   if (session.role === "technician") {
     await markJobAlertsReadForInspection(params.inspectionId);

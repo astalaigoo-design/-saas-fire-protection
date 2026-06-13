@@ -21,16 +21,11 @@ function tryRecoverFromChunkError(): void {
     try {
       if ("caches" in window) {
         const keys = await caches.keys();
-        await Promise.all(
-          keys
-            .filter(
-              (key) =>
-                key.includes("pages") ||
-                key.includes("inspect") ||
-                key.includes("assets"),
-            )
-            .map((key) => caches.delete(key)),
-        );
+        await Promise.all(keys.map((key) => caches.delete(key)));
+      }
+      if ("serviceWorker" in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((registration) => registration.unregister()));
       }
     } finally {
       window.location.reload();
