@@ -2,6 +2,7 @@
 export const PUBLIC_SITEMAP_PATHS = [
   { path: "", priority: 1, changeFrequency: "weekly" as const },
   { path: "/pricing", priority: 0.9, changeFrequency: "monthly" as const },
+  { path: "/about", priority: 0.8, changeFrequency: "monthly" as const },
   {
     path: "/nfpa-25-inspection-software",
     priority: 0.7,

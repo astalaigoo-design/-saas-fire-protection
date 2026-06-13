@@ -2,7 +2,6 @@ import { execSync } from "node:child_process";
 
 const steps = [
   { name: "Prisma generate", command: "npx prisma generate" },
-  { name: "SEO static files", command: "node scripts/generate-seo-static.mjs" },
   { name: "Database migrations", command: "node scripts/db/migrate-deploy.mjs" },
   { name: "Next.js build", command: "npx next build" },
 ];
