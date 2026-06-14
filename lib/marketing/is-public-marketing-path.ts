@@ -5,6 +5,7 @@ export const PUBLIC_MARKETING_PATHS = [
   "/",
   "/pricing",
   "/about",
+  "/compare",
   "/design-partner",
   "/sign-in",
   "/sign-up",

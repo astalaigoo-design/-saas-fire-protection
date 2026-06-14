@@ -6,6 +6,7 @@ export const PUBLIC_SITEMAP_PATHS = [
   { path: "/pricing", priority: 0.9, changeFrequency: "monthly" as const },
   { path: "/design-partner", priority: 0.85, changeFrequency: "monthly" as const },
   { path: "/about", priority: 0.8, changeFrequency: "monthly" as const },
+  { path: "/compare", priority: 0.85, changeFrequency: "monthly" as const },
   ...SEO_LANDING_PAGES.map((page) => ({
     path: page.path,
     priority: 0.75,

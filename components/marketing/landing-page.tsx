@@ -6,6 +6,7 @@ import {
 } from "@/components/marketing/how-it-works-section";
 import { PricingCards } from "@/components/marketing/pricing-cards";
 import { AboutSection } from "@/components/marketing/about-section";
+import { CompetitiveComparisonSection } from "@/components/marketing/competitive-comparison-section";
 import { productShowcase, ProductShowcaseImage } from "@/components/marketing/product-previews";
 import {
   marketingHeaderCtaClass,
@@ -65,6 +66,12 @@ export function LandingPage() {
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               Pricing
+            </Link>
+            <Link
+              href="#compare"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Compare
             </Link>
             <Link
               href="#solutions"
@@ -195,6 +202,8 @@ export function LandingPage() {
       </section>
 
       <AboutSection id="about" />
+
+      <CompetitiveComparisonSection />
 
       <section
         id="solutions"
@@ -332,6 +341,9 @@ export function LandingPage() {
             </Link>
             <Link href="/pricing" className="text-primary hover:underline">
               Pricing
+            </Link>
+            <Link href="/compare" className="text-primary hover:underline">
+              Compare
             </Link>
             <Link href={DESIGN_PARTNER_APPLY_PATH} className="text-primary hover:underline">
               Design partner
