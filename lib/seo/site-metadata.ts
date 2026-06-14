@@ -20,6 +20,8 @@ export function getMetadataBase(): URL {
 export function buildRootViewport(): Viewport {
   return {
     themeColor: "#020617",
+    width: "device-width",
+    initialScale: 1,
   };
 }
 

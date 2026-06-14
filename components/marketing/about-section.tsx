@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { TRIAL_DAYS } from "@/lib/billing/constants";
 import { APP_NAME, DESIGN_PARTNER_APPLY_PATH, PILOT_SUPPORT_EMAIL } from "@/lib/branding";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import {
+  marketingPrimaryCtaClass,
+  marketingSecondaryCtaClass,
+} from "@/lib/marketing/cta-classes";
 
 type AboutSectionProps = {
   id?: string;
@@ -83,14 +85,11 @@ export function AboutSection({ id, className }: AboutSectionProps) {
           </Link>
           .
         </p>
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <Link href="/sign-up" className={cn(buttonVariants({ size: "sm" }), "min-h-10")}>
+        <div className="mt-4 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
+          <Link href="/sign-up" className={marketingPrimaryCtaClass}>
             Start free trial
           </Link>
-          <Link
-            href={DESIGN_PARTNER_APPLY_PATH}
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "min-h-10")}
-          >
+          <Link href={DESIGN_PARTNER_APPLY_PATH} className={marketingSecondaryCtaClass}>
             Apply for design partner
           </Link>
         </div>

@@ -6,6 +6,11 @@ const nextConfig = {
     // Avoid blocking deploys on lint warnings (e.g. react-pdf Image alt).
     ignoreDuringBuilds: true,
   },
+  images: {
+    formats: ["image/avif", "image/webp"],
+    deviceSizes: [390, 420, 640, 750, 828, 1080, 1280],
+    imageSizes: [16, 32, 48, 64, 96, 128, 220, 256, 320, 384],
+  },
   experimental: {
     serverComponentsExternalPackages: ["@react-pdf/renderer"],
     instrumentationHook: true,

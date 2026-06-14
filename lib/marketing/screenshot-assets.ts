@@ -6,8 +6,8 @@ export type MarketingScreenshotAsset = {
   id: string;
   /** Public preview route (real app components + demo data). */
   previewPath: `/marketing-screenshot/${string}`;
-  /** Committed PNG served on the landing page. */
-  imagePath: `/marketing/${string}.png`;
+  /** Committed WebP served on the landing page (PNG kept for screenshot capture). */
+  imagePath: `/marketing/${string}.webp`;
   captureViewport: { width: number; height: number };
   imageWidth: number;
   imageHeight: number;
@@ -17,7 +17,7 @@ export const marketingScreenshotAssets = [
   {
     id: "field-inspection",
     previewPath: "/marketing-screenshot/field-inspection",
-    imagePath: "/marketing/field-inspection.png",
+    imagePath: "/marketing/field-inspection.webp",
     captureViewport: { width: 390, height: 844 },
     imageWidth: 390,
     imageHeight: 844,
@@ -25,7 +25,7 @@ export const marketingScreenshotAssets = [
   {
     id: "compliance-report",
     previewPath: "/marketing-screenshot/compliance-report",
-    imagePath: "/marketing/compliance-report.png",
+    imagePath: "/marketing/compliance-report.webp",
     captureViewport: { width: 420, height: 844 },
     imageWidth: 420,
     imageHeight: 844,
@@ -33,7 +33,7 @@ export const marketingScreenshotAssets = [
   {
     id: "command-center",
     previewPath: "/marketing-screenshot/command-center",
-    imagePath: "/marketing/command-center.png",
+    imagePath: "/marketing/command-center.webp",
     captureViewport: { width: 1280, height: 900 },
     imageWidth: 1280,
     imageHeight: 900,

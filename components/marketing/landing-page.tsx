@@ -7,7 +7,12 @@ import {
 import { PricingCards } from "@/components/marketing/pricing-cards";
 import { AboutSection } from "@/components/marketing/about-section";
 import { productShowcase, ProductShowcaseImage } from "@/components/marketing/product-previews";
-import { buttonVariants } from "@/components/ui/button";
+import {
+  marketingHeaderCtaClass,
+  marketingHeaderLinkClass,
+  marketingPrimaryCtaClass,
+  marketingSecondaryCtaClass,
+} from "@/lib/marketing/cta-classes";
 import { TRIAL_DAYS } from "@/lib/billing/constants";
 import {
   APP_POSITIONING,
@@ -16,7 +21,6 @@ import {
   PILOT_PRICING,
   PILOT_SUPPORT_EMAIL,
 } from "@/lib/branding";
-import { cn } from "@/lib/utils";
 
 const nfpaHighlights = [
   "Checklists cite exact NFPA standard, edition, and section",
@@ -36,7 +40,7 @@ export function LandingPage() {
       />
       <header className="border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <BrandLogo logoClassName="size-9" textClassName="text-lg" />
+          <BrandLogo logoClassName="size-9" textClassName="text-lg" priority />
           <nav className="hidden items-center gap-6 md:flex" aria-label="Primary">
             <Link
               href="#features"
@@ -76,13 +80,10 @@ export function LandingPage() {
             </Link>
           </nav>
           <nav className="flex items-center gap-2 sm:gap-3" aria-label="Account">
-            <Link
-              href="/sign-in"
-              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "min-h-10 px-4")}
-            >
+            <Link href="/sign-in" className={marketingHeaderLinkClass}>
               Sign in
             </Link>
-            <Link href="/sign-up" className={cn(buttonVariants({ size: "sm" }), "min-h-10 px-4")}>
+            <Link href="/sign-up" className={marketingHeaderCtaClass}>
               Start free
             </Link>
           </nav>
@@ -102,20 +103,11 @@ export function LandingPage() {
               Built for fire protection contractors — not generic scheduling software. One workflow
               from the truck to the client inbox.
             </p>
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <Link
-                href="/sign-up"
-                className={cn(buttonVariants({ size: "lg" }), "min-h-12 px-8 text-base")}
-              >
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-stretch">
+              <Link href="/sign-up" className={marketingPrimaryCtaClass}>
                 Start free — create account
               </Link>
-              <Link
-                href={DESIGN_PARTNER_APPLY_PATH}
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "lg" }),
-                  "min-h-12 px-8 text-base",
-                )}
-              >
+              <Link href={DESIGN_PARTNER_APPLY_PATH} className={marketingSecondaryCtaClass}>
                 Apply for design partner
               </Link>
             </div>
@@ -308,23 +300,11 @@ export function LandingPage() {
                 {PILOT_PRICING.standard.period}.
               </p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
-              <Link
-                href="/sign-up"
-                className={cn(
-                  buttonVariants({ size: "lg" }),
-                  "min-h-12 shrink-0 px-8 text-base lg:min-w-[200px]",
-                )}
-              >
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+              <Link href="/sign-up" className={marketingPrimaryCtaClass}>
                 Create account
               </Link>
-              <Link
-                href={DESIGN_PARTNER_APPLY_PATH}
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "lg" }),
-                  "min-h-12 shrink-0 px-8 text-base",
-                )}
-              >
+              <Link href={DESIGN_PARTNER_APPLY_PATH} className={marketingSecondaryCtaClass}>
                 Apply for design partner
               </Link>
             </div>

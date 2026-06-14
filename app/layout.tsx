@@ -2,14 +2,13 @@ import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { OfflinePrecache } from "@/components/offline/offline-precache";
-import { ChunkErrorRecovery } from "@/components/pwa/chunk-error-recovery";
-import { ServiceWorkerRegistration } from "@/components/pwa/service-worker-registration";
+import { DeferredAppShell } from "@/components/pwa/deferred-app-shell";
 import { buildRootMetadata, buildRootViewport } from "@/lib/seo/site-metadata";
 import { cn } from "@/lib/utils";
 
 const inter = Inter({
   subsets: ["latin"],
+  display: "swap",
   variable: "--font-sans",
 });
 
@@ -25,9 +24,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" className={cn("dark font-sans", inter.variable)}>
         <body>
-          <ServiceWorkerRegistration />
-          <ChunkErrorRecovery />
-          <OfflinePrecache />
+          <DeferredAppShell />
           {children}
         </body>
       </html>

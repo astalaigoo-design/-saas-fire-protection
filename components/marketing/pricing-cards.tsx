@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { TRIAL_DAYS } from "@/lib/billing/constants";
 import { DESIGN_PARTNER_APPLY_PATH, PILOT_PRICING } from "@/lib/branding";
-import { buttonVariants } from "@/components/ui/button";
+import {
+  marketingPrimaryCtaClass,
+  marketingSecondaryCtaClass,
+} from "@/lib/marketing/cta-classes";
 import { cn } from "@/lib/utils";
 
 /** Plan cards + CTAs, shared by the homepage pricing section and /pricing. */
@@ -25,10 +28,7 @@ export function PricingCards() {
           <p className="mt-4 text-xs text-muted-foreground">
             Includes {TRIAL_DAYS}-day free trial for new workspaces.
           </p>
-          <Link
-            href="/sign-up"
-            className={cn(buttonVariants({ size: "lg" }), "mt-6 min-h-11 w-full")}
-          >
+          <Link href="/sign-up" className={cn(marketingPrimaryCtaClass, "mt-6")}>
             Start free trial
           </Link>
         </li>
@@ -49,13 +49,7 @@ export function PricingCards() {
           <p className="mt-4 text-xs text-muted-foreground">
             {PILOT_PRICING.designPartner.limitNote} Apply here — no subscription required to inquire.
           </p>
-          <Link
-            href={DESIGN_PARTNER_APPLY_PATH}
-            className={cn(
-              buttonVariants({ variant: "outline", size: "lg" }),
-              "mt-6 min-h-11 w-full",
-            )}
-          >
+          <Link href={DESIGN_PARTNER_APPLY_PATH} className={cn(marketingSecondaryCtaClass, "mt-6")}>
             Apply for design partner
           </Link>
         </li>

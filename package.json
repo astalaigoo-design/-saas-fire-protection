@@ -40,6 +40,7 @@
     "vercel:sync-db-env": "node scripts/sync-vercel-db-env.mjs",
     "migrate-shared-tenant-users": "tsx scripts/migrate-shared-tenant-users.ts",
     "marketing:screenshots": "tsx scripts/capture-marketing-screenshots.ts",
+    "marketing:webp": "node scripts/convert-marketing-images-webp.mjs",
     "db:list-shared-tenant": "node scripts/list-shared-tenant-users.mjs",
     "sync-user-clerk-metadata": "tsx scripts/sync-user-clerk-metadata.ts",
     "db:backfill-share-tokens": "tsx scripts/backfill-report-share-tokens.ts --apply"
@@ -83,6 +84,7 @@
     "eslint-config-next": "14.2.28",
     "pg": "^8.20.0",
     "postcss": "^8.4.49",
+    "sharp": "^0.35.1",
     "tailwindcss": "^3.4.15",
     "tailwindcss-animate": "^1.0.7",
     "tsx": "^4.22.0",

@@ -70,13 +70,13 @@ export function ProductShowcaseImage({
       priority={priority}
       className={
         isTallMobile
-          ? "mx-auto max-h-[340px] max-w-[220px] object-contain object-top"
-          : "max-h-[340px] object-cover object-top"
+          ? "mx-auto max-w-[220px]"
+          : undefined
       }
       sizes={
         isTallMobile
-          ? "220px"
-          : "(max-width: 1024px) 100vw, 320px"
+          ? "(max-width: 640px) 220px, 220px"
+          : "(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 360px"
       }
     />
   );
