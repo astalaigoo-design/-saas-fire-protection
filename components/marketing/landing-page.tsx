@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
-import { DemoClipsSection } from "@/components/marketing/demo-clips-section";
-import { HeroDemoPanel } from "@/components/marketing/hero-demo-panel";
 import {
   HowItWorksSection,
   howItWorksJsonLd,
@@ -12,7 +10,6 @@ import { productShowcase, ProductShowcaseImage } from "@/components/marketing/pr
 import { buttonVariants } from "@/components/ui/button";
 import { TRIAL_DAYS } from "@/lib/billing/constants";
 import {
-  APP_NAME,
   APP_POSITIONING,
   APP_TAGLINE,
   DESIGN_PARTNER_APPLY_PATH,
@@ -41,12 +38,6 @@ export function LandingPage() {
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <BrandLogo logoClassName="size-9" textClassName="text-lg" />
           <nav className="hidden items-center gap-6 md:flex" aria-label="Primary">
-            <Link
-              href="#demo"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Demo
-            </Link>
             <Link
               href="#features"
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -99,7 +90,7 @@ export function LandingPage() {
       </header>
 
       <section className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 lg:py-20">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)] lg:items-center lg:gap-12">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,240px)] lg:items-center lg:gap-12">
           <div className="max-w-2xl space-y-6">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
               {APP_TAGLINE}
@@ -108,8 +99,8 @@ export function LandingPage() {
               {APP_POSITIONING}
             </h1>
             <p className="max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
-              Built for fire protection contractors — not generic scheduling software. Watch the
-              field demo: tap through NFPA checklists on a phone and generate the compliance PDF.
+              Built for fire protection contractors — not generic scheduling software. One workflow
+              from the truck to the client inbox.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <Link
@@ -128,19 +119,15 @@ export function LandingPage() {
                 Apply for design partner
               </Link>
             </div>
-            <p className="text-sm text-muted-foreground">
-              <Link href="#demo" className="font-medium text-primary hover:underline">
-                Watch demo clips
-              </Link>{" "}
-              — checklist, PDF report, and repair quote.
-            </p>
           </div>
 
-          <HeroDemoPanel />
+          <div className="hidden max-w-[280px] justify-center lg:flex">
+            {productShowcase[0] ? (
+              <ProductShowcaseImage item={productShowcase[0]} priority />
+            ) : null}
+          </div>
         </div>
       </section>
-
-      <DemoClipsSection />
 
       <section id="features" className="border-y border-border/60 bg-card/40 py-14 sm:py-16">
         <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
@@ -354,9 +341,6 @@ export function LandingPage() {
             </a>
           </p>
           <nav aria-label="Site links" className="flex flex-wrap gap-x-4 gap-y-2">
-            <Link href="#demo" className="text-primary hover:underline">
-              Field demo
-            </Link>
             <Link href="#features" className="text-primary hover:underline">
               Features
             </Link>
