@@ -5,6 +5,7 @@ type ErrorFeedbackProps = {
   fallbackMessage: string;
   error?: Error & { digest?: string };
   retryLabel?: string;
+  hint?: string;
   onRetry?: () => void;
   className?: string;
 };
@@ -44,6 +45,7 @@ export function ErrorFeedback({
   fallbackMessage,
   error,
   retryLabel = "Try again",
+  hint,
   onRetry,
   className,
 }: ErrorFeedbackProps) {
@@ -55,8 +57,8 @@ export function ErrorFeedback({
       <h2 className="text-lg font-semibold text-red-200">{title}</h2>
       <p className="mt-2 text-sm text-red-300/80">{userMessage}</p>
       <p className="mt-2 text-xs text-red-300/70">
-        If it keeps happening, close the app completely, reopen it online, and try again. After an
-        update, a full refresh fixes most inspection page errors.
+        {hint ??
+          "If it keeps happening, close the app completely, reopen it online, and try again. After an update, a full refresh fixes most inspection page errors."}
       </p>
       {error?.digest ? (
         <p className="mt-2 text-xs text-red-300/60">

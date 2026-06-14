@@ -4,7 +4,7 @@ import { PartsCatalog } from "@/components/parts/parts-catalog";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
-import { listCompanyParts } from "@/lib/parts/queries";
+import { listCompanyPartsForPage } from "@/lib/parts/serialize";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { cn } from "@/lib/utils";
 
@@ -13,7 +13,7 @@ export default async function PartsPage() {
   if (!session) redirect("/sign-in");
   ensureCanManageJobs(session.role);
 
-  const parts = await listCompanyParts(session);
+  const partsResult = await listCompanyPartsForPage(session);
 
   return (
     <div className="space-y-6">
@@ -29,7 +29,31 @@ export default async function PartsPage() {
           </Link>
         }
       />
-      <PartsCatalog parts={parts} />
+      {partsResult.ok ? (
+        <PartsCatalog parts={partsResult.parts} />
+      ) : (
+        <PartsCatalogLoadError message={partsResult.error} />
+      )}
+    </div>
+  );
+}
+
+function PartsCatalogLoadError({ message }: { message: string }) {
+  return (
+    <div
+      role="alert"
+      className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-6 text-sm leading-6 text-foreground"
+    >
+      <p className="font-medium">{message}</p>
+      <p className="mt-2 text-muted-foreground">
+        You can still use work orders — add parts manually on each ticket until the catalog loads.
+      </p>
+      <Link
+        href="/dashboard/work-orders"
+        className={cn(buttonVariants({ variant: "outline" }), "mt-4 inline-flex min-h-11")}
+      >
+        Open work orders
+      </Link>
     </div>
   );
 }

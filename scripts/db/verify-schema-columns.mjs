@@ -104,6 +104,11 @@ const checks = [
           WHERE table_schema = 'public' AND table_name = 'work_orders'`,
   },
   {
+    label: "parts",
+    sql: `SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'parts'`,
+  },
+  {
     label: "inspections.arrivedAt",
     sql: `SELECT 1 FROM information_schema.columns
           WHERE table_schema = 'public' AND table_name = 'inspections' AND column_name = 'arrivedAt'`,

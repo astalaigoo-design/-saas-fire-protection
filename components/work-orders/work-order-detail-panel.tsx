@@ -10,7 +10,7 @@ import {
 } from "@/lib/work-orders/actions";
 import { WORK_ORDER_STATUSES, workOrderStatusLabel } from "@/lib/work-orders/constants";
 import type { WorkOrderDetail } from "@/lib/work-orders/queries";
-import type { PartRow } from "@/lib/parts/queries";
+import type { ClientPartRow } from "@/lib/parts/types";
 import { buildingLabel } from "@/lib/customers/format";
 import { formatDate, formatDateTime } from "@/lib/dashboard/dates";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ function SaveButton() {
 type WorkOrderDetailPanelProps = {
   workOrder: WorkOrderDetail;
   technicians: { id: string; name: string | null }[];
-  parts: PartRow[];
+  parts: ClientPartRow[];
   canEdit?: boolean;
 };
 

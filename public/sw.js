@@ -1,7 +1,7 @@
-const STATIC_CACHE = "flareflow-static-v17";
-const PAGE_CACHE = "flareflow-pages-v17";
-const INSPECT_CACHE = "flareflow-inspect-v17";
-const ASSET_CACHE = "flareflow-assets-v17";
+const STATIC_CACHE = "flareflow-static-v18";
+const PAGE_CACHE = "flareflow-pages-v18";
+const INSPECT_CACHE = "flareflow-inspect-v18";
+const ASSET_CACHE = "flareflow-assets-v18";
 
 const OFFLINE_FALLBACK_PATH = "/offline.html";
 

@@ -3,7 +3,7 @@ import { TechnicianWorkOrderPanel } from "@/components/work-orders/technician-wo
 import { WorkOrderDetailPanel } from "@/components/work-orders/work-order-detail-panel";
 import { canManageJobs } from "@/lib/auth/permissions";
 import { listAssignableStaff } from "@/lib/deficiencies/queries";
-import { listCompanyParts } from "@/lib/parts/queries";
+import { listCompanyPartsForPage } from "@/lib/parts/serialize";
 import { getWorkOrderForSession } from "@/lib/work-orders/queries";
 import { getDashboardSession } from "@/lib/dashboard/session";
 
@@ -20,15 +20,14 @@ export default async function WorkOrderDetailPage({ params }: WorkOrderDetailPag
   const workOrder = await getWorkOrderForSession(session, params.workOrderId);
   if (!workOrder) notFound();
 
+  const partsResult = await listCompanyPartsForPage(session);
+  const parts = partsResult.ok ? partsResult.parts : [];
+
   if (isTechnician) {
-    const parts = await listCompanyParts(session);
     return <TechnicianWorkOrderPanel workOrder={workOrder} parts={parts} />;
   }
 
-  const [technicians, parts] = await Promise.all([
-    listAssignableStaff(session),
-    listCompanyParts(session),
-  ]);
+  const technicians = await listAssignableStaff(session);
 
   return (
     <WorkOrderDetailPanel

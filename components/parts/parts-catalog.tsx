@@ -7,7 +7,7 @@ import {
   updatePart,
   type PartActionResult,
 } from "@/lib/parts/actions";
-import type { PartRow } from "@/lib/parts/queries";
+import type { ClientPartRow } from "@/lib/parts/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,7 +27,7 @@ function SubmitButton({ label }: { label: string }) {
 }
 
 type PartsCatalogProps = {
-  parts: PartRow[];
+  parts: ClientPartRow[];
 };
 
 export function PartsCatalog({ parts }: PartsCatalogProps) {
@@ -62,11 +62,11 @@ export function PartsCatalog({ parts }: PartsCatalogProps) {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="new-qty">Qty on hand</Label>
-                <Input id="new-qty" name="quantityOnHand" type="number" min={0} defaultValue={0} className="min-h-11" />
+                <Input id="new-qty" name="quantityOnHand" type="number" min={0} defaultValue="0" className="min-h-11" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="new-unit">Unit price (cents)</Label>
-                <Input id="new-unit" name="unitCents" type="number" min={0} defaultValue={0} className="min-h-11" />
+                <Input id="new-unit" name="unitCents" type="number" min={0} defaultValue="0" className="min-h-11" />
               </div>
             </div>
             <div className="space-y-2">
@@ -79,6 +79,12 @@ export function PartsCatalog({ parts }: PartsCatalogProps) {
       </Card>
 
       <ul className="space-y-4">
+        {parts.length === 0 ? (
+          <li className="rounded-xl border border-dashed border-border bg-card/50 p-6 text-sm text-muted-foreground">
+            No parts in your catalog yet. Add your first SKU above — technicians can pick from this
+            list when logging parts on work orders.
+          </li>
+        ) : null}
         {parts.map((part) => (
           <li key={part.id}>
             <PartRowCard part={part} />
@@ -89,7 +95,7 @@ export function PartsCatalog({ parts }: PartsCatalogProps) {
   );
 }
 
-function PartRowCard({ part }: { part: PartRow }) {
+function PartRowCard({ part }: { part: ClientPartRow }) {
   const [updateState, updateAction] = useFormState(updatePart, initialState);
   const [stockState, stockAction] = useFormState(adjustPartStock, initialState);
 
@@ -119,7 +125,7 @@ function PartRowCard({ part }: { part: PartRow }) {
                 name="quantityOnHand"
                 type="number"
                 min={0}
-                defaultValue={part.quantityOnHand}
+                defaultValue={String(part.quantityOnHand)}
                 className="min-h-11"
               />
             </div>
@@ -130,7 +136,7 @@ function PartRowCard({ part }: { part: PartRow }) {
                 name="unitCents"
                 type="number"
                 min={0}
-                defaultValue={part.unitCents}
+                defaultValue={String(part.unitCents)}
                 className="min-h-11"
               />
             </div>

@@ -81,7 +81,7 @@ If a migration is missing, typical symptoms:
 | `building_assets` | Building **Equipment** tab 500; equipment CSV fails |
 | `inspection_asset_checks` | No equipment register on inspect form |
 | `users.phone` / `technicianDayOfSmsSentAt` | SMS features no-op or Prisma errors |
-| `branch_asset_service_intervals` | Water-system due intervals / command center equipment tab errors |
+| `work_orders` / `parts` | Parts inventory or work orders pages error |
 
 ---
 
