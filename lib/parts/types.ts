@@ -12,3 +12,14 @@ export type ClientPartRow = {
 };
 
 export type PartActionResult = { ok: true } | { ok: false; error: string };
+
+export type PartFormAction = (
+  prev: PartActionResult,
+  formData: FormData,
+) => Promise<PartActionResult>;
+
+export type PartsCatalogActions = {
+  createPart: PartFormAction;
+  updatePart: PartFormAction;
+  adjustPartStock: PartFormAction;
+};

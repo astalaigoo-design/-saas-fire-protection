@@ -1,12 +1,11 @@
 "use client";
 
 import { useFormState, useFormStatus } from "react-dom";
-import {
-  adjustPartStock,
-  createPart,
-  updatePart,
-} from "@/lib/parts/actions";
-import type { PartActionResult, ClientPartRow } from "@/lib/parts/types";
+import type {
+  PartActionResult,
+  ClientPartRow,
+  PartsCatalogActions,
+} from "@/lib/parts/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDate } from "@/lib/dashboard/dates";
 
-const initialState: PartActionResult = { ok: false, error: "" };
+const emptyFormState: PartActionResult = { ok: false, error: "" };
 
 function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
@@ -27,10 +26,11 @@ function SubmitButton({ label }: { label: string }) {
 
 type PartsCatalogProps = {
   parts: ClientPartRow[];
+  actions: PartsCatalogActions;
 };
 
-export function PartsCatalog({ parts }: PartsCatalogProps) {
-  const [createState, createAction] = useFormState(createPart, initialState);
+export function PartsCatalog({ parts, actions }: PartsCatalogProps) {
+  const [createState, createAction] = useFormState(actions.createPart, emptyFormState);
 
   return (
     <div className="space-y-8">
@@ -61,11 +61,25 @@ export function PartsCatalog({ parts }: PartsCatalogProps) {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="new-qty">Qty on hand</Label>
-                <Input id="new-qty" name="quantityOnHand" type="number" min={0} defaultValue="0" className="min-h-11" />
+                <Input
+                  id="new-qty"
+                  name="quantityOnHand"
+                  type="number"
+                  min={0}
+                  defaultValue="0"
+                  className="min-h-11"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="new-unit">Unit price (cents)</Label>
-                <Input id="new-unit" name="unitCents" type="number" min={0} defaultValue="0" className="min-h-11" />
+                <Input
+                  id="new-unit"
+                  name="unitCents"
+                  type="number"
+                  min={0}
+                  defaultValue="0"
+                  className="min-h-11"
+                />
               </div>
             </div>
             <div className="space-y-2">
@@ -86,7 +100,7 @@ export function PartsCatalog({ parts }: PartsCatalogProps) {
         ) : null}
         {parts.map((part) => (
           <li key={part.id}>
-            <PartRowCard part={part} />
+            <PartRowCard part={part} actions={actions} />
           </li>
         ))}
       </ul>
@@ -94,9 +108,15 @@ export function PartsCatalog({ parts }: PartsCatalogProps) {
   );
 }
 
-function PartRowCard({ part }: { part: ClientPartRow }) {
-  const [updateState, updateAction] = useFormState(updatePart, initialState);
-  const [stockState, stockAction] = useFormState(adjustPartStock, initialState);
+function PartRowCard({
+  part,
+  actions,
+}: {
+  part: ClientPartRow;
+  actions: PartsCatalogActions;
+}) {
+  const [updateState, updateAction] = useFormState(actions.updatePart, emptyFormState);
+  const [stockState, stockAction] = useFormState(actions.adjustPartStock, emptyFormState);
 
   return (
     <Card>
@@ -111,11 +131,23 @@ function PartRowCard({ part }: { part: ClientPartRow }) {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-2">
               <Label htmlFor={`sku-${part.id}`}>SKU</Label>
-              <Input id={`sku-${part.id}`} name="sku" defaultValue={part.sku} required className="min-h-11" />
+              <Input
+                id={`sku-${part.id}`}
+                name="sku"
+                defaultValue={part.sku}
+                required
+                className="min-h-11"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor={`name-${part.id}`}>Name</Label>
-              <Input id={`name-${part.id}`} name="name" defaultValue={part.name} required className="min-h-11" />
+              <Input
+                id={`name-${part.id}`}
+                name="name"
+                defaultValue={part.name}
+                required
+                className="min-h-11"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor={`qty-${part.id}`}>On hand</Label>
@@ -143,7 +175,10 @@ function PartRowCard({ part }: { part: ClientPartRow }) {
           <SubmitButton label="Save" />
         </form>
 
-        <form action={stockAction} className="flex flex-wrap items-end gap-3 border-t border-border pt-4">
+        <form
+          action={stockAction}
+          className="flex flex-wrap items-end gap-3 border-t border-border pt-4"
+        >
           <input type="hidden" name="partId" value={part.id} />
           <div className="space-y-1">
             <Label htmlFor={`delta-${part.id}`} className="text-xs">

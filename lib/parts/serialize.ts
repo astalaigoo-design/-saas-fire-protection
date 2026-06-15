@@ -45,10 +45,14 @@ export async function listCompanyPartsForPage(
     return { ok: true, parts };
   } catch (error) {
     console.error("listCompanyParts failed", error);
-    captureError(error, {
-      tags: { layer: "data_fetch", query: "listCompanyParts" },
-      extra: { companyId: session.companyId },
-    });
+    try {
+      captureError(error, {
+        tags: { layer: "data_fetch", query: "listCompanyParts" },
+        extra: { companyId: session.companyId },
+      });
+    } catch {
+      /* monitoring must not block the page */
+    }
 
     if (isMissingPartsTableError(error)) {
       return {
