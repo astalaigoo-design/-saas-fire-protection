@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BrandLogo } from "@/components/brand-logo";
 import { DesignPartnerApplicationForm } from "@/components/marketing/design-partner-application-form";
-import { buttonVariants } from "@/components/ui/button";
+import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { TRIAL_DAYS } from "@/lib/billing/constants";
 import { APP_NAME, PILOT_PRICING } from "@/lib/branding";
 import { buildPublicPageMetadata } from "@/lib/seo/site-metadata";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = buildPublicPageMetadata({
   title: `Apply for design partner — ${APP_NAME}`,
@@ -18,22 +16,12 @@ export const metadata: Metadata = buildPublicPageMetadata({
 export default function DesignPartnerPage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border/60 bg-background/80 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <BrandLogo logoClassName="size-9" textClassName="text-lg" />
-          <nav className="flex items-center gap-2 sm:gap-3" aria-label="Account">
-            <Link
-              href="/pricing"
-              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "min-h-10 px-4")}
-            >
-              Pricing
-            </Link>
-            <Link href="/sign-up" className={cn(buttonVariants({ size: "sm" }), "min-h-10 px-4")}>
-              Start free trial
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <MarketingHeader
+        maxWidth="3xl"
+        hideDesignPartner
+        showSignIn={false}
+        startFreeLabel="Start free trial"
+      />
 
       <section className="mx-auto w-full max-w-3xl px-4 py-14 sm:px-6 lg:py-16">
         <p className="text-sm font-medium uppercase tracking-wide text-primary">Design partner</p>

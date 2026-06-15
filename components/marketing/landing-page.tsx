@@ -1,16 +1,14 @@
 import Link from "next/link";
-import { BrandLogo } from "@/components/brand-logo";
 import {
   HowItWorksSection,
   howItWorksJsonLd,
 } from "@/components/marketing/how-it-works-section";
+import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { PricingCards } from "@/components/marketing/pricing-cards";
 import { AboutSection } from "@/components/marketing/about-section";
 import { CompetitiveComparisonSection } from "@/components/marketing/competitive-comparison-section";
 import { productShowcase, ProductShowcaseImage } from "@/components/marketing/product-previews";
 import {
-  marketingHeaderCtaClass,
-  marketingHeaderLinkClass,
   marketingPrimaryCtaClass,
   marketingSecondaryCtaClass,
 } from "@/lib/marketing/cta-classes";
@@ -39,63 +37,7 @@ export function LandingPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
       />
-      <header className="border-b border-border/60 bg-background/80 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <BrandLogo logoClassName="size-9" textClassName="text-lg" priority />
-          <nav className="hidden items-center gap-6 md:flex" aria-label="Primary">
-            <Link
-              href="#features"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Features
-            </Link>
-            <Link
-              href="#how-it-works"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              How it works
-            </Link>
-            <Link
-              href="/about"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              About
-            </Link>
-            <Link
-              href="/pricing"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Pricing
-            </Link>
-            <Link
-              href="#compare"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Compare
-            </Link>
-            <Link
-              href="#solutions"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Solutions
-            </Link>
-            <Link
-              href="#contact"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Contact
-            </Link>
-          </nav>
-          <nav className="flex items-center gap-2 sm:gap-3" aria-label="Account">
-            <Link href="/sign-in" className={marketingHeaderLinkClass}>
-              Sign in
-            </Link>
-            <Link href="/sign-up" className={marketingHeaderCtaClass}>
-              Start free
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <MarketingHeader variant="home" maxWidth="6xl" priorityLogo />
 
       <section className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 lg:py-20">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,240px)] lg:items-center lg:gap-12">

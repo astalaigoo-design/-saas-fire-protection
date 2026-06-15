@@ -1,16 +1,12 @@
 import Link from "next/link";
-import { BrandLogo } from "@/components/brand-logo";
+import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { TRIAL_DAYS } from "@/lib/billing/constants";
 import { APP_NAME, DESIGN_PARTNER_APPLY_PATH, PILOT_PRICING } from "@/lib/branding";
 import {
-  marketingHeaderCtaClass,
-  marketingHeaderLinkClass,
   marketingPrimaryCtaClass,
   marketingSecondaryCtaClass,
 } from "@/lib/marketing/cta-classes";
 import type { SeoLandingPageConfig } from "@/lib/seo/landing-pages";
-import { cn } from "@/lib/utils";
-
 type SeoLandingPageProps = {
   config: SeoLandingPageConfig;
 };
@@ -42,25 +38,7 @@ export function SeoLandingPage({ config }: SeoLandingPageProps) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
       ) : null}
-      <header className="border-b border-border/60 bg-background/80 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <BrandLogo logoClassName="size-9" textClassName="text-lg" priority />
-          <nav className="flex items-center gap-2" aria-label="Account">
-            <Link
-              href="/pricing"
-              className={cn(marketingHeaderLinkClass, "hidden sm:inline-flex")}
-            >
-              Pricing
-            </Link>
-            <Link href="/sign-in" className={marketingHeaderLinkClass}>
-              Sign in
-            </Link>
-            <Link href="/sign-up" className={marketingHeaderCtaClass}>
-              Start free
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <MarketingHeader maxWidth="3xl" priorityLogo showPricing="sm" />
 
       <article className="mx-auto w-full max-w-3xl px-4 py-12 sm:px-6 lg:py-16">
         <div className="space-y-4">

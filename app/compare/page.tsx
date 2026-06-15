@@ -1,12 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BrandLogo } from "@/components/brand-logo";
 import { CompetitiveComparisonSection } from "@/components/marketing/competitive-comparison-section";
+import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { APP_NAME, PILOT_SUPPORT_EMAIL } from "@/lib/branding";
-import {
-  marketingHeaderCtaClass,
-  marketingHeaderLinkClass,
-} from "@/lib/marketing/cta-classes";
 import { buildPublicPageMetadata } from "@/lib/seo/site-metadata";
 
 export const metadata: Metadata = buildPublicPageMetadata({
@@ -18,22 +14,7 @@ export const metadata: Metadata = buildPublicPageMetadata({
 export default function ComparePage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border/60 bg-background/80 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <BrandLogo logoClassName="size-9" textClassName="text-lg" priority />
-          <nav className="flex items-center gap-2 sm:gap-3" aria-label="Account">
-            <Link href="/pricing" className={marketingHeaderLinkClass}>
-              Pricing
-            </Link>
-            <Link href="/sign-in" className={marketingHeaderLinkClass}>
-              Sign in
-            </Link>
-            <Link href="/sign-up" className={marketingHeaderCtaClass}>
-              Start free
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <MarketingHeader maxWidth="6xl" priorityLogo />
 
       <div className="mx-auto w-full max-w-6xl px-4 pt-10 sm:px-6 lg:pt-12">
         <Link href="/" className="text-sm text-primary hover:underline">

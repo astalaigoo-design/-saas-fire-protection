@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { BrandLogo } from "@/components/brand-logo";
 import { PricingCards } from "@/components/marketing/pricing-cards";
+import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { TRIAL_DAYS } from "@/lib/billing/constants";
 import { APP_NAME, DESIGN_PARTNER_APPLY_PATH, PILOT_PRICING, PILOT_SUPPORT_EMAIL } from "@/lib/branding";
 import {
-  marketingHeaderCtaClass,
-  marketingHeaderLinkClass,
   marketingPrimaryCtaClass,
   marketingSecondaryCtaClass,
 } from "@/lib/marketing/cta-classes";
@@ -57,19 +55,7 @@ const faqs: { question: string; answer: string | ReactNode }[] = [
 export default function PricingPage() {
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border/60 bg-background/80 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <BrandLogo logoClassName="size-9" textClassName="text-lg" priority />
-          <nav className="flex items-center gap-2 sm:gap-3" aria-label="Account">
-            <Link href="/sign-in" className={marketingHeaderLinkClass}>
-              Sign in
-            </Link>
-            <Link href="/sign-up" className={marketingHeaderCtaClass}>
-              Start free
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <MarketingHeader maxWidth="4xl" priorityLogo showPricing={false} />
 
       <section className="mx-auto w-full max-w-4xl px-4 py-14 sm:px-6 lg:py-16">
         <div className="max-w-2xl">
