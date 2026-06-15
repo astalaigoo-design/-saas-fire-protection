@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { ErrorFeedback } from "@/components/ui/error-feedback";
+import { logClientDebug } from "@/lib/debug/log-client-debug";
 
 export default function PartsError({
   error,
@@ -12,22 +13,16 @@ export default function PartsError({
 }) {
   useEffect(() => {
     // #region agent log
-    fetch("http://127.0.0.1:7703/ingest/5689de24-7191-4ca4-92d5-2784a0c42a09", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "3283a7" },
-      body: JSON.stringify({
-        sessionId: "3283a7",
-        runId: "verify-fix",
-        hypothesisId: "F",
-        location: "parts/error.tsx",
-        message: "Parts error boundary",
-        data: {
-          digest: error?.digest ?? null,
-          errorMessage: error?.message?.slice(0, 400) ?? null,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
+    void logClientDebug({
+      runId: "post-fix",
+      hypothesisId: "F",
+      location: "parts/error.tsx",
+      message: "Parts error boundary",
+      data: {
+        digest: error?.digest ?? null,
+        errorMessage: error?.message?.slice(0, 400) ?? null,
+      },
+    });
     // #endregion
   }, [error]);
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect";
+import { isDynamicServerError } from "next/dist/client/components/hooks-server-context";
 import { PartsCatalogClient } from "@/components/parts/parts-catalog-client";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { buttonVariants } from "@/components/ui/button";
@@ -9,6 +10,8 @@ import { agentLog } from "@/lib/debug/agent-log";
 import { listCompanyPartsForPage } from "@/lib/parts/serialize";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { cn } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
 
 export default async function PartsPage() {
   try {
@@ -67,6 +70,7 @@ export default async function PartsPage() {
     );
   } catch (error) {
     if (isRedirectError(error)) throw error;
+    if (isDynamicServerError(error)) throw error;
 
     agentLog({
       runId: "verify-fix-2",
