@@ -17,16 +17,12 @@ function createPrismaClient(): PrismaClient {
 }
 
 function getPrismaClient(): PrismaClient {
-  if (process.env.NODE_ENV !== "production" && globalForPrisma.prisma) {
+  if (globalForPrisma.prisma) {
     return globalForPrisma.prisma;
   }
 
   const client = createPrismaClient();
-
-  if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = client;
-  }
-
+  globalForPrisma.prisma = client;
   return client;
 }
 

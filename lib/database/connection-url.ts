@@ -97,7 +97,29 @@ export function assertValidDatabaseUrl(
   return value;
 }
 
-/** Dev-only: bump connection_limit when Supabase pooler is set to 1. */
+/** Apply Supabase pooler params safe for Vercel serverless. */
+function applyServerlessPoolerParams(url: URL): string {
+  const isPooler =
+    url.port === "6543" || url.searchParams.get("pgbouncer") === "true";
+
+  if (isPooler) {
+    url.searchParams.set("pgbouncer", "true");
+    if (!url.searchParams.has("connection_limit")) {
+      url.searchParams.set("connection_limit", "1");
+    }
+    if (!url.searchParams.has("pool_timeout")) {
+      url.searchParams.set("pool_timeout", "20");
+    }
+  }
+
+  if (!url.searchParams.has("sslmode")) {
+    url.searchParams.set("sslmode", "require");
+  }
+
+  return url.toString();
+}
+
+/** Resolve DATABASE_URL with pooler settings appropriate for the runtime. */
 export function resolveDatabaseUrlForPrisma(): string {
   loadDotenvIfNeeded();
 
@@ -105,12 +127,15 @@ export function resolveDatabaseUrlForPrisma(): string {
   const rawDirectUrl = normalizeEnvUrl(process.env.DIRECT_URL);
   const validated = assertValidDatabaseUrl(rawDatabaseUrl || rawDirectUrl, "DATABASE_URL");
 
-  if (process.env.NODE_ENV === "production") {
-    return validated;
-  }
-
   try {
     const url = new URL(validated);
+    const onVercel = Boolean(process.env.VERCEL);
+
+    if (onVercel || process.env.NODE_ENV === "production") {
+      return applyServerlessPoolerParams(url);
+    }
+
+    // Local dev: allow a few more connections when pooler limit is 1.
     if (url.searchParams.get("connection_limit") === "1") {
       url.searchParams.set("connection_limit", "5");
       url.searchParams.set("pool_timeout", "20");

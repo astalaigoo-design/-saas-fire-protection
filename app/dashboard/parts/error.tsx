@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { ErrorFeedback } from "@/components/ui/error-feedback";
-import { logClientDebug } from "@/lib/debug/log-client-debug";
 
 export default function PartsError({
   error,
@@ -12,18 +11,7 @@ export default function PartsError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // #region agent log
-    void logClientDebug({
-      runId: "post-fix",
-      hypothesisId: "F",
-      location: "parts/error.tsx",
-      message: "Parts error boundary",
-      data: {
-        digest: error?.digest ?? null,
-        errorMessage: error?.message?.slice(0, 400) ?? null,
-      },
-    });
-    // #endregion
+    console.error("Parts catalog page error", error);
   }, [error]);
 
   return (
