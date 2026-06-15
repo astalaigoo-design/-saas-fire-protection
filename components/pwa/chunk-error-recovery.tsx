@@ -13,6 +13,14 @@ function isChunkLoadFailure(message: string): boolean {
   );
 }
 
+function isRecoverableClientError(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return (
+    isChunkLoadFailure(message) ||
+    normalized.includes("an error occurred in the server components render")
+  );
+}
+
 function tryRecoverFromChunkError(): void {
   if (sessionStorage.getItem(RELOAD_GUARD_KEY) === "1") return;
   sessionStorage.setItem(RELOAD_GUARD_KEY, "1");
@@ -43,7 +51,7 @@ export function ChunkErrorRecovery() {
     const handleError = (event: ErrorEvent) => {
       if (event.error instanceof DOMException) return;
       const message = event.message ?? "";
-      if (!isChunkLoadFailure(message)) return;
+      if (!isRecoverableClientError(message)) return;
       tryRecoverFromChunkError();
     };
 
@@ -56,7 +64,7 @@ export function ChunkErrorRecovery() {
           : typeof reason === "string"
             ? reason
             : "";
-      if (!isChunkLoadFailure(message)) return;
+      if (!isRecoverableClientError(message)) return;
       tryRecoverFromChunkError();
     };
 
