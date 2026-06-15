@@ -1,32 +1,36 @@
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { redirect } from "next/navigation";
+import { PartsCatalogClient } from "@/components/parts/parts-catalog-client";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
+import { agentLog } from "@/lib/debug/agent-log";
 import { listCompanyPartsForPage } from "@/lib/parts/serialize";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { cn } from "@/lib/utils";
 
-const PartsCatalog = dynamic(
-  () => import("@/components/parts/parts-catalog").then((m) => m.PartsCatalog),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="space-y-4 animate-pulse" aria-busy="true" aria-label="Loading parts catalog">
-        <div className="h-40 rounded-xl bg-muted" />
-        <div className="h-24 rounded-xl bg-muted" />
-      </div>
-    ),
-  },
-);
-
 export default async function PartsPage() {
+  agentLog({
+    hypothesisId: "F",
+    location: "parts/page.tsx:entry",
+    message: "PartsPage render (client wrapper pattern)",
+  });
+
   const session = await getDashboardSession();
   if (!session) redirect("/sign-in");
   ensureCanManageJobs(session.role);
 
   const partsResult = await listCompanyPartsForPage(session);
+
+  agentLog({
+    hypothesisId: "A",
+    location: "parts/page.tsx:partsResult",
+    message: "Parts query finished",
+    data: {
+      ok: partsResult.ok,
+      partCount: partsResult.ok ? partsResult.parts.length : 0,
+    },
+  });
 
   return (
     <div className="space-y-6">
@@ -43,7 +47,7 @@ export default async function PartsPage() {
         }
       />
       {partsResult.ok ? (
-        <PartsCatalog parts={partsResult.parts} />
+        <PartsCatalogClient parts={partsResult.parts} />
       ) : (
         <PartsCatalogLoadError message={partsResult.error} />
       )}
