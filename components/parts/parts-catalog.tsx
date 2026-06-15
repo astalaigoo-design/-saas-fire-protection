@@ -5,9 +5,8 @@ import {
   adjustPartStock,
   createPart,
   updatePart,
-  type PartActionResult,
 } from "@/lib/parts/actions";
-import type { ClientPartRow } from "@/lib/parts/types";
+import type { PartActionResult, ClientPartRow } from "@/lib/parts/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";

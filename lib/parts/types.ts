@@ -10,3 +10,5 @@ export type ClientPartRow = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type PartActionResult = { ok: true } | { ok: false; error: string };

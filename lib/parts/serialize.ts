@@ -41,7 +41,8 @@ export async function listCompanyPartsForPage(
 ): Promise<ListCompanyPartsResult> {
   try {
     const rows = await listCompanyParts(session);
-    return { ok: true, parts: serializePartRows(rows) };
+    const parts = serializePartRows(rows);
+    return { ok: true, parts };
   } catch (error) {
     console.error("listCompanyParts failed", error);
     captureError(error, {

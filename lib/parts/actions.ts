@@ -9,12 +9,13 @@ import {
   updatePartSchema,
 } from "@/lib/parts/schemas";
 import { getPartInCompany } from "@/lib/parts/queries";
+import type { PartActionResult } from "@/lib/parts/types";
 import { writeAuditEvent } from "@/lib/audit/write-event";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { captureServerActionError } from "@/lib/monitoring/capture";
 import { prisma } from "@/lib/prisma";
 
-export type PartActionResult = { ok: true } | { ok: false; error: string };
+export type { PartActionResult } from "@/lib/parts/types";
 
 function formFields(formData: FormData): Record<string, string> {
   const out: Record<string, string> = {};

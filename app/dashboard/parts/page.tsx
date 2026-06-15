@@ -1,12 +1,25 @@
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { redirect } from "next/navigation";
-import { PartsCatalog } from "@/components/parts/parts-catalog";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import { ensureCanManageJobs } from "@/lib/auth/guards";
 import { listCompanyPartsForPage } from "@/lib/parts/serialize";
 import { getDashboardSession } from "@/lib/dashboard/session";
 import { cn } from "@/lib/utils";
+
+const PartsCatalog = dynamic(
+  () => import("@/components/parts/parts-catalog").then((m) => m.PartsCatalog),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-4 animate-pulse" aria-busy="true" aria-label="Loading parts catalog">
+        <div className="h-40 rounded-xl bg-muted" />
+        <div className="h-24 rounded-xl bg-muted" />
+      </div>
+    ),
+  },
+);
 
 export default async function PartsPage() {
   const session = await getDashboardSession();
