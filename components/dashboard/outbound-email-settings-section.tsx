@@ -1,4 +1,5 @@
 import type { OutboundEmailStatus } from "@/lib/email/env";
+import { orgSectionAnchorClass } from "@/components/dashboard/org-settings-layout";
 import { RESEND_DEPENDENT_FEATURES, WORKS_WITHOUT_RESEND } from "@/lib/outbound/channels";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +13,10 @@ export function OutboundEmailSettingsSection({
   return (
     <section
       id="outbound-email"
-      className="max-w-lg rounded-xl border border-border bg-card p-5 shadow-sm"
+      className={cn(
+        orgSectionAnchorClass,
+        "max-w-2xl rounded-xl border border-border bg-card p-5 shadow-sm",
+      )}
       aria-labelledby="outbound-email-heading"
     >
       <h2

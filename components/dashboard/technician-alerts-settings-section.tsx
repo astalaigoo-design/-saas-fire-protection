@@ -1,5 +1,6 @@
 import type { OutboundEmailStatus } from "@/lib/email/env";
 import type { SmsConfigStatus } from "@/lib/sms/env";
+import { orgSectionAnchorClass } from "@/components/dashboard/org-settings-layout";
 import { NATIVE_APP_PILOT_THRESHOLD } from "@/lib/mobile/scope";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +16,10 @@ export function TechnicianAlertsSettingsSection({
   return (
     <section
       id="technician-alerts"
-      className="max-w-lg rounded-xl border border-border bg-card p-5 shadow-sm"
+      className={cn(
+        orgSectionAnchorClass,
+        "max-w-2xl rounded-xl border border-border bg-card p-5 shadow-sm",
+      )}
       aria-labelledby="technician-alerts-heading"
     >
       <h2

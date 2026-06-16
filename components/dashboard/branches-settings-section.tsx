@@ -7,6 +7,9 @@ import type { BranchListItem } from "@/lib/branches/queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { orgSectionAnchorClass } from "@/components/dashboard/org-settings-layout";
+import { cn } from "@/lib/utils";
+import { orgSectionAnchorClass } from "@/components/dashboard/org-settings-layout";
 
 type BranchesSettingsSectionProps = {
   branches: BranchListItem[];
@@ -30,7 +33,10 @@ export function BranchesSettingsSection({ branches }: BranchesSettingsSectionPro
   return (
     <section
       id="branches"
-      className="max-w-lg space-y-6 rounded-xl border border-border bg-card p-5 shadow-sm"
+      className={cn(
+        orgSectionAnchorClass,
+        "max-w-2xl space-y-6 rounded-xl border border-border bg-card p-5 shadow-sm",
+      )}
       aria-labelledby="branches-heading"
     >
       <div>

@@ -25,6 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getAppOrigin } from "@/lib/app-url";
+import { orgSectionAnchorClass } from "@/components/dashboard/org-settings-layout";
 import { APP_NAME } from "@/lib/branding";
 import { AHJ_FILING_WEBHOOK_EVENT } from "@/lib/integrations/ahj-filing-scope";
 import {
@@ -138,7 +139,7 @@ export function IntegrationsSettingsSection({ data }: IntegrationsSettingsSectio
   return (
     <section
       id="integrations"
-      className="max-w-2xl space-y-6"
+      className={cn(orgSectionAnchorClass, "max-w-2xl space-y-6")}
       aria-labelledby="integrations-heading"
     >
       <div className="space-y-3">

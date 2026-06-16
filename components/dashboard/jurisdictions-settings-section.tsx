@@ -18,8 +18,10 @@ import {
   REPORT_TEMPLATE_LABELS,
 } from "@/lib/reports/templates/types";
 import { reportTemplatePreviewUrl } from "@/lib/reports/generate-template-preview";
+import { orgSectionAnchorClass } from "@/components/dashboard/org-settings-layout";
 import { OperatingMarket } from "@prisma/client";
 import { CompliancePdfScopeNotice } from "@/components/reports/compliance-pdf-scope-notice";
+import { cn } from "@/lib/utils";
 
 type JurisdictionsSettingsSectionProps = {
   jurisdictions: JurisdictionRow[];
@@ -94,8 +96,12 @@ export function JurisdictionsSettingsSection({
 
   return (
     <section
+      id="jurisdictions"
       aria-labelledby="jurisdictions-heading"
-      className="max-w-2xl space-y-6 rounded-xl border border-border bg-card p-5 shadow-sm"
+      className={cn(
+        orgSectionAnchorClass,
+        "max-w-2xl space-y-6 rounded-xl border border-border bg-card p-5 shadow-sm",
+      )}
     >
       <div>
         <h2 id="jurisdictions-heading" className="font-heading text-base font-semibold text-foreground">

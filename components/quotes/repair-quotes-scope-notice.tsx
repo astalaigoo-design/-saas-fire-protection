@@ -3,6 +3,7 @@ import {
   REPAIR_QUOTE_CAPABILITIES,
   REPAIR_QUOTE_NOT_INCLUDED,
 } from "@/lib/quotes/scope";
+import { orgSectionAnchorClass } from "@/components/dashboard/org-settings-layout";
 import { cn } from "@/lib/utils";
 
 type RepairQuotesScopeNoticeProps = {
@@ -33,7 +34,9 @@ export function RepairQuotesScopeNotice({
 
   return (
     <section
+      id="repair-quotes"
       className={cn(
+        orgSectionAnchorClass,
         "max-w-2xl space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm",
         className,
       )}

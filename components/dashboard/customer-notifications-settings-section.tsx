@@ -8,6 +8,7 @@ import {
 import type { CustomerNotificationSettings } from "@/lib/notifications/customer-settings";
 import type { OutboundEmailStatus } from "@/lib/email/env";
 import type { SmsConfigStatus } from "@/lib/sms/env";
+import { orgSectionAnchorClass } from "@/components/dashboard/org-settings-layout";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -81,7 +82,10 @@ export function CustomerNotificationsSettingsSection({
   return (
     <section
       id="customer-notifications"
-      className="max-w-lg rounded-xl border border-border bg-card p-5 shadow-sm"
+      className={cn(
+        orgSectionAnchorClass,
+        "max-w-2xl rounded-xl border border-border bg-card p-5 shadow-sm",
+      )}
       aria-labelledby="customer-notifications-heading"
     >
       <h2

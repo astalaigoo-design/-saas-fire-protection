@@ -13,7 +13,9 @@ import {
   updateChecklistTemplateItem,
   type ChecklistTemplateActionState,
 } from "@/lib/inspections/checklist-template-actions";
+import { orgSectionAnchorClass } from "@/components/dashboard/org-settings-layout";
 import type { ChecklistTemplatesEditorData } from "@/lib/inspections/checklist-template-queries";
+import { cn } from "@/lib/utils";
 
 type ChecklistTemplatesSectionProps = {
   data: ChecklistTemplatesEditorData;
@@ -308,7 +310,7 @@ export function ChecklistTemplatesSection({
   return (
     <section
       id="checklist-templates"
-      className="max-w-2xl space-y-4 scroll-mt-6"
+      className={cn(orgSectionAnchorClass, "max-w-2xl space-y-4")}
       aria-labelledby="checklist-templates-heading"
     >
       <div>

@@ -10,10 +10,12 @@ import {
 import type { CompanyProfile } from "@/lib/companies/queries";
 import { OPERATING_MARKET_LABELS } from "@/lib/market/operating-market";
 import { compressImageFile } from "@/lib/inspect/compress-image";
+import { orgSectionAnchorClass } from "@/components/dashboard/org-settings-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 type CompanySettingsFormProps = {
   company: CompanyProfile;
@@ -69,7 +71,24 @@ export function CompanySettingsForm({ company }: CompanySettingsFormProps) {
   }
 
   return (
-    <form action={formAction} className="max-w-lg space-y-6">
+    <section
+      id="company"
+      className={cn(
+        orgSectionAnchorClass,
+        "max-w-2xl rounded-xl border border-border bg-card p-5 shadow-sm",
+      )}
+      aria-labelledby="company-heading"
+    >
+      <div className="mb-6">
+        <h2 id="company-heading" className="font-heading text-lg font-semibold text-foreground">
+          Company profile
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Name, logo, and report contact details shown on compliance PDFs and customer-facing links.
+        </p>
+      </div>
+
+      <form action={formAction} className="space-y-6">
       <input type="hidden" name="logoUrl" value={logoUrl} />
 
       <div className="space-y-2">
@@ -195,6 +214,7 @@ export function CompanySettingsForm({ company }: CompanySettingsFormProps) {
       ) : null}
 
       <SubmitButton />
-    </form>
+      </form>
+    </section>
   );
 }

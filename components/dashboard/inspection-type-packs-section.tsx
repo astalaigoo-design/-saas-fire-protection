@@ -6,7 +6,9 @@ import {
   type EnableInspectionTypePackState,
 } from "@/lib/companies/inspection-type-actions";
 import type { InspectionTypePackRow } from "@/lib/companies/inspection-type-queries";
+import { orgSectionAnchorClass } from "@/components/dashboard/org-settings-layout";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type InspectionTypePacksSectionProps = {
   packs: InspectionTypePackRow[];
@@ -69,7 +71,7 @@ export function InspectionTypePacksSection({
   return (
     <section
       id="inspection-type-packs"
-      className="max-w-2xl space-y-4 scroll-mt-6"
+      className={cn(orgSectionAnchorClass, "max-w-2xl space-y-4")}
       aria-labelledby="nfpa-packs-heading"
     >
       <div>

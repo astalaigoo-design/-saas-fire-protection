@@ -13,10 +13,12 @@ import { technicianContactGaps } from "@/lib/notifications/technician-contact";
 import type { BranchListItem } from "@/lib/branches/queries";
 import type { BranchTeamScope } from "@/lib/team/branch-team-access";
 import type { PendingTeamInviteRow, TeamMemberRow } from "@/lib/team/queries";
+import { orgSectionAnchorClass } from "@/components/dashboard/org-settings-layout";
 import { INVITABLE_TEAM_ROLES } from "@/lib/team/invite-schemas";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 type TeamInviteSectionProps = {
   members: TeamMemberRow[];
@@ -71,7 +73,10 @@ export function TeamInviteSection({
   return (
     <section
       id="team"
-      className="max-w-lg space-y-6 rounded-xl border border-border bg-card p-5 shadow-sm"
+      className={cn(
+        orgSectionAnchorClass,
+        "max-w-2xl space-y-6 rounded-xl border border-border bg-card p-5 shadow-sm",
+      )}
       aria-labelledby="team-heading"
     >
       <div>
